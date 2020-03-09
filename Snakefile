@@ -1,25 +1,30 @@
 genome_list = [ line.strip() for line in open('genome-list.txt', 'rt') ]
 
 rule all:
-     input:
+    input:
         expand('genomes/{g}.hashes', g=genome_list),
         expand('genomes/{g}.hashes.fragment.100000', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.10000', g=genome_list)
+        expand('genomes/{g}.hashes.fragment.10000', g=genome_list),
+        expand('genomes/{g}.hashes.fragment.5000', g=genome_list)
 
 rule make_hashes:
-     input:
+    input:
         'genomes/{filename}.fna'
-     output:
+    output:
         'genomes/{filename}.fna.hashes'
-     shell: """
+    conda: 'env-sourmash.yml'
+    shell: """
         ./process-genome.py {input} {output}
      """
 
 rule make_hashes_fragment:
-     input:
+    input:
         'genomes/{filename}.fna'
-     output:
-        'genomes/{filename}.fna.hashes.fragment.{size}'
-     shell: """
-        ./process-genome.py {input} {output} --fragment {wildcards.size}
+    output:
+        hashes='genomes/{filename}.fna.hashes.fragment.{size}',
+        stats='genomes/{filename}.fna.hashes.fragment.{size}.stats'
+    conda: 'env-sourmash.yml'
+    shell: """
+        ./process-genome.py {input} {output.hashes} \
+             --fragment {wildcards.size} --stats {output.stats}
      """
