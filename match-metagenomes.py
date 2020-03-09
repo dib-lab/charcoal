@@ -40,6 +40,7 @@ def main():
 
         print('...', i, len(metagenome_prefixes), metagenome, len(hash_to_lengths), m)
 
+    print(len(metagenome_prefixes), len(hash_to_lengths))
     with open(args.matrix_csv_out, 'wt') as outfp:
         w = csv.writer(outfp)
         for i in range(len(metagenome_prefixes)):
