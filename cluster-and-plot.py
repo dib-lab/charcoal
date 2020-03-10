@@ -171,6 +171,7 @@ def main():
                 largest_n = len(clusters[i])
             #print('cluster {} is {} in size'.format(i, len(clusters[i])))
 
+        print('Cut point: {}'.format(CUT_POINT))
         print('LARGEST cluster is {} of {} original hashes ({} nonempty)'.format(largest_n, n_orig_hashes, n_hashes))
 
 
