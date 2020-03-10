@@ -7,6 +7,7 @@ rule all:
         expand('genomes/{g}.hashes.fragment.10000', g=genome_list),
         expand('genomes/{g}.hashes.fragment.5000', g=genome_list),
         expand('genomes/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
+        expand('genomes/{g}.hashes.fragment.100000.matrix.csv.png', g=genome_list),
 
 rule make_hashes:
     input:
@@ -33,11 +34,20 @@ rule make_hashes_fragment:
 rule make_matrix_csv:
     input:
         hashes='genomes/{filename}.hashes{postfix}',
-        metag_list='ibd_metagenome_prefixes.txt.20'
+        metag_list='ibd_metagenome_prefixes.txt'
     output:
         'genomes/{filename}.hashes{postfix}.matrix.csv'
     conda: 'env-sourmash.yml'
     shell: """
         ./match-metagenomes.py {input.hashes} {input.metag_list} {output}
+    """
+
+rule make_matrix_png:
+    input:
+        'genomes/{g}.matrix.csv',
+    output:
+        'genomes/{g}.matrix.csv.png'
+    shell: """
+        ./cluster_and_plot.py {input}
     """
 
