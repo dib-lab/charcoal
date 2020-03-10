@@ -13,6 +13,7 @@ def main():
     p.add_argument('-k', '--ksize', default=31, type=int)
     p.add_argument('--scaled', default=1000, type=int)
     p.add_argument('--fragment', default=0, type=int)
+    p.add_argument('--stats', default=None)
     args = p.parse_args()
 
     mh_factory = sourmash.MinHash(n=0, ksize=args.ksize, scaled=args.scaled)
@@ -23,7 +24,16 @@ def main():
     m = 0
     sum_bp = 0
     sum_missed_bp = 0
+
+    statsfp = None
+    if args.stats:
+        statsfp = open(args.stats, 'wt')
+
+    #
+    # iterate over all contigs in genome file
+    #
     for record in screed.open(args.genome):
+        # fragment longer contigs into smaller regions?
         if args.fragment:
             for start in range(0, len(record.sequence), args.fragment):
                 seq = record.sequence[start:start + args.fragment]
@@ -32,6 +42,8 @@ def main():
 
                 mh = mh_factory.copy_and_clear()
                 mh.add_sequence(seq, force=True)
+                if statsfp and len(seq) == args.fragment:
+                    print('{}'.format(len(mh)), file=statsfp)
                 if not mh:
                     sum_missed_bp += len(seq)
                     continue
@@ -39,6 +51,9 @@ def main():
                 m += 1
                 min_value = min(mh.get_mins())
                 hash_to_lengths[min_value] = len(seq)
+
+
+        # deal directly with contigs in the genome file
         else:
             n += 1
             sum_bp += len(record.sequence)
