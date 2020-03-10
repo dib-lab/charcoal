@@ -7,7 +7,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 
 from matplotlib import pyplot as plt
 import pylab
-from sourmash import fig
+import scipy.cluster.hierarchy as sch
 
 
 def load_and_normalize(filename):
@@ -42,29 +42,94 @@ def load_and_normalize(filename):
     return D
         
         
-def cluster_and_plot(D, prefix):
-    linked = linkage(D, 'single')
+def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
+                          vmax=1.0, vmin=0.0, force=False):
+    """Build a composite plot showing dendrogram + distance matrix/heatmap.
 
-    plt.figure(figsize=(10, 7))
-    Z = dendrogram(linked,
-               orientation='top',
-               distance_sort='descending',
-               show_leaf_counts=True)
+    Returns a matplotlib figure."""
+    if D.max() > 1.0 or D.min() < 0.0:
+        print('This matrix doesn\'t look like a distance matrix - min value {}, max value {}'.format(D.min(), D.max()))
+        if not force:
+            raise ValueError("not a distance matrix")
+        else:
+            print('force is set; scaling to [0, 1]')
+            D -= D.min()
+            D /= D.max()
 
-    idx1 = Z['leaves']
-    print(len(idx1))
+    if show_labels:
+        show_indices = True
+
+    fig = pylab.figure(figsize=(11, 8))
+    ax1 = fig.add_axes([0.09, 0.1, 0.2, 0.6])
+
+    # plot dendrogram
+    Y = sch.linkage(D, method='single')  # centroid
+
+    dendrolabels = labeltext
+    if not show_labels:
+        dendrolabels = [str(i) for i in range(len(labeltext))]
+
+    Z1 = sch.dendrogram(Y, orientation='left', labels=dendrolabels,
+                        no_labels=not show_indices)
+    ax1.set_xticks([])
+
+    xstart = 0.45
+    width = 0.45
+    if not show_labels:
+        xstart = 0.315
+    scale_xstart = xstart + width + 0.01
+
+    # plot matrix
+    axmatrix = fig.add_axes([xstart, 0.1, width, 0.6])
+
+    # (this reorders D by the clustering in Z1)
+    idx1 = Z1['leaves']
     D = D[idx1, :]
     D = D[:, idx1]
 
-    im = plt.matshow(D, aspect='auto', origin='lower',
-                           cmap=pylab.cm.YlGnBu)
-    plt.savefig('{}.png'.format(prefix))
+    # show matrix
+    im = axmatrix.matshow(D, aspect='auto', origin='lower',
+                          cmap=pylab.cm.YlGnBu, vmin=vmin, vmax=vmax)
+    axmatrix.set_xticks([])
+    axmatrix.set_yticks([])
+
+    # Plot colorbar.
+    axcolor = fig.add_axes([scale_xstart, 0.1, 0.02, 0.6])
+    pylab.colorbar(im, cax=axcolor)
+
+    return fig
+
+
+def augmented_dendrogram(*args, **kwargs):
+    ddata = dendrogram(*args, **kwargs)
+
+    if not kwargs.get('no_plot', False):
+        for i, d in zip(ddata['icoord'], ddata['dcoord']):
+            x = 0.5 * sum(i[1:3])
+            y = d[1]
+            plt.plot(x, y, 'ro')
+            plt.annotate("%.3g" % y, (x, y), xytext=(0, -8),
+                         textcoords='offset points',
+                         va='top', ha='center')
+
+    return ddata
+
+def annotated_dendro(mat):
+    # this is what makes the distances
+    Y = sch.linkage(mat, method='average')
+
+    fig = pylab.figure(figsize=(11, 8))
+
+    Z = augmented_dendrogram(Y, orientation='top', no_labels=True)
+
+    return fig
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('matrix_csv')
     p.add_argument('output_fig')
+    p.add_argument('--dendro', default=None)
     args = p.parse_args()
 
     mat = load_and_normalize(args.matrix_csv)
@@ -73,10 +138,14 @@ def main():
     labels = [""]*mat.shape[0]
     print('plotting {} hashes.'.format(n_hashes))
 
-    x = fig.plot_composite_matrix(mat, labels,
+    x = plot_composite_matrix(mat, labels,
                                   show_labels=False, show_indices=False,
                                   force=True)
     x.savefig(args.output_fig)
+
+    if args.dendro:
+        y = annotated_dendro(mat)
+        y.savefig(args.dendro)
 
 
 if __name__ == '__main__':
