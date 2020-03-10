@@ -7,7 +7,7 @@ rule all:
         expand('genomes/{g}.hashes.fragment.10000', g=genome_list),
         expand('genomes/{g}.hashes.fragment.5000', g=genome_list),
         expand('genomes/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.100000.matrix.csv.png', g=genome_list),
+        expand('genomes/{g}.hashes.fragment.100000.matrix.csv.mat.pdf', g=genome_list),
 
 rule make_hashes:
     input:
@@ -42,12 +42,16 @@ rule make_matrix_csv:
         ./match-metagenomes.py {input.hashes} {input.metag_list} {output}
     """
 
-rule make_matrix_png:
+rule make_matrix_pdf:
     input:
         'genomes/{g}.matrix.csv',
     output:
-        'genomes/{g}.matrix.csv.png'
+        matrix_pdf='genomes/{g}.matrix.csv.mat.pdf',
+        dendro_pdf='genomes/{g}.matrix.csv.dendro.pdf',
+        out='genomes/{g}.matrix.csv.dendro.out'
+    conda: 'env-sourmash.yml'
     shell: """
-        ./cluster-and-plot.py {input} {output}
+        ./cluster-and-plot.py {input} {output.matrix_pdf} \
+            --dendro {output.dendro_pdf} > {output.out}
     """
 

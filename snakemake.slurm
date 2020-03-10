@@ -1,9 +1,9 @@
 #!/bin/bash -login
-#SBATCH -p bmh                 # partition, or queue, to assign to
+#SBATCH -p bmm                 # partition, or queue, to assign to
 #SBATCH -J charcoal     # name for job
 #SBATCH -N 1                   # one "node", or computer
 #SBATCH -n 1                   # one task for this node
-#SBATCH -c 8                   # eight cores per task
+#SBATCH -c 16                   # cores per task
 #SBATCH -t 3-0             # ask for 3 days
 #SBATCH --mem=5gb             # ask for no more than 5 GB of memory
 
@@ -23,7 +23,7 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-snakemake -p -j 8 --use-conda
+snakemake -p -j 16 --use-conda
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables
