@@ -8,12 +8,14 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from matplotlib import pyplot as plt
 import pylab
 import scipy.cluster.hierarchy as sch
+import collections
 
 
 def load_and_normalize(filename):
     mat = genfromtxt(filename, delimiter=',')
     assert mat.shape[0] == 347            # number of metagenomes
     n_hashes = mat.shape[1]
+    n_orig_hashes = n_hashes
 
     # go through and normalize all the sample-presence vectors for each hash;
     # track those with all 0s for later removal.
@@ -39,8 +41,8 @@ def load_and_normalize(filename):
             D[i][j] = np.dot(mat[:, i], mat[:, j])
 
     # done!
-    return D
-        
+    return D, n_orig_hashes
+
         
 def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
                           vmax=1.0, vmin=0.0, force=False):
@@ -63,7 +65,7 @@ def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
     ax1 = fig.add_axes([0.09, 0.1, 0.2, 0.6])
 
     # plot dendrogram
-    Y = sch.linkage(D, method='single')  # centroid
+    Y = sch.linkage(D, method='single')
 
     dendrolabels = labeltext
     if not show_labels:
@@ -116,13 +118,13 @@ def augmented_dendrogram(*args, **kwargs):
 
 def annotated_dendro(mat):
     # this is what makes the distances
-    Y = sch.linkage(mat, method='average')
+    Y = sch.linkage(mat, method='single')
 
     fig = pylab.figure(figsize=(11, 8))
 
     Z = augmented_dendrogram(Y, orientation='top', no_labels=True)
 
-    return fig
+    return fig, Z
 
 
 def main():
@@ -132,7 +134,7 @@ def main():
     p.add_argument('--dendro', default=None)
     args = p.parse_args()
 
-    mat = load_and_normalize(args.matrix_csv)
+    mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
 
     n_hashes = mat.shape[0]
     labels = [""]*mat.shape[0]
@@ -144,8 +146,32 @@ def main():
     x.savefig(args.output_fig)
 
     if args.dendro:
-        y = annotated_dendro(mat)
+        y, Z = annotated_dendro(mat)
         y.savefig(args.dendro)
+
+        CUT_POINT=2.0
+        Y = sch.linkage(mat, method='single')
+        cluster_ids = sch.fcluster(Y, t=CUT_POINT, criterion='distance')
+        Z = augmented_dendrogram(Y, orientation='top', no_labels=True)
+
+        # now, get leaves and leaf labels
+        idx1 = Z['leaves']
+        new_labels = Z['ivl']
+
+        # build clusters => sets of hashes.        
+        clusters = collections.defaultdict(set)
+
+        for i, k in enumerate(idx1):
+            cluster_id = cluster_ids[k]
+            clusters[cluster_id].add(new_labels[i])
+
+        largest_n = 0
+        for i in clusters:
+            if len(clusters[i]) > largest_n:
+                largest_n = len(clusters[i])
+            #print('cluster {} is {} in size'.format(i, len(clusters[i])))
+
+        print('LARGEST cluster is {} of {} original hashes ({} nonempty)'.format(largest_n, n_orig_hashes, n_hashes))
 
 
 if __name__ == '__main__':
