@@ -48,6 +48,6 @@ rule make_matrix_png:
     output:
         'genomes/{g}.matrix.csv.png'
     shell: """
-        ./cluster_and_plot.py {input}
+        ./cluster-and-plot.py {input} {output}
     """
 

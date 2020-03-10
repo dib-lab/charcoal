@@ -7,6 +7,8 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 
 from matplotlib import pyplot as plt
 import pylab
+from sourmash import fig
+
 
 def load_and_normalize(filename):
     mat = genfromtxt(filename, delimiter=',')
@@ -53,10 +55,15 @@ def cluster_and_plot(D, prefix):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('matrix_csv')
+    p.add_argument('output_fig')
     args = p.parse_args()
 
     mat = load_and_normalize(args.matrix_csv)
-    cluster_and_plot(mat, args.matrix_csv)
+    labels = [""]*mat.shape[0]
+    x = fig.plot_composite_matrix(mat, labels,
+                                  show_labels=False, show_indices=False,
+                                  force=True)
+    x.savefig(args.output_fig)
 
 
 if __name__ == '__main__':
