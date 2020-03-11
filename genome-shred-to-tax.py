@@ -85,7 +85,11 @@ def main():
 
                 for k in lineage_counts:
                     lca = lca_utils.display_lineage(k, truncate_empty=False)
-                    w.writerow((genome, record.name, start, start + args.fragment, lca, k[-1].rank))
+                    try:
+                        lca_rank = k[-1].rank
+                    except IndexError:
+                        lca_rank = "none"
+                    w.writerow((genome, record.name, start, start + args.fragment, lca, lca_rank))
 
                 m += 1
                 min_value = min(mh.get_mins())
