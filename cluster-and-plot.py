@@ -68,7 +68,7 @@ def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
     ax1 = fig.add_axes([0.09, 0.1, 0.2, 0.6])
 
     # plot dendrogram
-    Y = sch.linkage(D, method='single')
+    Y = sch.linkage(D, method='complete')
 
     dendrolabels = labeltext
     if not show_labels:
@@ -121,7 +121,7 @@ def augmented_dendrogram(*args, **kwargs):
 
 def annotated_dendro(mat):
     # this is what makes the distances
-    Y = sch.linkage(mat, method='single')
+    Y = sch.linkage(mat, method='complete')
 
     fig = pylab.figure(figsize=(11, 8))
 
@@ -153,7 +153,7 @@ def main():
         y.savefig(args.dendro)
 
         CUT_POINT=2.0
-        Y = sch.linkage(mat, method='single')
+        Y = sch.linkage(mat, method='complete')
         cluster_ids = sch.fcluster(Y, t=CUT_POINT, criterion='distance')
         Z = augmented_dendrogram(Y, orientation='top', no_labels=True)
 
