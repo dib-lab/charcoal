@@ -34,11 +34,14 @@ def load_and_normalize(filename):
     assert mat.shape[1] == n_hashes - len(to_delete)
     n_hashes = mat.shape[1]
 
-    # construct distance matrix of all sample-presence vectors x themselves.
+    # construct distance matrix using angular distance
     D = np.zeros((n_hashes, n_hashes))
     for i in range(n_hashes):
         for j in range(n_hashes):
-            D[i][j] = np.dot(mat[:, i], mat[:, j])
+            cos_sim = np.dot(mat[:, i], mat[:, j])
+            cos_sim = min(cos_sim, 1.0)
+            ang_sim = 1 - 2*math.acos(cos_sim) / math.pi
+            D[i][j] = ang_sim
 
     # done!
     return D, n_orig_hashes
