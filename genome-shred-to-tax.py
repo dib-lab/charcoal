@@ -43,6 +43,41 @@ def summarize(hashvals, dblist, threshold):
     return aggregated_counts
 
 
+def classify_signature(mh, db_list, threshold):
+    # gather assignments from across all the databases
+    assignments = lca_utils.gather_assignments(mh.get_mins(),
+                                               db_list)
+
+    # now convert to trees -> do LCA & counts
+    counts = lca_utils.count_lca_for_assignments(assignments)
+
+    # ok, we now have the LCAs for each hashval, and their number of
+    # counts. Now build a tree across "significant" LCAs - those above
+    # threshold.
+
+    tree = {}
+
+    for lca, count in counts.most_common():
+        if count < threshold:
+            break
+
+        # update tree with this set of assignments
+        lca_utils.build_tree([lca], tree)
+
+    status = 'nomatch'
+    if not tree:
+        return [], status
+
+    # now find lowest-common-ancestor of the resulting tree.
+    lca, reason = lca_utils.find_lca(tree)
+    if reason == 0:               # leaf node
+        status = 'found'
+    else:                         # internal node => disagreement
+        status = 'disagree'
+
+    return lca, status
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('lca_db')
@@ -62,14 +97,14 @@ def main():
 
     outfp = open(args.output, 'wt')
     w = csv.writer(outfp)
-    w.writerow(['filename', 'contig', 'begin', 'end', 'lca', 'lca_rank'])
+    w.writerow(['filename', 'contig', 'begin', 'end', 'lca', 'lca_rank', 'classified_as', 'classify_reason'])
 
     #
     # iterate over all contigs in genome file
     #
     for genome in args.genome:
         for record in screed.open(genome):
-            # fragment longer contigs into smaller regions?
+            # fragment longer contigs into smaller regions
             for start in range(0, len(record.sequence), args.fragment):
                 seq = record.sequence[start:start + args.fragment]
                 n += 1
@@ -82,13 +117,14 @@ def main():
                     continue
 
                 lineage_counts = summarize(mh.get_mins(), [db], 1)
+                classify_lca, reason = classify_signature(mh, [db], 1)
 
                 for k in lineage_counts:
                     lca = lca_utils.display_lineage(k, truncate_empty=False)
                     rank = ""
                     if k:
                         rank = k[-1].rank
-                    w.writerow((genome, record.name, start, start + args.fragment, lca, rank))
+                    w.writerow((genome, record.name, start, start + args.fragment, lca, rank, classify_lca, reason))
 
                 m += 1
                 min_value = min(mh.get_mins())
