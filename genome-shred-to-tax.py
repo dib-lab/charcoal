@@ -84,6 +84,7 @@ def main():
     p.add_argument('genome', nargs='+')
     p.add_argument('output')
     p.add_argument('--fragment', default=100000, type=int)
+    p.add_argument('--save-tax-hashes', default=None)
     args = p.parse_args()
 
     db, ksize, scaled = lca_utils.load_single_database(args.lca_db)
@@ -98,6 +99,8 @@ def main():
     outfp = open(args.output, 'wt')
     w = csv.writer(outfp)
     w.writerow(['filename', 'contig', 'begin', 'end', 'lca', 'lca_rank', 'classified_as', 'classify_reason'])
+
+    hashes_to_tax = {}
 
     #
     # iterate over all contigs in genome file
@@ -120,14 +123,22 @@ def main():
                 classify_lca, reason = classify_signature(mh, [db], 1)
 
                 for k in lineage_counts:
-                    lca = lca_utils.display_lineage(k, truncate_empty=False)
+                    lca_str = lca_utils.display_lineage(k, truncate_empty=False)
+                    classify_lca_str = lca_utils.display_lineage(classify_lca, truncate_empty=False)
                     rank = ""
                     if k:
                         rank = k[-1].rank
-                    w.writerow((genome, record.name, start, start + args.fragment, lca, rank, classify_lca, reason))
+                    w.writerow((genome, record.name, start, start + args.fragment, lca_str, rank, classify_lca_str, reason))
+
+                min_of_mh = min(mh.get_mins())
+                hashes_to_tax[min_of_mh] = (classify_lca, reason)
 
                 m += 1
                 min_value = min(mh.get_mins())
+
+    if args.save_tax_hashes:
+        with open(args.save_tax_hashes, 'wb') as fp:
+            dump(hashes_to_tax, fp)
 
     return 0
 
