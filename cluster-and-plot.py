@@ -135,6 +135,7 @@ def main():
     p.add_argument('matrix_csv')
     p.add_argument('output_fig')
     p.add_argument('--dendro', default=None)
+    p.add_argument('--newick', default=None)
     args = p.parse_args()
 
     mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
@@ -148,12 +149,36 @@ def main():
                                   force=True)
     x.savefig(args.output_fig)
 
+    if args.newick:
+        Y = sch.linkage(mat, method='complete')
+
+        ###
+
+        rootnode, nodelist = sch.to_tree(Y, rd=True)
+
+        def traverse(node, indent=' '):
+            is_leaf = ' '
+            if node.is_leaf():
+                is_leaf = '*'
+            print('XXX', indent, node.get_id(), is_leaf)
+            if node.is_leaf():
+                return '{}'.format(node.get_id())
+            else:
+                l = traverse(node.get_left(), indent=indent + ' ')
+                r = traverse(node.get_right(), indent=indent + ' ')
+                return "({},{}){}".format(l, r, node.get_id())
+
+        with open(args.newick, 'wt') as fp:
+            print(traverse(rootnode), file=fp)
+
+
     if args.dendro:
         y, Z = annotated_dendro(mat)
         y.savefig(args.dendro)
 
         CUT_POINT=2.0
         Y = sch.linkage(mat, method='complete')
+
         cluster_ids = sch.fcluster(Y, t=CUT_POINT, criterion='distance')
         Z = augmented_dendrogram(Y, orientation='top', no_labels=True)
 
