@@ -9,6 +9,7 @@ from numpy import genfromtxt
 import math
 from scipy.cluster.hierarchy import dendrogram, linkage
 import pprint
+from sourmash.lca import lca_utils
 
 from matplotlib import pyplot as plt
 import pylab
@@ -81,25 +82,58 @@ def do_cluster(mat, hashes_to_tax):
     for pos in range(n_hashes):
         node = nodelist[pos]
         assert node.get_id() == pos
-        node_id_to_tax[node.get_id()] = hashes_to_tax[hashlist[pos]]
+        tax_info, reason = hashes_to_tax[hashlist[pos]]
+
+        x = set()
+        if tax_info:
+            x.add(tax_info)
+        node_id_to_tax[node.get_id()] = x
 
     def traverse_and_label(node, indent=' '):
         if node.is_leaf():
             tax_id = node_id_to_tax[node.get_id()]
-            return set([tax_id])
+            x = set()
+            if tax_id:
+                x.update(tax_id)
+            return x
         else:
             l = traverse_and_label(node.get_left(), indent=indent + ' ')
             r = traverse_and_label(node.get_right(), indent=indent + ' ')
 
             x = l.union(r)
-
             node_id_to_tax[node.get_id()] = x
 
             return x
 
     traverse_and_label(rootnode)
 
-    pprint.pprint(node_id_to_tax)
+    def print_lca(node):
+        node_id = node.get_id()
+        tax_set = node_id_to_tax[node_id]
+
+        if not tax_set:
+            return "-nada-", "none"
+        tree = lca_utils.build_tree(tax_set)
+        lca, reason = lca_utils.find_lca(tree)
+
+        return lca_utils.display_lineage(lca, truncate_empty=False), reason
+
+    def traverse(node, indent=' '):
+        lca_str, reason = print_lca(node)
+        lca_str = lca_str.replace(';', '+')
+        is_leaf = ' '
+        if node.is_leaf():
+            is_leaf = '*'
+        print('YYY', indent, node.get_id(), is_leaf, lca_str, reason)
+        if node.is_leaf():
+            return '{}'.format(lca_str)
+        else:
+            l = traverse(node.get_left(), indent=indent + ' ')
+            r = traverse(node.get_right(), indent=indent + ' ')
+            return "({},{}){}".format(l, r, lca_str)
+
+    with open('nwck.txt', 'wt') as fp:
+        print(traverse(rootnode), file=fp)
 
     # we should have 2*n_hashes - 1 clusters
     assert len(nodelist) == 2*n_hashes - 1
