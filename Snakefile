@@ -31,7 +31,8 @@ rule make_hashes_fragment:
     conda: 'env-sourmash.yml'
     shell: """
         ./process-genome.py {input} {output.hashes} \
-             --fragment {wildcards.size} --stats {output.stats}
+             --fragment {wildcards.size} --stats {output.stats} \
+             --scaled=10000
      """
 
 rule make_matrix_csv:

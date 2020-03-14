@@ -136,6 +136,8 @@ def main():
                 m += 1
                 min_value = min(mh.get_mins())
 
+    print('{} contigs / {} bp, {} hash values (missing {} contigs / {} bp)'.format(n, sum_bp, len(hashes_to_tax), n - m, sum_missed_bp))
+
     if args.save_tax_hashes:
         with open(args.save_tax_hashes, 'wb') as fp:
             dump(hashes_to_tax, fp)
