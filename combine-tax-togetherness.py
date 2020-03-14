@@ -8,6 +8,7 @@ import numpy as np
 from numpy import genfromtxt
 import math
 from scipy.cluster.hierarchy import dendrogram, linkage
+import pprint
 
 from matplotlib import pyplot as plt
 import pylab
@@ -24,14 +25,14 @@ def load_and_normalize(filename, delete_empty=False):
 
     # go through and normalize all the sample-presence vectors for each hash;
     # track those with all 0s for later removal.
-    if delete_empty:
-        to_delete = []
-        for i in range(n_hashes):
-            if sum(mat[:, i]):
-                mat[:, i] /= math.sqrt(np.dot(mat[:, i], mat[:, i]))
-            else:
-                to_delete.append(i)
+    to_delete = []
+    for i in range(n_hashes):
+        if sum(mat[:, i]):
+            mat[:, i] /= math.sqrt(np.dot(mat[:, i], mat[:, i]))
+        else:
+            to_delete.append(i)
 
+    if delete_empty:
         # remove all columns with zeros
         print('removing {} null presence vectors'.format(len(to_delete)))
         for row_n in reversed(to_delete):
@@ -61,6 +62,45 @@ def do_cluster(mat, hashes_to_tax):
     Y = sch.linkage(mat, method='complete')
     rootnode, nodelist = sch.to_tree(Y, rd=True)
 
+    def traverse(node, indent=' '):
+        is_leaf = ' '
+        if node.is_leaf():
+            is_leaf = '*'
+        print('XXX', indent, node.get_id(), is_leaf)
+        if node.is_leaf():
+            return '{}'.format(node.get_id())
+        else:
+            l = traverse(node.get_left(), indent=indent + ' ')
+            r = traverse(node.get_right(), indent=indent + ' ')
+            return "({},{}){}".format(l, r, node.get_id())
+
+    traverse(rootnode)
+
+    hashlist = sorted(hashes_to_tax)
+    node_id_to_tax = {}
+    for pos in range(n_hashes):
+        node = nodelist[pos]
+        assert node.get_id() == pos
+        node_id_to_tax[node.get_id()] = hashes_to_tax[hashlist[pos]]
+
+    def traverse_and_label(node, indent=' '):
+        if node.is_leaf():
+            tax_id = node_id_to_tax[node.get_id()]
+            return set([tax_id])
+        else:
+            l = traverse_and_label(node.get_left(), indent=indent + ' ')
+            r = traverse_and_label(node.get_right(), indent=indent + ' ')
+
+            x = l.union(r)
+
+            node_id_to_tax[node.get_id()] = x
+
+            return x
+
+    traverse_and_label(rootnode)
+
+    pprint.pprint(node_id_to_tax)
+
     # we should have 2*n_hashes - 1 clusters
     assert len(nodelist) == 2*n_hashes - 1
 
@@ -88,6 +128,10 @@ def do_cluster(mat, hashes_to_tax):
     assert last_node.get_left().get_id() >= n_hashes
     assert last_node.get_right().get_id() >= n_hashes
 
+#    Z = sch.dendrogram(Y, orientation='left')
+#    print(Z['leaves'])
+#    print(Z['ivl'])
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -104,6 +148,8 @@ def main():
         lca, reason = hashes_to_tax[k]
         print(k, lca, reason)
 
+    print(mat.shape)
+    print(n_orig_hashes, len(hashes_to_tax))
     assert n_orig_hashes == len(hashes_to_tax)
     assert mat.shape[1] == len(hashes_to_tax)
 
