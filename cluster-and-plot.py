@@ -141,12 +141,12 @@ def main():
     mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
 
     n_hashes = mat.shape[0]
-    labels = [""]*mat.shape[0]
+    labels = [""]*mat.shape[0] # could be loaded from .hashes file...
     print('plotting {} hashes.'.format(n_hashes))
 
     x = plot_composite_matrix(mat, labels,
-                                  show_labels=False, show_indices=False,
-                                  force=True)
+                              show_labels=False, show_indices=False,
+                              force=True)
     x.savefig(args.output_fig)
 
     if args.newick:
