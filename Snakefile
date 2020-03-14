@@ -1,5 +1,7 @@
 genome_list = [ line.strip() for line in open('genome-list.txt', 'rt') ]
 
+gtdb_db = '/home/ctbrown/sourmash_databases/gtdb/gtdb-release89-k31.lca.json.gz'
+
 rule all:
     input:
         expand('genomes/{g}.hashes', g=genome_list),
@@ -8,6 +10,7 @@ rule all:
         expand('genomes/{g}.hashes.fragment.5000', g=genome_list),
         expand('genomes/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
         expand('genomes/{g}.hashes.fragment.100000.matrix.csv.mat.pdf', g=genome_list),
+        expand('genomes/{g}.hashes.fragment.100000.tax', g=genome_list)
 
 rule make_hashes:
     input:
@@ -54,4 +57,18 @@ rule make_matrix_pdf:
         ./cluster-and-plot.py {input} {output.matrix_pdf} \
             --dendro {output.dendro_pdf} > {output.out}
     """
+
+rule make_taxhashes:
+    input:
+        'genomes/{filename}.fna'
+    output:
+        taxhashes='genomes/{filename}.fna.hashes.fragment.{size,\d+}.tax',
+        taxcsv=   'genomes/{filename}.fna.hashes.fragment.{size,\d+}.tax.csv'
+    conda: 'env-sourmash.yml'
+    params:
+        lca_db=gtdb_db,
+    shell: """
+        ./genome-shred-to-tax.py {params.lca_db} {input} {output.taxcsv} \
+             --fragment {wildcards.size} --save-tax-hashes {output.taxhashes}
+     """
 

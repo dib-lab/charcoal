@@ -1,11 +1,11 @@
 #!/bin/bash -login
 #SBATCH -p bmm                 # partition, or queue, to assign to
-#SBATCH -J charcoal     # name for job
+#SBATCH -J charcoal            # name for job
 #SBATCH -N 1                   # one "node", or computer
 #SBATCH -n 1                   # one task for this node
-#SBATCH -c 16                   # cores per task
-#SBATCH -t 3-0             # ask for 3 days
-#SBATCH --mem=5gb             # ask for no more than 5 GB of memory
+#SBATCH -c 16                  # cores per task
+#SBATCH -t 3-0                 # ask for 3 days
+#SBATCH --mem=150gb             # memory
 
 # initialize conda
 . ~/miniconda3/etc/profile.d/conda.sh
