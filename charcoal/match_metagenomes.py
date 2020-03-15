@@ -1,15 +1,15 @@
 #! /usr/bin/env python
 """
-Take output of 'process-genome.py', match hashes against many metagenomes.
+Take output of 'process_genome.py', match hashes against many metagenomes.
 """
 import sys
 import argparse
-import sourmash
-import screed
 from pickle import load
 import numpy as np
 import csv
 import os
+
+import sourmash
 
 
 def main():
