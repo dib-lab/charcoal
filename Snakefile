@@ -131,6 +131,7 @@ rule make_tree_viz_output:
         svg = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.svg',
     conda: 'conf/env-ete.yml'
     shell: """
+        export QT_QPA_PLATFORM=offscreen   # turn off interactive ete3 behavior
         ete3 view -t {input} --show_internal_names -i {output.png}
         ete3 view -t {input} --show_internal_names -i {output.svg}
      """
