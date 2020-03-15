@@ -1,4 +1,8 @@
 #! /usr/bin/env python
+"""
+Take output of 'match-metagenomes.py', do presence-vector distance calculations
+for hashes.
+"""
 import argparse
 import numpy as np
 from numpy import genfromtxt
@@ -13,7 +17,6 @@ import collections
 
 def load_and_normalize(filename):
     mat = genfromtxt(filename, delimiter=',')
-    assert mat.shape[0] == 347            # number of metagenomes
     n_hashes = mat.shape[1]
     n_orig_hashes = n_hashes
 

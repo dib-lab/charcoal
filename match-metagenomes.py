@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+"""
+Take output of 'process-genome.py', match hashes against many metagenomes.
+"""
 import sys
 import argparse
 import sourmash
@@ -6,6 +9,7 @@ import screed
 from pickle import load
 import numpy as np
 import csv
+import os
 
 
 def main():
@@ -13,6 +17,7 @@ def main():
     p.add_argument('hashes_pickle')
     p.add_argument('metagenome_sigs_list')
     p.add_argument('matrix_csv_out')
+    p.add_argument('-d', '--metagenome-sigs-dir', default=None)
     args = p.parse_args()
 
     with open(args.hashes_pickle, 'rb') as fp:
@@ -22,11 +27,14 @@ def main():
     with open(args.metagenome_sigs_list, 'rt') as fp:
         metagenome_prefixes = [ x.strip() for x in fp ]
 
+    if args.metagenome_sigs_dir:
+        metagenome_prefixes = [ os.path.join(args.metagenome_sigs_dir, k) for k in metagenome_prefixes ]
+
     matrix = np.zeros((len(metagenome_prefixes), len(hash_to_lengths)), int)
 
     for i, prefix in enumerate(metagenome_prefixes):
-        metagenome = 'ibd_metagenome_sigs/' + prefix + '.sig'
-        ss = sourmash.load_one_signature(metagenome, ksize=31)
+        print('loading', prefix)
+        ss = sourmash.load_one_signature(prefix, ksize=31)
 
         mins = ss.minhash.get_mins(with_abundance=True)
 
@@ -38,7 +46,7 @@ def main():
 
                 matrix[i][j] = count
 
-        print('...', i, len(metagenome_prefixes), metagenome, len(hash_to_lengths), m)
+        print('...', i, len(metagenome_prefixes), prefix, len(hash_to_lengths), m)
 
     print(len(metagenome_prefixes), len(hash_to_lengths))
     with open(args.matrix_csv_out, 'wt') as outfp:

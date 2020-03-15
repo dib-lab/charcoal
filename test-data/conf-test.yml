@@ -1,0 +1,8 @@
+genome_list: test-data/genome_list.txt
+genome_dir: test-data/genomes/
+lca_db: test-data/podar-ref.lca.json.gz
+lca_scaled: 10000
+metagenome_sig_list: test-data/metag_sig_list.txt
+metagenome_sig_dir: test-data/fake-metagenomes/
+
+output_dir: 'output.test'

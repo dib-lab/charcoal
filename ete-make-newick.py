@@ -1,8 +1,7 @@
 #! /usr/bin/env python
-# next steps -
-#   load hashes into labels here, and add tax info
-#   represent as tree, decoraet internal nodes
-#   fun, profit.
+"""
+Write out a Newick tree, using ete3, for output of 'combine-tax-togetherness.py'
+"""
 import argparse
 import numpy as np
 from numpy import genfromtxt

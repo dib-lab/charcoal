@@ -1,22 +1,31 @@
-genome_list = [ line.strip() for line in open('genome-list.txt', 'rt') ]
+configfile: 'test-data/conf-test.yml'
 
-gtdb_db = '/home/ctbrown/sourmash_databases/gtdb/gtdb-release89-k31.lca.json.gz'
+genome_list_file = config['genome_list']
+genome_list = [ line.strip() for line in open(genome_list_file, 'rt') ]
+
+genome_dir = config['genome_dir'].rstrip('/')
+output_dir = config['output_dir'].rstrip('/')
+
+metagenome_sig_list = config['metagenome_sig_list']
+metagenome_sig_dir = config['metagenome_sig_dir'].rstrip('/')
+
+lca_db = config['lca_db']
 
 rule all:
     input:
-        expand('genomes/{g}.hashes', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.100000', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.10000', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.5000', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.100000.matrix.csv.mat.pdf', g=genome_list),
-        expand('genomes/{g}.hashes.fragment.100000.tax', g=genome_list)
+        expand(output_dir + '/{g}.hashes', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.10000', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.5000', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.matrix.csv.mat.pdf', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tax', g=genome_list)
 
 rule make_hashes:
     input:
-        'genomes/{filename}.fna'
+        genome_dir + '/{filename}'
     output:
-        'genomes/{filename}.fna.hashes'
+        output_dir + '/{filename}.hashes'
     conda: 'env-sourmash.yml'
     shell: """
         ./process-genome.py {input} {output}
@@ -24,35 +33,40 @@ rule make_hashes:
 
 rule make_hashes_fragment:
     input:
-        'genomes/{filename}.fna'
+        genome_dir + '/{filename}'
     output:
-        hashes='genomes/{filename}.fna.hashes.fragment.{size,\d+}',
-        stats='genomes/{filename}.fna.hashes.fragment.{size,\d+}.stats'
+        hashes=output_dir + '/{filename}.hashes.fragment.{size,\d+}',
+        stats=output_dir + '/{filename}.hashes.fragment.{size,\d+}.stats'
     conda: 'env-sourmash.yml'
+    params:
+        scaled=config['lca_scaled']
     shell: """
         ./process-genome.py {input} {output.hashes} \
              --fragment {wildcards.size} --stats {output.stats} \
-             --scaled=10000
+             --scaled={params.scaled}
      """
 
 rule make_matrix_csv:
     input:
-        hashes='genomes/{filename}.hashes{postfix}',
-        metag_list='ibd_metagenome_prefixes.txt'
+        hashes=output_dir + '/{filename}.hashes{postfix}',
+        metag_list=metagenome_sig_list,
     output:
-        'genomes/{filename}.hashes{postfix}.matrix.csv'
+        output_dir + '/{filename}.hashes{postfix}.matrix.csv'
+    params:
+        metagenome_sig_dir=metagenome_sig_dir
     conda: 'env-sourmash.yml'
     shell: """
-        ./match-metagenomes.py {input.hashes} {input.metag_list} {output}
+        ./match-metagenomes.py {input.hashes} {input.metag_list} {output} \
+            -d {params.metagenome_sig_dir}
     """
 
 rule make_matrix_pdf:
     input:
-        'genomes/{g}.matrix.csv',
+        output_dir + '/{g}.matrix.csv',
     output:
-        matrix_pdf='genomes/{g}.matrix.csv.mat.pdf',
-        dendro_pdf='genomes/{g}.matrix.csv.dendro.pdf',
-        out='genomes/{g}.matrix.csv.dendro.out'
+        matrix_pdf=output_dir + '/{g}.matrix.csv.mat.pdf',
+        dendro_pdf=output_dir + '/{g}.matrix.csv.dendro.pdf',
+        out=output_dir + '/{g}.matrix.csv.dendro.out'
     conda: 'env-sourmash.yml'
     shell: """
         ./cluster-and-plot.py {input} {output.matrix_pdf} \
@@ -61,15 +75,14 @@ rule make_matrix_pdf:
 
 rule make_taxhashes:
     input:
-        'genomes/{filename}.fna'
+        genome_dir + '/{filename}'
     output:
-        taxhashes='genomes/{filename}.fna.hashes.fragment.{size,\d+}.tax',
-        taxcsv=   'genomes/{filename}.fna.hashes.fragment.{size,\d+}.tax.csv'
+        taxhashes=output_dir + '/{filename}.hashes.fragment.{size,\d+}.tax',
+        taxcsv=   output_dir + '/{filename}.hashes.fragment.{size,\d+}.tax.csv'
     conda: 'env-sourmash.yml'
     params:
-        lca_db=gtdb_db,
+        lca_db=lca_db,
     shell: """
         ./genome-shred-to-tax.py {params.lca_db} {input} {output.taxcsv} \
              --fragment {wildcards.size} --save-tax-hashes {output.taxhashes}
      """
-
