@@ -34,7 +34,7 @@ TBW.
    
 ## Need help?
 
-Ask questions and file issues on [the GitHub issue tracker](https://github.com/dib-lab/charcoal/issues)
+Ask questions and file issues on [the GitHub issue tracker](https://github.com/dib-lab/charcoal/issues).
 
-@ctb @taylorreiter
+[@ctb](https://github.com/ctb/) [@taylorreiter](https://github.com/taylorreiter)
 March 2020
