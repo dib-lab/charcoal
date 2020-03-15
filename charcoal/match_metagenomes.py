@@ -18,6 +18,7 @@ def main():
     p.add_argument('metagenome_sigs_list')
     p.add_argument('matrix_csv_out')
     p.add_argument('-d', '--metagenome-sigs-dir', default=None)
+    p.add_argument('-k', '--ksize', type=int, default=31)
     args = p.parse_args()
 
     with open(args.hashes_pickle, 'rb') as fp:
@@ -25,16 +26,16 @@ def main():
     print('loaded {} hashes from {}'.format(len(hash_to_lengths), args.hashes_pickle))
 
     with open(args.metagenome_sigs_list, 'rt') as fp:
-        metagenome_prefixes = [ x.strip() for x in fp ]
+        metagenome_sigs = [ x.strip() for x in fp ]
 
     if args.metagenome_sigs_dir:
-        metagenome_prefixes = [ os.path.join(args.metagenome_sigs_dir, k) for k in metagenome_prefixes ]
+        metagenome_sigs = [ os.path.join(args.metagenome_sigs_dir, k) for k in metagenome_sigs ]
 
-    matrix = np.zeros((len(metagenome_prefixes), len(hash_to_lengths)), int)
+    matrix = np.zeros((len(metagenome_sigs), len(hash_to_lengths)), int)
 
-    for i, prefix in enumerate(metagenome_prefixes):
-        print('loading', prefix)
-        ss = sourmash.load_one_signature(prefix, ksize=31)
+    for i, sigfile in enumerate(metagenome_sigs):
+        print('loading metagenome sig from', sigfile)
+        ss = sourmash.load_one_signature(sigfile, ksize=args.ksize)
 
         mins = ss.minhash.get_mins(with_abundance=True)
 
@@ -46,12 +47,12 @@ def main():
 
                 matrix[i][j] = count
 
-        print('...', i, len(metagenome_prefixes), prefix, len(hash_to_lengths), m)
+        print('...', i, len(metagenome_sigs), sigfile, len(hash_to_lengths), m)
 
-    print(len(metagenome_prefixes), len(hash_to_lengths))
+    print('writing {} x {} matrix'.format(len(metagenome_sigs), len(hash_to_lengths)))
     with open(args.matrix_csv_out, 'wt') as outfp:
         w = csv.writer(outfp)
-        for i in range(len(metagenome_prefixes)):
+        for i in range(len(metagenome_sigs)):
             y = []
             for j in range(len(hash_to_lengths)):
                 y.append('{}'.format(matrix[i][j]))
