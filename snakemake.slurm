@@ -23,7 +23,7 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-snakemake -p -j 16 --use-conda
+snakemake -p -j 16 --use-conda --configfile=conf/ibd.conf
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables

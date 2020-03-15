@@ -2,6 +2,10 @@
 .snakemake
 output.test
 
+#
+ibd-genomes
+ibd-metagenome-sigs
+
 # titus test stuff
 Vatanen*
 AP010890*
