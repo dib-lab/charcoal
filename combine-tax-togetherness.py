@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 import pylab
 import scipy.cluster.hierarchy as sch
 import collections
-from pickle import load
+from pickle import load, dump
 
 
 def load_and_normalize(filename, delete_empty=False):
@@ -63,20 +63,6 @@ def do_cluster(mat, hashes_to_tax):
     Y = sch.linkage(mat, method='complete')
     rootnode, nodelist = sch.to_tree(Y, rd=True)
 
-    def traverse(node, indent=' '):
-        is_leaf = ' '
-        if node.is_leaf():
-            is_leaf = '*'
-        print('XXX', indent, node.get_id(), is_leaf)
-        if node.is_leaf():
-            return '{}'.format(node.get_id())
-        else:
-            l = traverse(node.get_left(), indent=indent + ' ')
-            r = traverse(node.get_right(), indent=indent + ' ')
-            return "({},{}){}".format(l, r, node.get_id())
-
-    traverse(rootnode)
-
     hashlist = sorted(hashes_to_tax)
     node_id_to_tax = {}
     for pos in range(n_hashes):
@@ -107,6 +93,8 @@ def do_cluster(mat, hashes_to_tax):
 
     traverse_and_label(rootnode)
 
+    return rootnode, nodelist, node_id_to_tax
+
     def print_lca(node):
         node_id = node.get_id()
         tax_set = node_id_to_tax[node_id]
@@ -116,11 +104,22 @@ def do_cluster(mat, hashes_to_tax):
         tree = lca_utils.build_tree(tax_set)
         lca, reason = lca_utils.find_lca(tree)
 
-        return lca_utils.display_lineage(lca, truncate_empty=False), reason
+        lca = list(lca)
+
+        # find species, or next best thing
+        for i in range(len(lca)):
+            if lca[-1] and lca[-1].rank == 'strain':
+                lca.pop()
+            elif lca[-1] and lca[-1].rank == 'species':
+                return lca[-1].name, reason
+            elif lca[-1]:
+                return "{}={}".format(lca[-1].rank, lca[-1].name), reason
+
+        return lca_utils.display_lineage(lca, truncate_empty=True), reason
 
     def traverse(node, indent=' '):
         lca_str, reason = print_lca(node)
-        lca_str = lca_str.replace(';', '+')
+        lca_str = lca_str.replace(';', '+').replace(' ', '_').replace('_', '')
         is_leaf = ' '
         if node.is_leaf():
             is_leaf = '*'
@@ -132,8 +131,7 @@ def do_cluster(mat, hashes_to_tax):
             r = traverse(node.get_right(), indent=indent + ' ')
             return "({},{}){}".format(l, r, lca_str)
 
-    with open('nwck.txt', 'wt') as fp:
-        print(traverse(rootnode), file=fp)
+    newick_tree = traverse(rootnode) + ';'
 
     # we should have 2*n_hashes - 1 clusters
     assert len(nodelist) == 2*n_hashes - 1
@@ -166,11 +164,15 @@ def do_cluster(mat, hashes_to_tax):
 #    print(Z['leaves'])
 #    print(Z['ivl'])
 
+    return newick_tree
+
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('matrix_csv')
     p.add_argument('taxhashes')
+    p.add_argument('--newick', default=None)
+    p.add_argument('--pickle-tree', default=None)
     args = p.parse_args()
 
     mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
@@ -180,14 +182,21 @@ def main():
 
     for k in hashes_to_tax:
         lca, reason = hashes_to_tax[k]
-        print(k, lca, reason)
 
-    print(mat.shape)
-    print(n_orig_hashes, len(hashes_to_tax))
     assert n_orig_hashes == len(hashes_to_tax)
     assert mat.shape[1] == len(hashes_to_tax)
 
-    do_cluster(mat, hashes_to_tax)
+    rootnode, nodelist, node_id_to_tax = do_cluster(mat, hashes_to_tax)
+
+    if args.pickle_tree:
+        with open(args.pickle_tree, 'wb') as fp:
+            dump((rootnode, nodelist, node_id_to_tax), fp)
+
+#    newick_tree = do_cluster(mat, hashes_to_tax)
+
+#    if args.newick:
+#        with open(args.newick, 'wt') as fp:
+#            fp.write(newick_tree)
 
 
 if __name__ == '__main__':
