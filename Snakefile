@@ -26,7 +26,7 @@ rule make_hashes:
         genome_dir + '/{filename}'
     output:
         output_dir + '/{filename}.hashes'
-    conda: 'env-sourmash.yml'
+    conda: 'conf/env-sourmash.yml'
     shell: """
         ./process-genome.py {input} {output}
      """
@@ -37,7 +37,7 @@ rule make_hashes_fragment:
     output:
         hashes=output_dir + '/{filename}.hashes.fragment.{size,\d+}',
         stats=output_dir + '/{filename}.hashes.fragment.{size,\d+}.stats'
-    conda: 'env-sourmash.yml'
+    conda: 'conf/env-sourmash.yml'
     params:
         scaled=config['lca_scaled']
     shell: """
@@ -54,7 +54,7 @@ rule make_matrix_csv:
         output_dir + '/{filename}.hashes{postfix}.matrix.csv'
     params:
         metagenome_sig_dir=metagenome_sig_dir
-    conda: 'env-sourmash.yml'
+    conda: 'conf/env-sourmash.yml'
     shell: """
         ./match-metagenomes.py {input.hashes} {input.metag_list} {output} \
             -d {params.metagenome_sig_dir}
@@ -67,7 +67,7 @@ rule make_matrix_pdf:
         matrix_pdf=output_dir + '/{g}.matrix.csv.mat.pdf',
         dendro_pdf=output_dir + '/{g}.matrix.csv.dendro.pdf',
         out=output_dir + '/{g}.matrix.csv.dendro.out'
-    conda: 'env-sourmash.yml'
+    conda: 'conf/env-sourmash.yml'
     shell: """
         ./cluster-and-plot.py {input} {output.matrix_pdf} \
             --dendro {output.dendro_pdf} > {output.out}
@@ -79,7 +79,7 @@ rule make_taxhashes:
     output:
         taxhashes=output_dir + '/{filename}.hashes.fragment.{size,\d+}.tax',
         taxcsv=   output_dir + '/{filename}.hashes.fragment.{size,\d+}.tax.csv'
-    conda: 'env-sourmash.yml'
+    conda: 'conf/env-sourmash.yml'
     params:
         lca_db=lca_db,
     shell: """
