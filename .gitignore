@@ -1,2 +1,7 @@
 *~
 .snakemake
+output.test
+
+# titus test stuff
+Vatanen*
+AP010890*
