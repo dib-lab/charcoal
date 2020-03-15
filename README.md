@@ -6,6 +6,12 @@ analysis.
 
 **Still early in development.** Buyer beware! Here be dragons!!
 
+## Installing!
+
+You'll need snakemake and conda installed.
+
+Then, clone this repository and change into the top-level repo directory.
+
 ## Running!
 
 To run, execute (in the top-level directory):
