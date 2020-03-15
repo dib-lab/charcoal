@@ -1,5 +1,11 @@
+#
+# run with --use-conda for maximal froodiness.
+#
+
+# override this with --configfile on command line
 configfile: 'test-data/conf-test.yml'
 
+### config stuff loaded from config file
 genome_list_file = config['genome_list']
 genome_list = [ line.strip() for line in open(genome_list_file, 'rt') ]
 
@@ -10,6 +16,8 @@ metagenome_sig_list = config['metagenome_sig_list']
 metagenome_sig_dir = config['metagenome_sig_dir'].rstrip('/')
 
 lca_db = config['lca_db']
+
+### rules!
 
 rule all:
     input:
@@ -28,7 +36,7 @@ rule make_hashes:
         output_dir + '/{filename}.hashes'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        ./process-genome.py {input} {output}
+        ./charcoal/process_genome.py {input} {output}
      """
 
 rule make_hashes_fragment:
@@ -41,7 +49,7 @@ rule make_hashes_fragment:
     params:
         scaled=config['lca_scaled']
     shell: """
-        ./process-genome.py {input} {output.hashes} \
+        ./charcoal/process_genome.py {input} {output.hashes} \
              --fragment {wildcards.size} --stats {output.stats} \
              --scaled={params.scaled}
      """
@@ -56,8 +64,8 @@ rule make_matrix_csv:
         metagenome_sig_dir=metagenome_sig_dir
     conda: 'conf/env-sourmash.yml'
     shell: """
-        ./match-metagenomes.py {input.hashes} {input.metag_list} {output} \
-            -d {params.metagenome_sig_dir}
+        ./charcoal/match_metagenomes.py {input.hashes} {input.metag_list} \
+            {output} -d {params.metagenome_sig_dir}
     """
 
 rule make_matrix_pdf:
@@ -69,7 +77,7 @@ rule make_matrix_pdf:
         out=output_dir + '/{g}.matrix.csv.dendro.out'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        ./cluster-and-plot.py {input} {output.matrix_pdf} \
+        ./charcoal/cluster_and_plot.py {input} {output.matrix_pdf} \
             --dendro {output.dendro_pdf} > {output.out}
     """
 
@@ -83,6 +91,7 @@ rule make_taxhashes:
     params:
         lca_db=lca_db,
     shell: """
-        ./genome-shred-to-tax.py {params.lca_db} {input} {output.taxcsv} \
+        ./charcoal/genome_shred_to_tax.py {params.lca_db} {input} \
+             {output.taxcsv} \
              --fragment {wildcards.size} --save-tax-hashes {output.taxhashes}
      """
