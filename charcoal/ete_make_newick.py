@@ -1,26 +1,18 @@
 #! /usr/bin/env python
 """
-Write out a Newick tree, using ete3, for output of 'combine-tax-togetherness.py'
+Write out a Newick tree, using ete3, from output of 'combine_tax_togetherness'
 """
 import argparse
-import numpy as np
-from numpy import genfromtxt
-import math
-from scipy.cluster.hierarchy import dendrogram, linkage
-import pprint
 from sourmash.lca import lca_utils
 
-from matplotlib import pyplot as plt
-import pylab
-import scipy.cluster.hierarchy as sch
 import collections
 from pickle import load
 from ete3 import Tree
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('pickle_tree')
-    p.add_argument('newick_out')
+    p.add_argument('pickle_tree', help='output of combine_tax_togetherness')
+    p.add_argument('newick_out', help='output newick tree')
     args = p.parse_args()
 
     with open(args.pickle_tree, 'rb') as fp:

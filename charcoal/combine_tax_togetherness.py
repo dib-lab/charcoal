@@ -126,11 +126,11 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('matrix_csv', help='output of match_metagenomes')
     p.add_argument('taxhashes', help='output of genome_shred_to_tax')
-    p.add_argument('--newick', default=None)
     p.add_argument('--pickle-tree', default=None)
     args = p.parse_args()
 
     # output of match_metagenomes
+    print('calculating distance matrix from', args.matrix_csv)
     mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
 
     # output of genome_shred_to_tax
@@ -141,9 +141,13 @@ def main():
     assert n_orig_hashes == len(hashes_to_tax), "mismatch! was same --scaled used to compute these?"
     assert mat.shape[1] == len(hashes_to_tax)
 
+    print('distance matrix is {} x {}; found {} matching hashes.'.format(mat.shape[0], mat.shape[1], len(hashes_to_tax)))
+
+    print('clustering by togetherness & assigning taxonomy!')
     rootnode, nodelist, node_id_to_tax = do_cluster(mat, hashes_to_tax)
 
     if args.pickle_tree:
+        print('pickling tree & taxonomy to file', args.pickle_tree)
         with open(args.pickle_tree, 'wb') as fp:
             dump((rootnode, nodelist, node_id_to_tax), fp)
 
