@@ -1,13 +1,16 @@
 #! /usr/bin/env python
+"""
+Assign taxonomy to shredded fragments in genomes.
+"""
 import sys
 import argparse
-import sourmash
-import screed
 from pickle import dump
 import csv
-from sourmash.lca import lca_utils
-import pprint
 from collections import defaultdict
+
+import sourmash
+import screed
+from sourmash.lca import lca_utils
 
 
 def summarize(hashvals, dblist, threshold):

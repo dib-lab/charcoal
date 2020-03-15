@@ -1,6 +1,7 @@
 *~
 .snakemake
 output.test
+__pycache__
 
 #
 ibd-genomes
@@ -9,3 +10,4 @@ ibd-metagenome-sigs
 # titus test stuff
 Vatanen*
 AP010890*
+

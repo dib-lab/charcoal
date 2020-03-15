@@ -1,55 +1,20 @@
 #! /usr/bin/env python
 """
-Take output of 'match-metagenomes.py', do presence-vector distance calculations
-for hashes.
+Plot togetherness.
+
+Takes output of 'match_metagenomes.py', do presence-vector distance
+calculations for hashes, and cluster/plot.
 """
 import argparse
-import numpy as np
-from numpy import genfromtxt
-import math
-from scipy.cluster.hierarchy import dendrogram, linkage
 
 from matplotlib import pyplot as plt
 import pylab
 import scipy.cluster.hierarchy as sch
 import collections
 
+from utils import load_and_normalize
 
-def load_and_normalize(filename):
-    mat = genfromtxt(filename, delimiter=',')
-    n_hashes = mat.shape[1]
-    n_orig_hashes = n_hashes
 
-    # go through and normalize all the sample-presence vectors for each hash;
-    # track those with all 0s for later removal.
-    to_delete = []
-    for i in range(n_hashes):
-        if sum(mat[:, i]):
-            mat[:, i] /= math.sqrt(np.dot(mat[:, i], mat[:, i]))
-        else:
-            to_delete.append(i)
-
-    # remove all columns with zeros
-    print('removing {} null presence vectors'.format(len(to_delete)))
-    for row_n in reversed(to_delete):
-        mat = np.delete(mat, row_n, 1)
-
-    assert mat.shape[1] == n_hashes - len(to_delete)
-    n_hashes = mat.shape[1]
-
-    # construct distance matrix using angular distance
-    D = np.zeros((n_hashes, n_hashes))
-    for i in range(n_hashes):
-        for j in range(n_hashes):
-            cos_sim = np.dot(mat[:, i], mat[:, j])
-            cos_sim = min(cos_sim, 1.0)
-            ang_sim = 1 - 2*math.acos(cos_sim) / math.pi
-            D[i][j] = ang_sim
-
-    # done!
-    return D, n_orig_hashes
-
-        
 def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
                           vmax=1.0, vmin=0.0, force=False):
     """Build a composite plot showing dendrogram + distance matrix/heatmap.
@@ -109,7 +74,7 @@ def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
 
 
 def augmented_dendrogram(*args, **kwargs):
-    ddata = dendrogram(*args, **kwargs)
+    ddata = sch.dendrogram(*args, **kwargs)
 
     if not kwargs.get('no_plot', False):
         for i, d in zip(ddata['icoord'], ddata['dcoord']):

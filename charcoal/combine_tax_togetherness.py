@@ -1,59 +1,16 @@
 #! /usr/bin/env python
-# next steps -
-#   load hashes into labels here, and add tax info
-#   represent as tree, decoraet internal nodes
-#   fun, profit.
+"""
+Combine taxonomy information and "togetherness" into one mishmash of data
+structures.
+"""
 import argparse
-import numpy as np
-from numpy import genfromtxt
-import math
-from scipy.cluster.hierarchy import dendrogram, linkage
 import pprint
-from sourmash.lca import lca_utils
-
-from matplotlib import pyplot as plt
-import pylab
 import scipy.cluster.hierarchy as sch
-import collections
 from pickle import load, dump
 
+from sourmash.lca import lca_utils
 
-def load_and_normalize(filename, delete_empty=False):
-    mat = genfromtxt(filename, delimiter=',')
-    assert mat.shape[0] == 347            # number of metagenomes
-    n_hashes = mat.shape[1]
-    n_orig_hashes = n_hashes
-
-    # go through and normalize all the sample-presence vectors for each hash;
-    # track those with all 0s for later removal.
-    to_delete = []
-    for i in range(n_hashes):
-        if sum(mat[:, i]):
-            mat[:, i] /= math.sqrt(np.dot(mat[:, i], mat[:, i]))
-        else:
-            to_delete.append(i)
-
-    if delete_empty:
-        # remove all columns with zeros
-        print('removing {} null presence vectors'.format(len(to_delete)))
-        for row_n in reversed(to_delete):
-            mat = np.delete(mat, row_n, 1)
-
-        assert mat.shape[1] == n_hashes - len(to_delete)
-
-    n_hashes = mat.shape[1]
-
-    # construct distance matrix using angular distance
-    D = np.zeros((n_hashes, n_hashes))
-    for i in range(n_hashes):
-        for j in range(n_hashes):
-            cos_sim = np.dot(mat[:, i], mat[:, j])
-            cos_sim = min(cos_sim, 1.0)
-            ang_sim = 1 - 2*math.acos(cos_sim) / math.pi
-            D[i][j] = ang_sim
-
-    # done!
-    return D, n_orig_hashes
+from utils import load_and_normalize
 
 
 def do_cluster(mat, hashes_to_tax):
@@ -75,7 +32,8 @@ def do_cluster(mat, hashes_to_tax):
             x.add(tax_info)
         node_id_to_tax[node.get_id()] = x
 
-    def traverse_and_label(node, indent=' '):
+    def traverse_and_label(node):
+        "do recursive traversal from node and label with taxonomy LCA"
         if node.is_leaf():
             tax_id = node_id_to_tax[node.get_id()]
             x = set()
@@ -83,8 +41,8 @@ def do_cluster(mat, hashes_to_tax):
                 x.update(tax_id)
             return x
         else:
-            l = traverse_and_label(node.get_left(), indent=indent + ' ')
-            r = traverse_and_label(node.get_right(), indent=indent + ' ')
+            l = traverse_and_label(node.get_left())
+            r = traverse_and_label(node.get_right())
 
             x = l.union(r)
             node_id_to_tax[node.get_id()] = x
@@ -95,6 +53,7 @@ def do_cluster(mat, hashes_to_tax):
 
     return rootnode, nodelist, node_id_to_tax
 
+def leftovers():                          # ignore me
     def print_lca(node):
         node_id = node.get_id()
         tax_set = node_id_to_tax[node_id]
@@ -160,43 +119,37 @@ def do_cluster(mat, hashes_to_tax):
     assert last_node.get_left().get_id() >= n_hashes
     assert last_node.get_right().get_id() >= n_hashes
 
-#    Z = sch.dendrogram(Y, orientation='left')
-#    print(Z['leaves'])
-#    print(Z['ivl'])
-
     return newick_tree
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('matrix_csv')
-    p.add_argument('taxhashes')
-    p.add_argument('--newick', default=None)
+    p.add_argument('matrix_csv', help='output of match_metagenomes')
+    p.add_argument('taxhashes', help='output of genome_shred_to_tax')
     p.add_argument('--pickle-tree', default=None)
     args = p.parse_args()
 
+    # output of match_metagenomes
+    print('calculating distance matrix from', args.matrix_csv)
     mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
 
+    # output of genome_shred_to_tax
     with open(args.taxhashes, 'rb') as fp:
         hashes_to_tax = load(fp)
 
-    for k in hashes_to_tax:
-        lca, reason = hashes_to_tax[k]
-
-    assert n_orig_hashes == len(hashes_to_tax)
+    # some basic validation
+    assert n_orig_hashes == len(hashes_to_tax), "mismatch! was same --scaled used to compute these?"
     assert mat.shape[1] == len(hashes_to_tax)
 
+    print('distance matrix is {} x {}; found {} matching hashes.'.format(mat.shape[0], mat.shape[1], len(hashes_to_tax)))
+
+    print('clustering by togetherness & assigning taxonomy!')
     rootnode, nodelist, node_id_to_tax = do_cluster(mat, hashes_to_tax)
 
     if args.pickle_tree:
+        print('pickling tree & taxonomy to file', args.pickle_tree)
         with open(args.pickle_tree, 'wb') as fp:
             dump((rootnode, nodelist, node_id_to_tax), fp)
-
-#    newick_tree = do_cluster(mat, hashes_to_tax)
-
-#    if args.newick:
-#        with open(args.newick, 'wt') as fp:
-#            fp.write(newick_tree)
 
 
 if __name__ == '__main__':

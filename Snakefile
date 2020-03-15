@@ -27,7 +27,10 @@ rule all:
         expand(output_dir + '/{g}.hashes.fragment.5000', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.matrix.csv.mat.pdf', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tax', g=genome_list)
+        expand(output_dir + '/{g}.hashes.fragment.100000.tax', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tree', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tree.newick', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tree.png', g=genome_list),
 
 rule make_hashes:
     input:
@@ -94,4 +97,40 @@ rule make_taxhashes:
         ./charcoal/genome_shred_to_tax.py {params.lca_db} {input} \
              {output.taxcsv} \
              --fragment {wildcards.size} --save-tax-hashes {output.taxhashes}
+     """
+
+rule make_tree:
+    input:
+        matrix=   output_dir + '/{f}.hashes.fragment.{size}.matrix.csv',
+        taxhashes=output_dir + '/{f}.hashes.fragment.{size}.tax',
+    output:
+        output_dir + "/{f}.hashes.fragment.{size,\d+}.tree"
+    conda: 'conf/env-sourmash.yml'
+    params:
+        lca_db=lca_db,
+    shell: """
+        ./charcoal/combine_tax_togetherness.py \
+             {input.matrix} {input.taxhashes} --pickle-tree {output}
+     """
+
+rule make_tree_viz:
+    input:
+        output_dir + "/{f}.hashes.fragment.{size}.tree"
+    output:
+        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.newick',
+    conda: 'conf/env-ete.yml'
+    shell: """
+        ./charcoal/ete_make_newick.py {input} {output}
+     """
+
+rule make_tree_viz_output:
+    input:
+        output_dir + '/{f}.hashes.fragment.{size}.tree.newick',
+    output:
+        png = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.png',
+        svg = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.svg',
+    conda: 'conf/env-ete.yml'
+    shell: """
+        ete3 view -t {input} --show_internal_names -i {output.png}
+        ete3 view -t {input} --show_internal_names -i {output.svg}
      """
