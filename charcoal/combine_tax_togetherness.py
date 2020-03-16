@@ -22,15 +22,17 @@ def do_cluster(mat, hashes_to_tax):
 
     hashlist = sorted(hashes_to_tax)
     node_id_to_tax = {}
+    leaf_id_to_hash = {}
     for pos in range(n_hashes):
         node = nodelist[pos]
         assert node.get_id() == pos
+        leaf_id_to_hash[pos] = hashlist[pos]
         tax_info, reason = hashes_to_tax[hashlist[pos]]
 
         x = set()
         if tax_info:
             x.add(tax_info)
-        node_id_to_tax[node.get_id()] = x
+        node_id_to_tax[pos] = x
 
     def traverse_and_label(node):
         "do recursive traversal from node and label with taxonomy LCA"
