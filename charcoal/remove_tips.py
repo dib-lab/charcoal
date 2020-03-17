@@ -13,8 +13,6 @@ import collections
 from pickle import load
 import pprint
 
-import dendropy
-
 
 def is_lineage_match(lin_a, lin_b, rank):
     for a, b in zip(lin_a, lin_b):
