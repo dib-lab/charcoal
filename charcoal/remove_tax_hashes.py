@@ -61,7 +61,7 @@ def main():
     print(rm_hashes)
 
     with open(args.rm_hashes, 'wt') as fp:
-        print("\n".join([str(h) for h in rm_hashes ]), file=fp)
+        print("\n".join([str(h) for h in sorted(rm_hashes) ]), file=fp)
         
 
 if __name__ == '__main__':

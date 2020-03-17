@@ -24,18 +24,29 @@ def do_cluster(mat, hashes_to_tax):
     Y = sch.linkage(mat, method='complete')
     rootnode, nodelist = sch.to_tree(Y, rd=True)
 
+    node_id_to_original = []              # len n_hashes
+    for i in range(n_hashes - 1):
+        if Y[i][0] < n_hashes:
+            node_id_to_original.append(int(Y[i][0]))
+        if Y[i][1] < n_hashes:
+            node_id_to_original.append(int(Y[i][1]))
+
+    print(len(node_id_to_original))
+    print(node_id_to_original)
+
     # now, track the taxonomy <-> hashval <-> cluster node.
     hashlist = sorted(hashes_to_tax)
     node_id_to_tax = {}
     leaf_id_to_hash = {}
 
     # here we are assuming that the nodelist is in the same order as the
-    # original labels. Is that right?
+    # original labels. Is that right? NO, it is not.
     for pos in range(n_hashes):
         node = nodelist[pos]
         assert node.get_id() == pos
-        leaf_id_to_hash[pos] = hashlist[pos]
-        tax_info, reason = hashes_to_tax[hashlist[pos]]
+        original_id = node_id_to_original[pos]
+        leaf_id_to_hash[pos] = hashlist[original_id]
+        tax_info, reason = hashes_to_tax[hashlist[original_id]]
 
         x = set()
         if tax_info:

@@ -29,8 +29,9 @@ def main():
     rm_hashes = set()
     for line in open(args.hashlist, 'rt'):
         line = line.strip()
-        hashval = int(line)
-        rm_hashes.add(hashval)
+        if line:
+            hashval = int(line)
+            rm_hashes.add(hashval)
 
     n = 0
     o = 0
