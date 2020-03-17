@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 """
 Separate genomes into have-hash and not-have-hash.
+
+Only works for fragments right now.
 """
 import sys
 import argparse
@@ -20,6 +22,8 @@ def main():
     p.add_argument('--fragment', default=0, type=int)
     args = p.parse_args()
 
+    assert args.fragment, "must specify --fragment"
+
     mh_factory = sourmash.MinHash(n=0, ksize=args.ksize, scaled=args.scaled)
 
     rm_hashes = set()
@@ -29,8 +33,8 @@ def main():
         rm_hashes.add(hashval)
 
     n = 0
-    m = 0
     o = 0
+    p = 0
 
     clean_fp = open(args.clean_output, 'wt')
     dirty_fp = open(args.dirty_output, 'wt')
@@ -58,7 +62,7 @@ def main():
                     dirty_fp.write('>{}:{}-{}\n{}\n'.format(record.name.split()[0], start, start+args.fragment, record.sequence))
                 else:
                     clean_fp.write('>{}:{}-{}\n{}\n'.format(record.name.split()[0], start, start+args.fragment, record.sequence))
-                    m += 1
+                    p += 1
 
         # deal directly with contigs in the genome file
         else:
@@ -75,7 +79,9 @@ def main():
             min_value = min(mh.get_mins())
             hash_to_lengths[min_value] = len(record.sequence)
 
-    print(n, m, o)
+    print('total contigs:', n)
+    print('dirty contigs:', o)
+    print('clean contigs:', p)
 
     return 0
 

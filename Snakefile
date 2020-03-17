@@ -31,6 +31,8 @@ rule all:
         expand(output_dir + '/{g}.hashes.fragment.100000.tree', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.newick', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.png', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tax.rm.clean.fa', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tree.rm.clean.fa', g=genome_list),
 
 rule make_hashes:
     input:
@@ -137,3 +139,42 @@ rule make_tree_viz_output:
         ete3 view -t {input} --show_internal_names -i {output.png}
         ete3 view -t {input} --show_internal_names -i {output.svg}
      """
+
+# generic rule for removing contigs/fragments by hash
+rule separate_clean_dirty:
+    input:
+        genome  =genome_dir + '/{f}',
+        rmhashes=output_dir + '/{f}.hashes.fragment.{size}.{suffix}',
+    output:
+        clean=output_dir + '/{f}.hashes.fragment.{size,\d+}.{suffix}.clean.fa',
+        dirty=output_dir + '/{f}.hashes.fragment.{size,\d+}.{suffix}.dirty.fa'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        charcoal/remove_contigs_by_hash.py {input.genome} {input.rmhashes} \
+            --fragment {wildcards.size} {output.clean} {output.dirty}
+     """
+
+# do dumb cleaning, based solely on majority order.
+rule clean_tax_only:
+    input:
+        output_dir + '/{f}.hashes.fragment.{size}.tax',
+    output:
+        output_dir + '/{f}.hashes.fragment.{size,\d+}.tax.rm'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        charcoal/remove_tax_hashes.py {input} --rm-hashes {output}
+     """
+
+# do dumb cleaning, based solely on tip taxonomy
+rule clean_tip_only:
+    input:
+        hashes=   output_dir + '/{f}.hashes.fragment.{size}',
+        taxhashes=output_dir + '/{f}.hashes.fragment.{size}.tree',
+    output:
+        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.rm'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        charcoal/remove_tips.py {input.taxhashes} {input.hashes} \
+              --rm-hashes {output}
+     """
+
