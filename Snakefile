@@ -102,6 +102,7 @@ rule make_taxhashes:
 rule make_tree:
     input:
         matrix=   output_dir + '/{f}.hashes.fragment.{size}.matrix.csv',
+        hashes=   output_dir + '/{f}.hashes.fragment.{size}',
         taxhashes=output_dir + '/{f}.hashes.fragment.{size}.tax',
     output:
         output_dir + "/{f}.hashes.fragment.{size,\d+}.tree"
@@ -110,7 +111,8 @@ rule make_tree:
         lca_db=lca_db,
     shell: """
         ./charcoal/combine_tax_togetherness.py \
-             {input.matrix} {input.taxhashes} --pickle-tree {output}
+             {input.matrix} {input.hashes} {input.taxhashes} \
+             --pickle-tree {output}
      """
 
 rule make_tree_viz:
