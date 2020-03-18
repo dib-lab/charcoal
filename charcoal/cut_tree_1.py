@@ -97,11 +97,13 @@ def main():
                         assert not rm
                         rm = 1
                         rm_node_id = r.get_id()
-                    assert rm
-                    rm_nodes.add(rm_node_id)
+                    #assert rm # @CTB?
+                    if rm:
+                        rm_nodes.add(rm_node_id)
                 
 
         lca = list(lca)
+        lca_str = '- none -'
 
         # find species, or next best thing
         for i in range(len(lca)):
