@@ -33,6 +33,7 @@ rule all:
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.png', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tax.rm.clean.fa', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.rm.clean.fa', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tree.cut.clean.fa', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.json', g=genome_list),
 
 rule make_hashes:
@@ -169,13 +170,26 @@ rule clean_tax_only:
 # do dumb cleaning, based solely on tip taxonomy
 rule clean_tip_only:
     input:
-        hashes=   output_dir + '/{f}.hashes.fragment.{size}',
-        taxhashes=output_dir + '/{f}.hashes.fragment.{size}.tree',
+        hashes= output_dir + '/{f}.hashes.fragment.{size}',
+        tree  = output_dir + '/{f}.hashes.fragment.{size}.tree',
     output:
         output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.rm'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        charcoal/remove_tips.py {input.taxhashes} {input.hashes} \
+        charcoal/remove_tips.py {input.tree} {input.hashes} \
+              --rm-hashes {output}
+     """
+
+# slightly cleverer cleaning, based on tree cutting
+rule cut_tree:
+    input:
+        hashes= output_dir + '/{f}.hashes.fragment.{size}',
+        tree  = output_dir + '/{f}.hashes.fragment.{size}.tree',
+    output:
+        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.cut'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        charcoal/cut_tree_1.py {input.tree} {input.hashes} \
               --rm-hashes {output}
      """
 

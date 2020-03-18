@@ -13,17 +13,7 @@ import pprint
 
 import dendropy
 
-
-def is_lineage_match(lin_a, lin_b, rank):
-    for a, b in zip(lin_a, lin_b):
-        assert a.rank == b.rank
-        if a.rank == rank:
-            if a == b:
-                return 1
-        if a != b:
-            return 0
-
-    return 0
+from utils import is_lineage_match, pop_to_rank
 
 
 def main():
@@ -43,10 +33,7 @@ def main():
             tax_set = node_id_to_tax[node.get_id()]
             assert len(tax_set) <= 1
             if tax_set:
-                p = list(tax_set)[0]
-                p = list(p)
-                while p and p[-1].rank != 'order':
-                    p.pop()
+                p = pop_to_rank(list(tax_set)[0], 'order')
 
                 if p and p[-1].rank == 'order':
                     leaf_tax[tuple(p)] += 1
@@ -172,15 +159,14 @@ def main():
         hash_to_lengths = load(fp)
 
     rm_hashes = set()
-    for hashpos, hash in enumerate(hash_to_lengths):
+    for hashpos, hash in enumerate(sorted(hash_to_lengths)):
         if hashpos in rm_leaves:
-            print(hashpos, hash)
             rm_hashes.add(hash)
             rm_leaves.remove(hashpos)
     assert not rm_leaves
 
     with open(args.rm_hashes, 'wt') as fp:
-        print("\n".join([str(h) for h in rm_hashes ]), file=fp)
+        print("\n".join([str(h) for h in sorted(rm_hashes) ]), file=fp)
         
 #    with open(args.newick_out, 'wt') as fp:
 #        print(tree.as_string("newick"), file=fp)
