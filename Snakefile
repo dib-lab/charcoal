@@ -33,6 +33,7 @@ rule all:
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.png', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tax.rm.clean.fa', g=genome_list),
         expand(output_dir + '/{g}.hashes.fragment.100000.tree.rm.clean.fa', g=genome_list),
+        expand(output_dir + '/{g}.hashes.fragment.100000.tree.json', g=genome_list),
 
 rule make_hashes:
     input:
@@ -176,5 +177,20 @@ rule clean_tip_only:
     shell: """
         charcoal/remove_tips.py {input.taxhashes} {input.hashes} \
               --rm-hashes {output}
+     """
+
+# JSON output
+rule together_json:
+    input:
+        genome=genome_dir + "/{f}",
+        taxhashes=output_dir + "/{f}.hashes.fragment.{size}.tax",
+        tree=output_dir + "/{f}.hashes.fragment.{size}.tree"
+    output:
+        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.json',
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        ./charcoal/together_tree_to_json.py \
+               {input.genome} {input.taxhashes} {input.tree} {output} \
+               --fragment {wildcards.size}
      """
 
