@@ -24,29 +24,18 @@ def do_cluster(mat, hashes_to_tax):
     Y = sch.linkage(mat, method='complete')
     rootnode, nodelist = sch.to_tree(Y, rd=True)
 
-    node_id_to_original = []              # len n_hashes
-    for i in range(n_hashes - 1):
-        if Y[i][0] < n_hashes:
-            node_id_to_original.append(int(Y[i][0]))
-        if Y[i][1] < n_hashes:
-            node_id_to_original.append(int(Y[i][1]))
-
-    print(len(node_id_to_original))
-    print(node_id_to_original)
-
     # now, track the taxonomy <-> hashval <-> cluster node.
-    hashlist = sorted(hashes_to_tax)
+    hashlist = list(sorted(hashes_to_tax))
     node_id_to_tax = {}
     leaf_id_to_hash = {}
 
     # here we are assuming that the nodelist is in the same order as the
-    # original labels. Is that right? NO, it is not.
+    # original labels. Is that right? Yes, it is.
     for pos in range(n_hashes):
         node = nodelist[pos]
         assert node.get_id() == pos
-        original_id = node_id_to_original[pos]
-        leaf_id_to_hash[pos] = hashlist[original_id]
-        tax_info, reason = hashes_to_tax[hashlist[original_id]]
+        hashval = hashlist[pos]
+        tax_info, reason = hashes_to_tax[hashval]
 
         x = set()
         if tax_info:
@@ -171,7 +160,7 @@ def main():
     # some basic validation
     assert n_orig_hashes == len(hashes_to_tax), "mismatch! was same --scaled used to compute these?"
     assert mat.shape[1] == len(hashes_to_tax)
-    assert set(hashes_to_length) == set(hashes_to_tax)
+    assert list(sorted(hashes_to_length)) == list(sorted(hashes_to_tax))
 
     print('distance matrix is {} x {}; found {} matching hashes.'.format(mat.shape[0], mat.shape[1], len(hashes_to_tax)))
 
