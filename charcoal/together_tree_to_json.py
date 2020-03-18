@@ -23,9 +23,11 @@ Guide to mappings output in the JSON file:
 import sys
 import argparse
 import sourmash
+from sourmash.lca import lca_utils
 import screed
 import json
 from pickle import load
+import csv
 
 
 def main():
@@ -135,6 +137,46 @@ def main():
 
     with open(args.json_output, 'wt') as outfp:
         outfp.write(json.dumps(output))
+
+    with open(args.json_output + '.hashes_to_fragment.csv', 'wt') as outfp:
+        w = csv.writer(outfp)
+
+        w.writerow(['hashval', 'contig', 'start', 'end'])
+        for hashval, (contig, start, end) in hashes_to_fragment.items():
+            w.writerow([hashval, contig, start, end])
+
+    with open(args.json_output + '.leaves_to_hashval.csv', 'wt') as outfp:
+        w = csv.writer(outfp)
+
+        w.writerow(['leaf_id', 'hashval'])
+        for leaf_id, hashval in leaves_to_hashval.items():
+            w.writerow([leaf_id, hashval])
+
+    with open(args.json_output + '.hashes_to_tax.csv', 'wt') as outfp:
+        w = csv.writer(outfp)
+
+        w.writerow(['hashval', 'lineage'])
+        for hashval, (lca, reason) in hashes_to_tax.items():
+            lineage_str = lca_utils.display_lineage(lca, truncate_empty=False, include_strain=True)
+            x = [hashval, lineage_str]
+            w.writerow(x)
+
+    with open(args.json_output + '.node_id_to_tax.csv', 'wt') as outfp:
+        w = csv.writer(outfp)
+
+        w.writerow(['hashval'])
+        for node_id, taxset in node_id_to_tax2.items():
+            x = [hashval]
+            for tax in taxset:
+                x.append(lca_utils.display_lineage(tax, truncate_empty=False, include_strain=True))
+            w.writerow(x)
+
+    with open(args.json_output + '.node_to_children.csv', 'wt') as outfp:
+        w = csv.writer(outfp)
+
+        w.writerow(['node_id', 'left_child_id', 'right_child_id'])
+        for node_id, (lid, rid) in node_to_children.items():
+            w.writerow([node_id, lid, rid])
 
     return 0
 
