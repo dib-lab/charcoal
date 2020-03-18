@@ -27,10 +27,10 @@ def do_cluster(mat, hashes_to_tax):
     # now, track the taxonomy <-> hashval <-> cluster node.
     hashlist = list(sorted(hashes_to_tax))
     node_id_to_tax = {}
-    leaf_id_to_hash = {}
 
     # here we are assuming that the nodelist is in the same order as the
-    # original labels. Is that right? Yes, it is.
+    # original labels. Is that right? Yes, it is. Just make sure the
+    # hashes are sorted (same as when we created the matrix).
     for pos in range(n_hashes):
         node = nodelist[pos]
         assert node.get_id() == pos
@@ -67,74 +67,6 @@ def do_cluster(mat, hashes_to_tax):
     ###
 
     return rootnode, nodelist, node_id_to_tax
-
-def leftovers():                          # ignore me
-    def print_lca(node):
-        node_id = node.get_id()
-        tax_set = node_id_to_tax[node_id]
-
-        if not tax_set:
-            return "-nada-", "none"
-        tree = lca_utils.build_tree(tax_set)
-        lca, reason = lca_utils.find_lca(tree)
-
-        lca = list(lca)
-
-        # find species, or next best thing
-        for i in range(len(lca)):
-            if lca[-1] and lca[-1].rank == 'strain':
-                lca.pop()
-            elif lca[-1] and lca[-1].rank == 'species':
-                return lca[-1].name, reason
-            elif lca[-1]:
-                return "{}={}".format(lca[-1].rank, lca[-1].name), reason
-
-        return lca_utils.display_lineage(lca, truncate_empty=True), reason
-
-    def traverse(node, indent=' '):
-        lca_str, reason = print_lca(node)
-        lca_str = lca_str.replace(';', '+').replace(' ', '_').replace('_', '')
-        is_leaf = ' '
-        if node.is_leaf():
-            is_leaf = '*'
-        print('YYY', indent, node.get_id(), is_leaf, lca_str, reason)
-        if node.is_leaf():
-            return '{}'.format(lca_str)
-        else:
-            l = traverse(node.get_left(), indent=indent + ' ')
-            r = traverse(node.get_right(), indent=indent + ' ')
-            return "({},{}){}".format(l, r, lca_str)
-
-    newick_tree = traverse(rootnode) + ';'
-
-    # we should have 2*n_hashes - 1 clusters
-    assert len(nodelist) == 2*n_hashes - 1
-
-    # ok. so this linkage matrix has entries where each cluster k
-    # is composed of two IDs, Y[k][0] and Y[k][1]. If an ID has
-    # value (0..n) where n is original observation, then it is an
-    # original observation. Otherwise it is a non-leaf node ID.
-    
-    # or, in reverse:
-    # every entry i in Y[*,0] and Y[*,1] refers to an entry in nodelist.
-
-    nodelist_to_linkage = [-1]*len(nodelist)
-    for k in range(n_hashes - 1):
-        id_1 = int(Y[k][0])
-        id_2 = int(Y[k][1])
-
-        assert nodelist_to_linkage[id_1] == -1
-        assert nodelist_to_linkage[id_2] == -1
-        nodelist_to_linkage[id_1] = k
-        nodelist_to_linkage[id_2] = k
-
-    # the last node in the list is the only one without any original
-    # observations belonging to it.
-    last_node = nodelist[-1]
-    assert last_node.get_left().get_id() >= n_hashes
-    assert last_node.get_right().get_id() >= n_hashes
-
-    return newick_tree
 
 
 def main():

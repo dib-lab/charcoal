@@ -61,6 +61,7 @@ def main():
                     # dirty! discard.
                     o += 1
                     dirty_fp.write('>{}:{}-{}\n{}\n'.format(record.name.split()[0], start, start+args.fragment, record.sequence))
+                    rm_hashes -= minset
                 else:
                     clean_fp.write('>{}:{}-{}\n{}\n'.format(record.name.split()[0], start, start+args.fragment, record.sequence))
                     p += 1
@@ -83,6 +84,8 @@ def main():
     print('total contigs:', n)
     print('dirty contigs:', o)
     print('clean contigs:', p)
+
+    assert not rm_hashes, rm_hashes
 
     return 0
 

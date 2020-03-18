@@ -43,3 +43,27 @@ def load_and_normalize(filename, delete_empty=False):
 
     # done!
     return D, n_orig_hashes
+
+
+def is_lineage_match(lin_a, lin_b, rank):
+    """
+    check to see if two lineages are a match down to given rank.
+    """
+    for a, b in zip(lin_a, lin_b):
+        assert a.rank == b.rank
+        if a.rank == rank:
+            if a == b:
+                return 1
+        if a != b:
+            return 0
+
+    return 0
+
+
+def pop_to_rank(lin, rank):
+    "Remove lineage tuples from given lineage `lin` until `rank` is reached."
+    lin = list(lin)
+    while lin and lin[-1].rank != rank:
+        lin.pop()
+
+    return tuple(lin)

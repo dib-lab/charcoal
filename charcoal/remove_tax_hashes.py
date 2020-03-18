@@ -11,17 +11,7 @@ import collections
 from pickle import load
 import pprint
 
-
-def is_lineage_match(lin_a, lin_b, rank):
-    for a, b in zip(lin_a, lin_b):
-        assert a.rank == b.rank
-        if a.rank == rank:
-            if a == b:
-                return 1
-        if a != b:
-            return 0
-
-    return 0
+from utils import is_lineage_match, pop_to_rank
 
 
 def main():
@@ -37,12 +27,8 @@ def main():
     leaf_tax = collections.Counter()
     for hashval, (tax, reason) in hashes_to_tax.items():
         if tax:
-            p = tax
-            p = list(p)
-            while p and p[-1].rank != 'order':
-                p.pop()
-
-            if p and p[-1].rank == 'order':
+            p = pop_to_rank(tax, 'order')
+            if p:
                 leaf_tax[tuple(p)] += 1
 
     for k, v in leaf_tax.most_common():
@@ -52,6 +38,7 @@ def main():
     most_common, most_common_count = next(iter(leaf_tax.most_common(1)))
     print('removing all but {}'.format(lca_utils.display_lineage(most_common)))
 
+    # find all hashes belonging to "bad" (all but most common) tax.
     rm_hashes = set()
     for hashval, (tax, reason) in hashes_to_tax.items():
         if tax:
@@ -60,6 +47,7 @@ def main():
                 rm_hashes.add(hashval)
     print(rm_hashes)
 
+    # save!
     with open(args.rm_hashes, 'wt') as fp:
         print("\n".join([str(h) for h in sorted(rm_hashes) ]), file=fp)
         
