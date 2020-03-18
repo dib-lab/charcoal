@@ -200,11 +200,16 @@ rule together_json:
         taxhashes=output_dir + "/{f}.hashes.fragment.{size}.tax",
         tree=output_dir + "/{f}.hashes.fragment.{size}.tree"
     output:
-        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.json',
+        json = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.json',
+        csv1 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.hashes_to_fragment.csv',
+        csv2 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.hashes_to_tax.csv',
+        csv3 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.leaves_to_hashval.csv',
+        csv4 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.node_id_to_tax.csv',
+        csv5 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.node_to_children.csv',
     conda: 'conf/env-sourmash.yml'
     shell: """
         ./charcoal/together_tree_to_json.py \
-               {input.genome} {input.taxhashes} {input.tree} {output} \
+               {input.genome} {input.taxhashes} {input.tree} {output.json} \
                --fragment {wildcards.size}
      """
 
