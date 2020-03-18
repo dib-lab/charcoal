@@ -74,7 +74,7 @@ def main():
         hash_to_lengths = load(fp)
 
     rm_hashes = set()
-    for hashpos, hash in enumerate(hash_to_lengths):
+    for hashpos, hash in enumerate(sorted(hash_to_lengths)):
         if hashpos in rm_leaves:
             rm_hashes.add(hash)
             rm_leaves.remove(hashpos)
