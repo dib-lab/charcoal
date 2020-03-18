@@ -164,9 +164,9 @@ def main():
     with open(args.json_output + '.node_id_to_tax.csv', 'wt') as outfp:
         w = csv.writer(outfp)
 
-        w.writerow(['hashval'])
+        w.writerow(['node_id'])
         for node_id, taxset in node_id_to_tax2.items():
-            x = [hashval]
+            x = [node_id]
             for tax in taxset:
                 x.append(lca_utils.display_lineage(tax, truncate_empty=False, include_strain=True))
             w.writerow(x)
