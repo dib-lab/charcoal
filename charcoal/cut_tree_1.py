@@ -16,6 +16,36 @@ import dendropy
 from utils import is_lineage_match, pop_to_rank
 
 
+def make_lca(node, node_id_to_tax):
+    tax_set = node_id_to_tax[node.get_id()]
+    if not tax_set:
+        return None
+
+    tree = lca_utils.build_tree(tax_set)
+    lca, n_children = lca_utils.find_lca(tree)
+    return lca
+
+
+def query_cut_node(node, node_id_to_tax, most_common):
+    # should we cut this node?
+    lca = make_lca(node, node_id_to_tax)
+
+    # no lca? ignore.
+    if not lca:
+        return False
+
+    # high level node? ignore. confusion below.
+    if lca[-1].rank in ('superkingdom', 'phylum', 'class'):
+        return False
+
+    # matches most common lineage? do not cut.
+    if is_lineage_match(lca, most_common, 'order'):
+        return False
+
+    # cut!
+    return True
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('pickle_tree', help='output of combine_tax_togetherness')
@@ -45,103 +75,10 @@ def main():
     most_common, most_common_count = next(iter(leaf_tax.most_common(1)))
     print('removing all but {}'.format(lca_utils.display_lineage(most_common)))
 
-    def find_lca(node_id):
-        tax_set = node_id_to_tax[node_id]
-        if not tax_set:
-            return None
-
-        tree = lca_utils.build_tree(tax_set)
-        lca, n_children = lca_utils.find_lca(tree)
-        return lca
-
     rm_nodes = set()
-    def get_lca_str(node_id):
-        tax_set = node_id_to_tax[node_id]
-        if not tax_set:
-            return "- none -"
-        tree = lca_utils.build_tree(tax_set)
-        lca, n_children = lca_utils.find_lca(tree)
-
-        if lca and lca[-1].rank in ('superkingdom', 'phylum', 'class'):
-            if len(tax_set) > 1:
-                print('-'*20)
-                lca_str = lca_utils.display_lineage(lca, include_strain=False)
-                print('LCA for node {}; {} children. {}'.format(node_id, len(tax_set), lca_str))
-                for k in tax_set:
-                    print('   * ', lca_utils.display_lineage(k, include_strain=False, truncate_empty=False))
-
-            node = nodelist[node_id]
-            if not node.is_leaf():
-                l = node.get_left()
-                l_lca = find_lca(l.get_id())
-                r = node.get_right()
-                r_lca = find_lca(r.get_id())
-                keep_going = 1
-                if l_lca and l_lca[-1].rank in ('superkingdom', 'phylum', 'class'):
-                    keep_going = 0
-                if r_lca and r_lca[-1].rank in ('superkingdom', 'phylum', 'class'):
-                    keep_going = 0
-
-                if keep_going:
-                    print('xxx 1', lca_utils.display_lineage(l_lca, include_strain=False, truncate_empty=False))
-                    print('xxx 2', lca_utils.display_lineage(r_lca, include_strain=False, truncate_empty=False))
-
-                    rm = 0
-                    rm_node_id = None
-                    if is_lineage_match(l_lca, most_common, 'order'):
-                        print('(xxx keeping first)')
-                        rm = 1
-                        rm_node_id = l.get_id()
-                    if is_lineage_match(r_lca, most_common, 'order'):
-                        print('(xxx keeping second)')
-                        assert not rm
-                        rm = 1
-                        rm_node_id = r.get_id()
-                    #assert rm # @CTB?
-                    if rm:
-                        rm_nodes.add(rm_node_id)
-                
-
-        lca = list(lca)
-        lca_str = '- none -'
-
-        # find species, or next best thing
-        for i in range(len(lca)):
-            if lca[-1] and lca[-1].rank == 'strain':
-                lca.pop()
-            elif lca[-1] and lca[-1].rank == 'species':
-                lca_str = lca[-1].name
-                break
-            elif lca[-1]:
-                lca_str = "{}={}".format(lca[-1].rank, lca[-1].name)
-                break
-
-        return lca_str
-
-    lca_str_set = set()
-    for k in node_id_to_tax:
-        lca_str = get_lca_str(k)
-        lca_str_set.add(lca_str)
-
-    taxon_namespace = dendropy.TaxonNamespace(lca_str_set)
-    tree = dendropy.Tree(taxon_namespace=taxon_namespace)
-    
-    def traverse(node):
-        lca_str = get_lca_str(node.get_id())
-        ch = dendropy.Node(edge_length=1)
-        ch.taxon = taxon_namespace.get_taxon(lca_str)
-        
-        if node.is_leaf():
-            return ch
-        else:
-            l = traverse(node.get_left())
-            r = traverse(node.get_right())
-
-            ch.set_child_nodes([l, r])
-            return ch
-
-    tree.seed_node.add_child(traverse(rootnode))
-
+    for node in nodelist:
+        if query_cut_node(node, node_id_to_tax, most_common):
+            rm_nodes.add(node.get_id())
     print(rm_nodes)
 
     rm_leaves = set()
@@ -170,11 +107,6 @@ def main():
     with open(args.rm_hashes, 'wt') as fp:
         print("\n".join([str(h) for h in sorted(rm_hashes) ]), file=fp)
         
-#    with open(args.newick_out, 'wt') as fp:
-#        print(tree.as_string("newick"), file=fp)
-
-#    print(tree.as_ascii_plot())
-
 
 if __name__ == '__main__':
     main()
