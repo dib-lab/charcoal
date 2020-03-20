@@ -12,7 +12,7 @@ import pylab
 import scipy.cluster.hierarchy as sch
 import collections
 
-from utils import load_and_normalize
+import utils
 
 
 def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,
@@ -106,7 +106,8 @@ def main():
     p.add_argument('--newick', default=None)
     args = p.parse_args()
 
-    mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
+    mat = utils.load_matrix_csv(args.matrix_csv)
+    mat, n_orig_hashes = utils.make_distance_matrix(mat)
 
     n_hashes = mat.shape[0]
     labels = [""]*mat.shape[0] # could be loaded from .hashes file...

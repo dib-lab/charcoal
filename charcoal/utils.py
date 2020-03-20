@@ -4,12 +4,17 @@ utility functions for charcoal.
 import math
 import numpy as np
 from numpy import genfromtxt
+import screed
 
-def load_and_normalize(filename, delete_empty=False):
-    """
-    Load metagenome x hash matrices, construct distance matrix.
-    """
+
+def load_matrix_csv(filename):
     mat = genfromtxt(filename, delimiter=',')
+    return mat
+
+def make_distance_matrix(mat, delete_empty=False):
+    """
+    Construct distance matrix from metagenome x hash matrices.
+    """
     n_hashes = mat.shape[1]
     n_orig_hashes = n_hashes
 
@@ -67,3 +72,80 @@ def pop_to_rank(lin, rank):
         lin.pop()
 
     return tuple(lin)
+
+
+class HashesToTaxonomy(object):
+    def __init__(self, genome_file, ksize, scaled, fragment_size, lca_db_file):
+        self.genome_file = genome_file
+        self.ksize = ksize
+        self.scaled = scaled
+        self.fragment_size = fragment_size
+        self.lca_db_file = lca_db_file
+
+        self.d = {}
+
+    def __setitem__(self, hashval, lineage):
+        self.d[hashval] = lineage
+
+    def __getitem__(self, hashval):
+        return self.d[hashval]
+
+    def __len__(self):
+        return len(self.d)
+
+    def __iter__(self):
+        return iter(self.d)
+
+    def items(self):
+        return self.d.items()
+
+
+class HashesToLengths(object):
+    def __init__(self, genome_file, ksize, scaled, fragment_size):
+        self.genome_file = genome_file
+        self.ksize = ksize
+        self.scaled = scaled
+        self.fragment_size = fragment_size
+
+        self.d = {}
+
+    def __setitem__(self, hashval, length):
+        self.d[hashval] = length
+
+    def __getitem__(self, hashval):
+        return self.d[hashval]
+
+    def __len__(self):
+        return len(self.d)
+
+    def __iter__(self):
+        return iter(self.d)
+
+    def items(self):
+        return self.d.items()
+
+
+class MetagenomesMatrix(object):
+    def __init__(self, genome_file, query_hashlist, query_fragment_size, ksize):
+        self.genome_file = genome_file
+        self.query_hashlist = list(sorted(query_hashlist))
+        self.query_fragment_size = query_fragment_size
+        self.ksize = ksize
+        self.mat = None
+
+
+class GenomeShredder(object):
+    def __init__(self, genome_file, fragment_size):
+        self.genome_file = genome_file
+        self.fragment_size = fragment_size
+
+    def __iter__(self):
+        fragment_size = self.fragment_size
+
+        for record in screed.open(self.genome_file):
+            if not fragment_size:
+                yield record.name, record.sequence, 0, len(record.sequence)
+            else:
+                for start in range(0, len(record.sequence), fragment_size):
+                    seq = record.sequence[start:start + fragment_size]
+                    yield record.name, seq, start, start + len(seq)

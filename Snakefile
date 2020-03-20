@@ -19,22 +19,29 @@ lca_db = config['lca_db']
 
 ### rules!
 
+wildcard_constraints:
+    size="\d+"
+
 rule all:
     input:
-        expand(output_dir + '/{g}.hashes', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.10000', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.5000', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.matrix.csv', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.matrix.csv.mat.pdf', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tax', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tree', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tree.newick', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tree.png', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tax.rm.clean.fa', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tree.rm.clean.fa', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tree.cut.clean.fa', g=genome_list),
-        expand(output_dir + '/{g}.hashes.fragment.100000.tree.json', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000', g=genome_list),
+        expand(output_dir + '/{g}.hash.10000', g=genome_list),
+        expand(output_dir + '/{g}.hash.5000', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.matrix.csv', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.matrix.csv.mat.pdf', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tax', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tax.rm.clean.fa', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree.rm.clean.fa', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree.cut.clean.fa', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree.json', g=genome_list),
+
+rule all_make_tree_viz:
+    input:
+        expand(output_dir + '/{g}.hash.100000.tree.newick', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree.png', g=genome_list),
+
+####
 
 rule make_hashes:
     input:
@@ -53,8 +60,8 @@ rule make_hashes_fragment:
     input:
         genome_dir + '/{filename}'
     output:
-        hashes=output_dir + '/{filename}.hashes.fragment.{size,\d+}',
-        stats=output_dir + '/{filename}.hashes.fragment.{size,\d+}.stats'
+        hashes=output_dir + '/{filename}.hash.{size}',
+        stats=output_dir + '/{filename}.hash.{size}.stats'
     conda: 'conf/env-sourmash.yml'
     params:
         scaled=config['lca_scaled']
@@ -64,18 +71,19 @@ rule make_hashes_fragment:
              --scaled={params.scaled}
      """
 
-rule make_matrix_csv:
+rule make_matrix:
     input:
-        hashes=output_dir + '/{filename}.hashes{postfix}',
+        hashes=output_dir + '/{filename}.hash{postfix}',
         metag_list=metagenome_sig_list,
     output:
-        output_dir + '/{filename}.hashes{postfix}.matrix.csv'
+        csv = output_dir + '/{filename}.hash{postfix}.matrix.csv',
+        mat = output_dir + '/{filename}.hash{postfix}.matrix'
     params:
         metagenome_sig_dir=metagenome_sig_dir
     conda: 'conf/env-sourmash.yml'
     shell: """
         ./charcoal/match_metagenomes.py {input.hashes} {input.metag_list} \
-            {output} -d {params.metagenome_sig_dir}
+            {output.csv} {output.mat} -d {params.metagenome_sig_dir}
     """
 
 rule make_matrix_pdf:
@@ -95,8 +103,8 @@ rule make_taxhashes:
     input:
         genome_dir + '/{filename}'
     output:
-        taxhashes=output_dir + '/{filename}.hashes.fragment.{size,\d+}.tax',
-        taxcsv=   output_dir + '/{filename}.hashes.fragment.{size,\d+}.tax.csv'
+        taxhashes=output_dir + '/{filename}.hash.{size}.tax',
+        taxcsv=   output_dir + '/{filename}.hash.{size}.tax.csv'
     conda: 'conf/env-sourmash.yml'
     params:
         lca_db=lca_db,
@@ -108,25 +116,23 @@ rule make_taxhashes:
 
 rule make_tree:
     input:
-        matrix=   output_dir + '/{f}.hashes.fragment.{size}.matrix.csv',
-        hashes=   output_dir + '/{f}.hashes.fragment.{size}',
-        taxhashes=output_dir + '/{f}.hashes.fragment.{size}.tax',
+        matrix=   output_dir + '/{f}.hash.{size}.matrix',
+        taxhashes=output_dir + '/{f}.hash.{size}.tax',
     output:
-        output_dir + "/{f}.hashes.fragment.{size,\d+}.tree"
+        output_dir + "/{f}.hash.{size}.tree"
     conda: 'conf/env-sourmash.yml'
     params:
         lca_db=lca_db,
     shell: """
         ./charcoal/combine_tax_togetherness.py \
-             {input.matrix} {input.hashes} {input.taxhashes} \
-             --pickle-tree {output}
+             {input.matrix} {input.taxhashes} --pickle-tree {output}
      """
 
 rule make_tree_viz:
     input:
-        output_dir + "/{f}.hashes.fragment.{size}.tree"
+        output_dir + "/{f}.hash.{size}.tree"
     output:
-        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.newick',
+        output_dir + '/{f}.hash.{size}.tree.newick',
     conda: 'conf/env-ete.yml'
     shell: """
         ./charcoal/ete_make_newick.py {input} {output}
@@ -134,10 +140,10 @@ rule make_tree_viz:
 
 rule make_tree_viz_output:
     input:
-        output_dir + '/{f}.hashes.fragment.{size}.tree.newick',
+        output_dir + '/{f}.hash.{size}.tree.newick',
     output:
-        png = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.png',
-        svg = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.svg',
+        png = output_dir + '/{f}.hash.{size}.tree.png',
+        svg = output_dir + '/{f}.hash.{size}.tree.svg',
     conda: 'conf/env-ete.yml'
     shell: """
         export QT_QPA_PLATFORM=offscreen   # turn off interactive ete3 behavior
@@ -149,10 +155,10 @@ rule make_tree_viz_output:
 rule separate_clean_dirty:
     input:
         genome  =genome_dir + '/{f}',
-        rmhashes=output_dir + '/{f}.hashes.fragment.{size}.{suffix}',
+        rmhashes=output_dir + '/{f}.hash.{size}.{suffix}',
     output:
-        clean=output_dir + '/{f}.hashes.fragment.{size,\d+}.{suffix}.clean.fa',
-        dirty=output_dir + '/{f}.hashes.fragment.{size,\d+}.{suffix}.dirty.fa'
+        clean=output_dir + '/{f}.hash.{size}.{suffix}.clean.fa',
+        dirty=output_dir + '/{f}.hash.{size}.{suffix}.dirty.fa'
     conda: 'conf/env-sourmash.yml'
     shell: """
         charcoal/remove_contigs_by_hash.py {input.genome} {input.rmhashes} \
@@ -162,9 +168,9 @@ rule separate_clean_dirty:
 # do dumb cleaning, based solely on majority order.
 rule clean_tax_only:
     input:
-        output_dir + '/{f}.hashes.fragment.{size}.tax',
+        output_dir + '/{f}.hash.{size}.tax',
     output:
-        output_dir + '/{f}.hashes.fragment.{size,\d+}.tax.rm'
+        output_dir + '/{f}.hash.{size}.tax.rm'
     conda: 'conf/env-sourmash.yml'
     shell: """
         charcoal/remove_tax_hashes.py {input} --rm-hashes {output}
@@ -173,10 +179,10 @@ rule clean_tax_only:
 # do dumb cleaning, based solely on tip taxonomy
 rule clean_tip_only:
     input:
-        hashes= output_dir + '/{f}.hashes.fragment.{size}',
-        tree  = output_dir + '/{f}.hashes.fragment.{size}.tree',
+        hashes= output_dir + '/{f}.hash.{size}',
+        tree  = output_dir + '/{f}.hash.{size}.tree',
     output:
-        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.rm'
+        output_dir + '/{f}.hash.{size}.tree.rm'
     conda: 'conf/env-sourmash.yml'
     shell: """
         charcoal/remove_tips.py {input.tree} {input.hashes} \
@@ -186,10 +192,10 @@ rule clean_tip_only:
 # slightly cleverer cleaning, based on tree cutting
 rule cut_tree:
     input:
-        hashes= output_dir + '/{f}.hashes.fragment.{size}',
-        tree  = output_dir + '/{f}.hashes.fragment.{size}.tree',
+        hashes= output_dir + '/{f}.hash.{size}',
+        tree  = output_dir + '/{f}.hash.{size}.tree',
     output:
-        output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.cut'
+        output_dir + '/{f}.hash.{size}.tree.cut'
     conda: 'conf/env-sourmash.yml'
     shell: """
         charcoal/cut_tree_1.py {input.tree} {input.hashes} \
@@ -200,15 +206,15 @@ rule cut_tree:
 rule together_json:
     input:
         genome=genome_dir + "/{f}",
-        taxhashes=output_dir + "/{f}.hashes.fragment.{size}.tax",
-        tree=output_dir + "/{f}.hashes.fragment.{size}.tree"
+        taxhashes=output_dir + "/{f}.hash.{size}.tax",
+        tree=output_dir + "/{f}.hash.{size}.tree"
     output:
-        json = output_dir + '/{f}.hashes.fragment.{size,\d+}.tree.json',
-        csv1 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.hashes_to_fragment.csv',
-        csv2 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.hashes_to_tax.csv',
-        csv3 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.leaves_to_hashval.csv',
-        csv4 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.node_id_to_tax.csv',
-        csv5 = output_dir + '/{f}.hashes.fragment.{size}.tree.json.node_to_children.csv',
+        json = output_dir + '/{f}.hash.{size}.tree.json',
+        csv1 = output_dir + '/{f}.hash.{size}.tree.json.hashes_to_fragment.csv',
+        csv2 = output_dir + '/{f}.hash.{size}.tree.json.hashes_to_tax.csv',
+        csv3 = output_dir + '/{f}.hash.{size}.tree.json.leaves_to_hashval.csv',
+        csv4 = output_dir + '/{f}.hash.{size}.tree.json.node_id_to_tax.csv',
+        csv5 = output_dir + '/{f}.hash.{size}.tree.json.node_to_children.csv',
     conda: 'conf/env-sourmash.yml'
     shell: """
         ./charcoal/together_tree_to_json.py \

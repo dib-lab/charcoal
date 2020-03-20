@@ -127,7 +127,7 @@ def main():
     output['leaves_to_hashval'] = leaves_to_hashval
 
     # hashval -> tax
-    output['hashes_to_tax'] = hashes_to_tax
+    output['hashes_to_tax'] = hashes_to_tax.d
 
     # node_id -> tax
     output['node_id_to_tax'] = node_id_to_tax2
@@ -156,7 +156,7 @@ def main():
         w = csv.writer(outfp)
 
         w.writerow(['hashval', 'lineage'])
-        for hashval, (lca, reason) in hashes_to_tax.items():
+        for hashval, lca in hashes_to_tax.items():
             lineage_str = lca_utils.display_lineage(lca, truncate_empty=False, include_strain=True)
             x = [hashval, lineage_str]
             w.writerow(x)

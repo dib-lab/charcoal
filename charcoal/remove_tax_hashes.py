@@ -25,7 +25,7 @@ def main():
 
     # find majority across leaves
     leaf_tax = collections.Counter()
-    for hashval, (tax, reason) in hashes_to_tax.items():
+    for hashval, tax in hashes_to_tax.items():
         if tax:
             p = pop_to_rank(tax, 'order')
             if p:
@@ -40,7 +40,7 @@ def main():
 
     # find all hashes belonging to "bad" (all but most common) tax.
     rm_hashes = set()
-    for hashval, (tax, reason) in hashes_to_tax.items():
+    for hashval, tax in hashes_to_tax.items():
         if tax:
             if not is_lineage_match(tax, most_common, 'order'):
                 print(lca_utils.display_lineage(tax))
