@@ -42,8 +42,11 @@ rule make_hashes:
     output:
         output_dir + '/{filename}.hashes'
     conda: 'conf/env-sourmash.yml'
+    params:
+        scaled=config['lca_scaled']
     shell: """
-        ./charcoal/process_genome.py {input} {output}
+        ./charcoal/process_genome.py {input} {output} \
+             --scaled={params.scaled}
      """
 
 rule make_hashes_fragment:
