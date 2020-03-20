@@ -61,18 +61,19 @@ rule make_hashes_fragment:
              --scaled={params.scaled}
      """
 
-rule make_matrix_csv:
+rule make_matrix:
     input:
         hashes=output_dir + '/{filename}.hashes{postfix}',
         metag_list=metagenome_sig_list,
     output:
-        output_dir + '/{filename}.hashes{postfix}.matrix.csv'
+        csv = output_dir + '/{filename}.hashes{postfix}.matrix.csv',
+        mat = output_dir + '/{filename}.hashes{postfix}.matrix'
     params:
         metagenome_sig_dir=metagenome_sig_dir
     conda: 'conf/env-sourmash.yml'
     shell: """
         ./charcoal/match_metagenomes.py {input.hashes} {input.metag_list} \
-            {output} -d {params.metagenome_sig_dir}
+            {output.csv} {output.mat} -d {params.metagenome_sig_dir}
     """
 
 rule make_matrix_pdf:
@@ -105,8 +106,7 @@ rule make_taxhashes:
 
 rule make_tree:
     input:
-        matrix=   output_dir + '/{f}.hashes.fragment.{size}.matrix.csv',
-        hashes=   output_dir + '/{f}.hashes.fragment.{size}',
+        matrix=   output_dir + '/{f}.hashes.fragment.{size}.matrix',
         taxhashes=output_dir + '/{f}.hashes.fragment.{size}.tax',
     output:
         output_dir + "/{f}.hashes.fragment.{size,\d+}.tree"
@@ -115,8 +115,7 @@ rule make_tree:
         lca_db=lca_db,
     shell: """
         ./charcoal/combine_tax_togetherness.py \
-             {input.matrix} {input.hashes} {input.taxhashes} \
-             --pickle-tree {output}
+             {input.matrix} {input.taxhashes} --pickle-tree {output}
      """
 
 rule make_tree_viz:

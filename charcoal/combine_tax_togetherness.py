@@ -10,7 +10,7 @@ from pickle import load, dump
 
 from sourmash.lca import lca_utils
 
-from utils import load_and_normalize
+import utils
 
 
 def do_cluster(mat, hashes_to_tax):
@@ -35,7 +35,7 @@ def do_cluster(mat, hashes_to_tax):
         node = nodelist[pos]
         assert node.get_id() == pos
         hashval = hashlist[pos]
-        tax_info, reason = hashes_to_tax[hashval]
+        tax_info = hashes_to_tax[hashval]
 
         x = set()
         if tax_info:
@@ -71,28 +71,29 @@ def do_cluster(mat, hashes_to_tax):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('matrix_csv', help='output of match_metagenomes')
-    p.add_argument('hashes', help='output of process_genome')
+    p.add_argument('matrix', help='output of match_metagenomes')
     p.add_argument('taxhashes', help='output of genome_shred_to_tax')
     p.add_argument('--pickle-tree', default=None)
     args = p.parse_args()
 
     # output of match_metagenomes
-    print('calculating distance matrix from', args.matrix_csv)
-    mat, n_orig_hashes = load_and_normalize(args.matrix_csv)
-
-    # output of process_genome
-    with open(args.hashes, 'rb') as fp:
-        hashes_to_length = load(fp)
+    print('calculating distance matrix from', args.matrix)
+    with open(args.matrix, 'rb') as fp:
+        matrix_obj = load(fp)
+    mat, n_orig_hashes = utils.make_distance_matrix(matrix_obj.mat)
 
     # output of genome_shred_to_tax
     with open(args.taxhashes, 'rb') as fp:
         hashes_to_tax = load(fp)
 
     # some basic validation
+    assert matrix_obj.ksize == hashes_to_tax.ksize
+    print(matrix_obj.genome_file, hashes_to_tax.genome_file)
+    assert matrix_obj.genome_file == hashes_to_tax.genome_file
+    assert matrix_obj.query_hashlist == list(sorted(hashes_to_tax))
+    assert matrix_obj.query_fragment_size == hashes_to_tax.fragment_size
     assert n_orig_hashes == len(hashes_to_tax), "mismatch! was same --scaled used to compute these?"
     assert mat.shape[1] == len(hashes_to_tax)
-    assert list(sorted(hashes_to_length)) == list(sorted(hashes_to_tax))
 
     print('distance matrix is {} x {}; found {} matching hashes.'.format(mat.shape[0], mat.shape[1], len(hashes_to_tax)))
 

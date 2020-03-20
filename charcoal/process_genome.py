@@ -8,6 +8,8 @@ import sourmash
 import screed
 from pickle import dump
 
+import utils                              # charcoal utils
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -21,7 +23,9 @@ def main():
 
     mh_factory = sourmash.MinHash(n=0, ksize=args.ksize, scaled=args.scaled)
 
-    hash_to_lengths = {}
+    hash_to_lengths = utils.HashesToLengths(args.genome,
+                                            args.ksize, args.scaled,
+                                            args.fragment)
 
     n = 0
     m = 0

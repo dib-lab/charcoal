@@ -11,6 +11,7 @@ from collections import defaultdict
 import sourmash
 import screed
 from sourmash.lca import lca_utils
+import utils                              # charcoal utils
 
 
 def summarize(hashvals, dblist, threshold):
@@ -84,7 +85,7 @@ def classify_signature(mh, db_list, threshold):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('lca_db')
-    p.add_argument('genome', nargs='+')
+    p.add_argument('genome')
     p.add_argument('output')
     p.add_argument('--fragment', default=100000, type=int)
     p.add_argument('--save-tax-hashes', default=None)
@@ -103,41 +104,51 @@ def main():
     w = csv.writer(outfp)
     w.writerow(['filename', 'contig', 'begin', 'end', 'lca', 'lca_rank', 'classified_as', 'classify_reason'])
 
-    hashes_to_tax = {}
+    hashes_to_tax = utils.HashesToTaxonomy(args.genome,
+                                           ksize,
+                                           scaled,
+                                           args.fragment,
+                                           args.lca_db)
 
     #
     # iterate over all contigs in genome file
     #
-    for genome in args.genome:
-        for record in screed.open(genome):
-            # fragment longer contigs into smaller regions
-            for start in range(0, len(record.sequence), args.fragment):
-                seq = record.sequence[start:start + args.fragment]
-                n += 1
-                sum_bp += len(seq)
+    for record in screed.open(args.genome):
+        # fragment longer contigs into smaller regions
+        for start in range(0, len(record.sequence), args.fragment):
+            seq = record.sequence[start:start + args.fragment]
+            n += 1
+            sum_bp += len(seq)
 
-                mh = mh_factory.copy_and_clear()
-                mh.add_sequence(seq, force=True)
-                if not mh:
-                    sum_missed_bp += len(seq)
-                    continue
+            # for each fragment, construct hashes
+            mh = mh_factory.copy_and_clear()
+            mh.add_sequence(seq, force=True)
+            if not mh:
+                sum_missed_bp += len(seq)
+                continue
 
-                lineage_counts = summarize(mh.get_mins(), [db], 1)
-                classify_lca, reason = classify_signature(mh, [db], 1)
+            # summarize & classify hashes; probably redundant code here.
+            lineage_counts = summarize(mh.get_mins(), [db], 1)
+            classify_lca, reason = classify_signature(mh, [db], 1)
 
-                for k in lineage_counts:
-                    lca_str = lca_utils.display_lineage(k, truncate_empty=False)
-                    classify_lca_str = lca_utils.display_lineage(classify_lca, truncate_empty=False)
-                    rank = ""
-                    if k:
-                        rank = k[-1].rank
-                    w.writerow((genome, record.name, start, start + args.fragment, lca_str, rank, classify_lca_str, reason))
+            # output a CSV containing all of the lineage counts
+            # (do we use this for anything?)
+            for k in lineage_counts:
+                lca_str = lca_utils.display_lineage(k, truncate_empty=False)
+                classify_lca_str = lca_utils.display_lineage(classify_lca, truncate_empty=False)
+                rank = ""
+                if k:
+                    rank = k[-1].rank
+                w.writerow((args.genome, record.name, start, start + args.fragment, lca_str, rank, classify_lca_str, reason))
 
-                min_of_mh = min(mh.get_mins())
-                hashes_to_tax[min_of_mh] = (classify_lca, reason)
+            # construct the hashes_to_tax dictionary from the minimum
+            # of the hashes in the contig; this will match the
+            # results from process_genome.
+            min_of_mh = min(mh.get_mins())
+            hashes_to_tax[min_of_mh] = classify_lca
 
-                m += 1
-                min_value = min(mh.get_mins())
+            m += 1
+            min_value = min(mh.get_mins())
 
     print('{} contigs / {} bp, {} hash values (missing {} contigs / {} bp)'.format(n, sum_bp, len(hashes_to_tax), n - m, sum_missed_bp))
 
