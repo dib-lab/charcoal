@@ -111,45 +111,46 @@ def main():
                                            args.lca_db)
 
     #
-    # iterate over all contigs in genome file
+    # iterate over all contigs in genome file, fragmenting them.
     #
-    for record in screed.open(args.genome):
-        # fragment longer contigs into smaller regions
-        for start in range(0, len(record.sequence), args.fragment):
-            seq = record.sequence[start:start + args.fragment]
-            n += 1
-            sum_bp += len(seq)
+    shredder = utils.GenomeShredder(args.genome, args.fragment)
+    for name, seq, start, end in shredder:
+        n += 1
+        sum_bp += len(seq)
 
-            # for each fragment, construct hashes
-            mh = mh_factory.copy_and_clear()
-            mh.add_sequence(seq, force=True)
-            if not mh:
-                sum_missed_bp += len(seq)
-                continue
+        # for each fragment, construct hashes
+        mh = mh_factory.copy_and_clear()
+        mh.add_sequence(seq, force=True)
+        if not mh:
+            sum_missed_bp += len(seq)
+            continue
 
-            # summarize & classify hashes; probably redundant code here.
-            lineage_counts = summarize(mh.get_mins(), [db], 1)
-            classify_lca, reason = classify_signature(mh, [db], 1)
+        # summarize & classify hashes; probably redundant code here...
+        lineage_counts = summarize(mh.get_mins(), [db], 1)
+        classify_lca, reason = classify_signature(mh, [db], 1)
 
-            # output a CSV containing all of the lineage counts
-            # (do we use this for anything?)
-            for k in lineage_counts:
-                lca_str = lca_utils.display_lineage(k, truncate_empty=False)
-                classify_lca_str = lca_utils.display_lineage(classify_lca, truncate_empty=False)
-                rank = ""
-                if k:
-                    rank = k[-1].rank
-                w.writerow((args.genome, record.name, start, start + args.fragment, lca_str, rank, classify_lca_str, reason))
+        # output a CSV containing all of the lineage counts
+        # (do we use this for anything?)
+        for k in lineage_counts:
+            lca_str = lca_utils.display_lineage(k, truncate_empty=False)
+            classify_lca_str = lca_utils.display_lineage(classify_lca,
+                                                         truncate_empty=False)
+            rank = ""
+            if k:
+                rank = k[-1].rank
+            w.writerow((args.genome, name, start, end,
+                        lca_str, rank, classify_lca_str, reason))
 
-            # construct the hashes_to_tax dictionary from the minimum
-            # of the hashes in the contig; this will match the
-            # results from process_genome.
-            min_of_mh = min(mh.get_mins())
-            hashes_to_tax[min_of_mh] = classify_lca
+        # construct the hashes_to_tax dictionary from the minimum
+        # of the hashes in the contig; this will match the
+        # results from process_genome.
+        min_of_mh = min(mh.get_mins())
+        hashes_to_tax[min_of_mh] = classify_lca
 
-            m += 1
-            min_value = min(mh.get_mins())
+        m += 1
+        min_value = min(mh.get_mins())
 
+    # done! summarize to output.
     print('{} contigs / {} bp, {} hash values (missing {} contigs / {} bp)'.format(n, sum_bp, len(hashes_to_tax), n - m, sum_missed_bp))
 
     if args.save_tax_hashes:

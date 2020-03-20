@@ -4,6 +4,7 @@ utility functions for charcoal.
 import math
 import numpy as np
 from numpy import genfromtxt
+import screed
 
 
 def load_matrix_csv(filename):
@@ -131,3 +132,20 @@ class MetagenomesMatrix(object):
         self.query_fragment_size = query_fragment_size
         self.ksize = ksize
         self.mat = None
+
+
+class GenomeShredder(object):
+    def __init__(self, genome_file, fragment_size):
+        self.genome_file = genome_file
+        self.fragment_size = fragment_size
+
+    def __iter__(self):
+        fragment_size = self.fragment_size
+
+        for record in screed.open(self.genome_file):
+            if not fragment_size:
+                yield record.name, record.sequence, 0, len(record.sequence)
+            else:
+                for start in range(0, len(record.sequence), fragment_size):
+                    seq = record.sequence[start:start + fragment_size]
+                    yield record.name, seq, start, start + len(seq)
