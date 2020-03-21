@@ -27,6 +27,22 @@ def make_lca(node, node_id_to_tax):
 
 
 def query_cut_node(node, node_id_to_tax, most_common):
+    """\
+    Should we eliminate this node?
+
+    * if it has no taxonomic assignment, leave the node: we have no info
+      either way.
+
+    * if the LCA taxonomic assignment of the node is above order, leave
+      the node: there is (presumably) taxonomic confusion below this node.
+      (note, if this is a leaf node, we should take another look at this
+      contig!)
+
+    * if the LCA taxonomic assignment of the node matches the most common
+      lineage at the 'order' level, keep the node: this is probably correct.
+
+    * if none of those conditions are met, remove the node!
+    """
     # should we cut this node?
     lca = make_lca(node, node_id_to_tax)
 
@@ -34,7 +50,7 @@ def query_cut_node(node, node_id_to_tax, most_common):
     if not lca:
         return False
 
-    # high level node? ignore. confusion below.
+    # high level node? ignore. confusion _below_ this node, leave this one.
     if lca[-1].rank in ('superkingdom', 'phylum', 'class'):
         return False
 

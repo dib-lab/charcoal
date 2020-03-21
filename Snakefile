@@ -99,21 +99,25 @@ rule make_matrix_pdf:
             --dendro {output.dendro_pdf} > {output.out}
     """
 
-rule make_taxhashes:
+rule make_taxhashes_multi:
     input:
-        genome_dir + '/{filename}'
+        expand(genome_dir + '/{f}', f=genome_list)
     output:
-        taxhashes=output_dir + '/{filename}.hash.{size}.tax',
-        taxcsv=   output_dir + '/{filename}.hash.{size}.tax.csv'
+        taxhashes=expand(output_dir + '/{f}.hash.{{size}}.tax', f=genome_list),
+        taxcsv=expand(output_dir + '/{f}.hash.{{size}}.tax.csv', f=genome_list)
     conda: 'conf/env-sourmash.yml'
     resources:
         mem_mb=180000,
     params:
         lca_db=lca_db,
+        output_dir=output_dir,
+        tax_template = lambda wildcards: output_dir + '/{{genome}}.hash.{size}.tax'.format(size=wildcards.size),
+        csv_template = lambda wildcards: output_dir + '/{{genome}}.hash.{size}.tax.csv'.format(size=wildcards.size),
     shell: """
-        ./charcoal/genome_shred_to_tax.py {params.lca_db} {input} \
-             {output.taxcsv} \
-             --fragment {wildcards.size} --save-tax-hashes {output.taxhashes}
+        ./charcoal/genome_shred_to_tax_multi.py {params.lca_db} {input} \
+             --csv-output-template {params.csv_template} \
+             --save-tax-hashes-template {params.tax_template} \
+             --fragment {wildcards.size}
      """
 
 rule make_tree:
