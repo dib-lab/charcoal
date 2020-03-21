@@ -106,6 +106,8 @@ rule make_taxhashes:
         taxhashes=output_dir + '/{filename}.hash.{size}.tax',
         taxcsv=   output_dir + '/{filename}.hash.{size}.tax.csv'
     conda: 'conf/env-sourmash.yml'
+    resources:
+        mem_mb=180000,
     params:
         lca_db=lca_db,
     shell: """
