@@ -19,12 +19,14 @@ import utils                              # charcoal utils
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('genome')
-    p.add_argument('--tax-hashes')
+    p.add_argument('--tax-hashes', help='output of genome_shred_to_tax')
+    p.add_argument('--matrix', help='output of match_metagenomes')
     p.add_argument('-o', '--output')
     args = p.parse_args()
 
     assert args.tax_hashes
     assert args.output
+    assert args.matrix
 
     n_contigs = 0
     sum_bp = 0
@@ -129,6 +131,37 @@ Genus or above: {len(lca_count_genus)} distinct taxonomic matches in the genome 
     print(f"\nGenus or above: {len(rank_count)} ranks in tax classifications.", file=outfp)
     for rank, cnt in rank_count.most_common():
         print(f"* {cnt} at rank '{rank}'", file=outfp)
+
+    ###
+
+    print('calculating distance matrix from', args.matrix)
+    with open(args.matrix, 'rb') as fp:
+        matrix_obj = load(fp)
+
+    matrix = matrix_obj.mat
+
+    n_metagenomes, n_hashes = matrix.shape
+
+    n_not_present = 0
+    for i in range(n_metagenomes):
+        if not sum(matrix[i, :]):
+            n_not_present += 1
+
+    n_empty_hashes = 0
+    for j in range(n_hashes):
+        if not sum(matrix[:, j]):
+            n_empty_hashes += 1
+
+    # @CTB include plot?
+    print(f"""
+## Metagenome togetherness
+
+Across {n_metagenomes} metagenomes, {n_hashes - n_empty_hashes} of {n_hashes}
+hashes are present in at least one sample.
+
+Of {n_metagenomes}, this genome has no overlap with {n_not_present} of them.
+
+""", file=outfp)
 
 
 if __name__ == '__main__':
