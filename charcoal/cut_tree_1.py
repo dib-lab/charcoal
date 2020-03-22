@@ -11,8 +11,6 @@ import collections
 from pickle import load
 import pprint
 
-import dendropy
-
 from utils import is_lineage_match, pop_to_rank
 
 
