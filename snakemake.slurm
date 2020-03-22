@@ -25,7 +25,7 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-snakemake -p -j 1 --use-conda --configfile=conf/ibd.conf --resources mem=${SLURM_MEM_PER_NODE:-150000}
+snakemake -p -j 1 --use-conda --configfile=conf/ibd.conf --resources mem=${SLURM_MEM_PER_NODE:-150000} -- all reports
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables
