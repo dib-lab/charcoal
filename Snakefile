@@ -41,6 +41,10 @@ rule all_make_tree_viz:
         expand(output_dir + '/{g}.hash.100000.tree.newick', g=genome_list),
         expand(output_dir + '/{g}.hash.100000.tree.png', g=genome_list),
 
+rule reports:
+    input:
+        expand(output_dir + '/{g}.hash.100000.report.txt', g=genome_list)
+
 ####
 
 rule make_hashes:
@@ -224,5 +228,17 @@ rule together_json:
         ./charcoal/together_tree_to_json.py \
                {input.genome} {input.taxhashes} {input.tree} {output.json} \
                --fragment {wildcards.size}
-     """
+    """
 
+rule make_report:
+    input:
+        genome=genome_dir + "/{f}",
+        taxhashes=output_dir + "/{f}.hash.{size}.tax",
+        tree=output_dir + "/{f}.hash.{size}.tree"
+    output:
+        output_dir + '/{f}.hash.{size}.report.txt'
+    shell: """
+        ./charcoal/report_and_summarize.py {input.genome} \
+            --tax-hashes {input.taxhashes} \
+            -o {output}
+    """
