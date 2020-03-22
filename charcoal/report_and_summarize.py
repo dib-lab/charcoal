@@ -92,15 +92,28 @@ Hashing missed {sum_missed_bp/1000:.2f} kbp in {missed_contigs} contigs.
 
 LCA database: {hashes_to_tax.lca_db_file}
 
-Order or above: {len(lca_count_order)} distinct taxonomic matches in the genome fragments.
+### Order or above
+
+{len(lca_count_order)} distinct taxonomic matches in the genome fragments.
 """, file=outfp)
 
     for lca, cnt in lca_count_order.most_common():
         pcnt = cnt / len(hashes_to_tax) * 100.
         print(f"""\
-* {cnt} fragments ({pcnt:.1f}%), {lca_utils.display_lineage(lca, truncate_empty=False)}""",
+* {cnt} fragments ({pcnt:.1f}%), {lca_utils.display_lineage(lca, truncate_empty=True)}""",
               file=outfp)
 
+    most_common_order, cnt = lca_count_order.most_common()[0]
+    most_common_order_str = lca_utils.display_lineage(most_common_order,
+                                                      truncate_empty=True)
+
+    print(f"""
+The most common order is:
+
+{most_common_order_str}
+
+so that's what we'll assume this genome is.
+""", file=outfp)
 
     lca_count_genus = Counter()
     for v in hashes_to_tax.d.values():
@@ -109,16 +122,15 @@ Order or above: {len(lca_count_order)} distinct taxonomic matches in the genome 
         lca_count_genus[v2] += 1
 
     print(f"""\
+### Genus or above
 
-----
-
-Genus or above: {len(lca_count_genus)} distinct taxonomic matches in the genome fragments.
+{len(lca_count_genus)} distinct taxonomic matches in the genome fragments.
 """, file=outfp)
 
     for lca, cnt in lca_count_genus.most_common():
         pcnt = cnt / len(hashes_to_tax) * 100.
         print(f"""\
-* {cnt} fragments ({pcnt:.1f}%), {lca_utils.display_lineage(lca, truncate_empty=False)}""",
+* {cnt} fragments ({pcnt:.1f}%), {lca_utils.display_lineage(lca, truncate_empty=True)}""",
               file=outfp)
 
     rank_count = Counter()
@@ -156,11 +168,9 @@ Genus or above: {len(lca_count_genus)} distinct taxonomic matches in the genome 
     print(f"""
 ## Metagenome togetherness
 
-Across {n_metagenomes} metagenomes, {n_hashes - n_empty_hashes} of
-{n_hashes} hashes are present in at least one sample.
+Across {n_metagenomes} metagenomes, {n_hashes - n_empty_hashes} of {n_hashes} hashes are present in at least one sample.
 
-Of {n_metagenomes} metagenomes, this genome has no overlap with
-{n_not_present} of them.
+Of {n_metagenomes} metagenomes, this genome has no overlap with {n_not_present} of them.
 
 """, file=outfp)
 
