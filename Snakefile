@@ -110,6 +110,8 @@ rule make_taxhashes_multi:
         taxhashes=expand(output_dir + '/{f}.hash.{{size}}.tax', f=genome_list),
         taxcsv=expand(output_dir + '/{f}.hash.{{size}}.tax.csv', f=genome_list)
     conda: 'conf/env-sourmash.yml'
+    resources:
+        mem_mb=180000,
     params:
         lca_db=lca_db,
         output_dir=output_dir,
