@@ -156,10 +156,11 @@ Genus or above: {len(lca_count_genus)} distinct taxonomic matches in the genome 
     print(f"""
 ## Metagenome togetherness
 
-Across {n_metagenomes} metagenomes, {n_hashes - n_empty_hashes} of {n_hashes}
-hashes are present in at least one sample.
+Across {n_metagenomes} metagenomes, {n_hashes - n_empty_hashes} of
+{n_hashes} hashes are present in at least one sample.
 
-Of {n_metagenomes}, this genome has no overlap with {n_not_present} of them.
+Of {n_metagenomes} metagenomes, this genome has no overlap with
+{n_not_present} of them.
 
 """, file=outfp)
 
