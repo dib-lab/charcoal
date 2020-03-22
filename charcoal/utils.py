@@ -6,6 +6,8 @@ import numpy as np
 from numpy import genfromtxt
 import screed
 
+from sourmash.lca import lca_utils
+
 
 def load_matrix_csv(filename):
     mat = genfromtxt(filename, delimiter=',')
@@ -68,6 +70,19 @@ def is_lineage_match(lin_a, lin_b, rank):
 def pop_to_rank(lin, rank):
     "Remove lineage tuples from given lineage `lin` until `rank` is reached."
     lin = list(lin)
+
+    txl = lca_utils.taxlist()
+    before_rank = []
+    for txl_rank in txl:
+        if txl_rank != rank:
+            before_rank.append(txl_rank)
+        else:
+            break
+
+    # are we already above rank?
+    if lin and lin[-1].rank in before_rank:
+        return tuple(lin)
+
     while lin and lin[-1].rank != rank:
         lin.pop()
 
