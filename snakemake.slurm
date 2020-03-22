@@ -3,7 +3,7 @@
 #SBATCH -J charcoal            # name for job
 #SBATCH -N 1                   # one "node", or computer
 #SBATCH -n 1                   # one task for this node
-#SBATCH -c 1                  # cores per task
+#SBATCH -c 16                  # cores per task
 #SBATCH -t 1-0                 # ask for a full day
 #SBATCH --mem=300000             # memory (300,000 mb = 300gb)
 #SBATCH --mail-type=ALL
