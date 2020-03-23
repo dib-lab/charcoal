@@ -40,6 +40,8 @@ rule all_make_tree_viz:
     input:
         expand(output_dir + '/{g}.hash.100000.tree.newick', g=genome_list),
         expand(output_dir + '/{g}.hash.100000.tree.png', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree.json.pdf', g=genome_list),
+        expand(output_dir + '/{g}.hash.100000.tree.json.svg', g=genome_list),
 
 rule reports:
     input:
@@ -160,6 +162,20 @@ rule make_tree_viz_output:
         ete3 view -t {input} --show_internal_names -i {output.png}
         ete3 view -t {input} --show_internal_names -i {output.svg}
      """
+
+rule make_tree_viz_output_pretty:
+    input: 
+        hash_to_frag = output_dir + '/{f}.hash.{size}.tree.json.hashes_to_fragment.csv',
+        hash_to_tax = output_dir + '/{f}.hash.{size}.tree.json.hashes_to_tax.csv',
+        leaves_to_hash = output_dir + '/{f}.hash.{size}.tree.json.leaves_to_hashval.csv',
+        node_to_children = output_dir + '/{f}.hash.{size}.tree.json.node_to_children.csv',
+    output:
+        pdf = output_dir + '/{f}.hash.{size}.tree.json.pdf',
+        svg = output_dir + '/{f}.hash.{size}.tree.json.svg',
+    params: 
+        output_dir = output_dir  
+    conda:  'conf/env-ggtree.yml' 
+    script: "charcoal/plot_json_pretty.R"
 
 # generic rule for removing contigs/fragments by hash
 rule separate_clean_dirty:
