@@ -108,9 +108,10 @@ LCA database: {hashes_to_tax.lca_db_file}
 
     for lca, cnt in lca_count_order.most_common():
         pcnt = cnt / len(hashes_to_tax) * 100.
-        print(f"""\
-* {cnt} fragments ({pcnt:.1f}%), {lca_utils.display_lineage(lca, truncate_empty=True)}""",
-              file=outfp)
+        lca_str = "(none)"
+        if lca:
+            lca_str = lca_utils.display_lineage(lca, truncate_empty=True)
+        print(f"* {cnt} fragments ({pcnt:.1f}%), {lca_str}", file=outfp)
 
     most_common_order, cnt = lca_count_order.most_common()[0]
     most_common_order_str = lca_utils.display_lineage(most_common_order,
