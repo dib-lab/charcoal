@@ -21,12 +21,18 @@ def main():
     p.add_argument('genome')
     p.add_argument('--tax-hashes', help='output of genome_shred_to_tax')
     p.add_argument('--matrix', help='output of match_metagenomes')
+    p.add_argument('--tips-rm', help='output of remove_tips')
+    p.add_argument('--tax-rm', help='output of remove_tax_hashes')
+    p.add_argument('--cut1-rm', help='output of cut_tree_1')
     p.add_argument('-o', '--output')
     args = p.parse_args()
 
     assert args.tax_hashes
     assert args.output
     assert args.matrix
+    assert args.tips_rm
+    assert args.tax_rm
+    assert args.cut1_rm
 
     n_contigs = 0
     sum_bp = 0
@@ -66,7 +72,7 @@ Genome file: {args.genome}
             sum_missed_bp += len(seq)
             missed_contigs += 1
 
-    #assert total_contigs == len(hashes_to_tax) @CTB WTF
+    assert total_contigs - missed_contigs == len(hashes_to_tax) # @CTB WTF
 
     print(f"""\
 ## Contigs & fragments report
@@ -171,6 +177,25 @@ so that's what we'll assume this genome is.
 Across {n_metagenomes} metagenomes, {n_hashes - n_empty_hashes} of {n_hashes} hashes are present in at least one sample.
 
 Of {n_metagenomes} metagenomes, this genome has no overlap with {n_not_present} of them.
+
+""", file=outfp)
+
+    #######
+
+    tax_rm = utils.load_hashset(args.tax_rm)
+    tips_rm = utils.load_hashset(args.tips_rm)
+    cut1_rm = utils.load_hashset(args.cut1_rm)
+
+    assert tax_rm == tips_rm
+
+    print(f"""
+## Removal statistics.
+
+{len(tips_rm)} hashes removed by simple contig tax/tip analysis.
+{len(cut1_rm)} hashes removed by cut-1 algorithm.
+{len(tips_rm.intersection(cut1_rm))} in common;
+{len(tips_rm - cut1_rm)} only in simple tax/tip removal;
+{len(cut1_rm - tips_rm)} only in cut-1 algorithm.
 
 """, file=outfp)
 

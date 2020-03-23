@@ -9,6 +9,13 @@ import screed
 from sourmash.lca import lca_utils
 
 
+def load_hashset(filename):
+    "Load set of hashes from a file."
+    with open(filename, 'rt') as fp:
+        hashes = set([ int(x.strip()) for x in fp if x.strip() ])
+    return hashes
+
+
 def load_matrix_csv(filename):
     mat = genfromtxt(filename, delimiter=',')
     return mat

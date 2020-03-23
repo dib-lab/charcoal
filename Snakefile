@@ -238,10 +238,16 @@ rule make_report:
         taxhashes=output_dir + "/{f}.hash.{size}.tax",
         tree=output_dir + "/{f}.hash.{size}.tree",
         matrix=output_dir + '/{f}.hash.{size}.matrix',
+        tips_rm=output_dir + '/{f}.hash.{size}.tree.rm',
+        tax_rm=output_dir + '/{f}.hash.{size}.tax.rm',
+        cut1_rm=output_dir + '/{f}.hash.{size}.tree.cut',
     output:
         output_dir + '/{f}.hash.{size}.report.txt'
     shell: """
         ./charcoal/report_and_summarize.py {input.genome} \
             --tax-hashes {input.taxhashes} --matrix {input.matrix} \
+            --tips-rm {input.tax_rm} \
+            --tax-rm {input.tips_rm} \
+            --cut1-rm {input.cut1_rm} \
             -o {output}
     """
