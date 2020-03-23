@@ -86,6 +86,7 @@ def shred_to_tax(genome, csv_output, tax_hashes_output, fragment_size, lca_db,
                  lca_db_name, mh_factory):
     n = 0
     m = 0
+    n_skipped_contigs = 0
     sum_bp = 0
     sum_missed_bp = 0
 
@@ -112,6 +113,7 @@ def shred_to_tax(genome, csv_output, tax_hashes_output, fragment_size, lca_db,
         mh.add_sequence(seq, force=True)
         if not mh:
             sum_missed_bp += len(seq)
+            n_skipped_contigs += 1
             continue
 
         # summarize & classify hashes; probably redundant code here...
@@ -134,6 +136,8 @@ def shred_to_tax(genome, csv_output, tax_hashes_output, fragment_size, lca_db,
         # of the hashes in the contig; this will match the
         # results from process_genome.
         min_of_mh = min(mh.get_mins())
+        if min_of_mh in hashes_to_tax:
+            print('** WARNING: Duplicate 31-mer chosen!?', name, min_of_mh)
         hashes_to_tax[min_of_mh] = classify_lca
 
         m += 1
@@ -141,6 +145,9 @@ def shred_to_tax(genome, csv_output, tax_hashes_output, fragment_size, lca_db,
 
     # done! summarize to output.
     print('{} contigs / {} bp, {} hash values (missing {} contigs / {} bp)'.format(n, sum_bp, len(hashes_to_tax), n - m, sum_missed_bp))
+
+    # with duplicate 31-mers, this may not always be true :(
+    #assert n - n_skipped_contigs == len(hashes_to_tax)
 
     if tax_hashes_output:
         with open(tax_hashes_output, 'wb') as fp:
