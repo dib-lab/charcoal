@@ -8,7 +8,7 @@ import sourmash
 import screed
 from pickle import dump
 
-import utils                              # charcoal utils
+from . import utils                              # charcoal utils
 
 
 def main():

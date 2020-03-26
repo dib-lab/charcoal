@@ -11,7 +11,7 @@ from collections import defaultdict
 import sourmash
 import screed
 from sourmash.lca import lca_utils
-import utils                              # charcoal utils
+from . import utils                              # charcoal utils
 
 
 def summarize(hashvals, dblist, threshold):

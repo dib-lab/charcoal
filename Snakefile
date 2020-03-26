@@ -58,7 +58,7 @@ rule make_hashes:
     params:
         scaled=config['lca_scaled']
     shell: """
-        ./charcoal/process_genome.py {input} {output} \
+        python -m charcoal.process_genome {input} {output} \
              --scaled={params.scaled}
      """
 
@@ -72,7 +72,7 @@ rule make_hashes_fragment:
     params:
         scaled=config['lca_scaled']
     shell: """
-        ./charcoal/process_genome.py {input} {output.hashes} \
+        python -m charcoal.process_genome {input} {output.hashes} \
              --fragment {wildcards.size} --stats {output.stats} \
              --scaled={params.scaled}
      """
@@ -88,7 +88,7 @@ rule make_matrix:
         metagenome_sig_dir=metagenome_sig_dir
     conda: 'conf/env-sourmash.yml'
     shell: """
-        ./charcoal/match_metagenomes.py {input.hashes} {input.metag_list} \
+        python -m charcoal.match_metagenomes {input.hashes} {input.metag_list} \
             {output.csv} {output.mat} -d {params.metagenome_sig_dir}
     """
 
@@ -101,7 +101,7 @@ rule make_matrix_pdf:
         out=output_dir + '/{g}.matrix.csv.dendro.out'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        ./charcoal/cluster_and_plot.py {input} {output.matrix_pdf} \
+        python -m charcoal.cluster_and_plot {input} {output.matrix_pdf} \
             --dendro {output.dendro_pdf} > {output.out}
     """
 
@@ -120,7 +120,7 @@ rule make_taxhashes_multi:
         tax_template = lambda wildcards: output_dir + '/{{genome}}.hash.{size}.tax'.format(size=wildcards.size),
         csv_template = lambda wildcards: output_dir + '/{{genome}}.hash.{size}.tax.csv'.format(size=wildcards.size),
     shell: """
-        ./charcoal/genome_shred_to_tax_multi.py {params.lca_db} {input} \
+        python -m charcoal.genome_shred_to_tax_multi {params.lca_db} {input} \
              --csv-output-template {params.csv_template} \
              --save-tax-hashes-template {params.tax_template} \
              --fragment {wildcards.size}
@@ -136,7 +136,7 @@ rule make_tree:
     params:
         lca_db=lca_db,
     shell: """
-        ./charcoal/combine_tax_togetherness.py \
+        python -m charcoal.combine_tax_togetherness \
              {input.matrix} {input.taxhashes} --pickle-tree {output}
      """
 
@@ -147,7 +147,7 @@ rule make_tree_viz:
         output_dir + '/{f}.hash.{size}.tree.newick',
     conda: 'conf/env-ete.yml'
     shell: """
-        ./charcoal/ete_make_newick.py {input} {output}
+        python -m charcoal.ete_make_newick {input} {output}
      """
 
 rule make_tree_viz_output:
@@ -187,7 +187,7 @@ rule separate_clean_dirty:
         dirty=output_dir + '/{f}.hash.{size}.{suffix}.dirty.fa'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        charcoal/remove_contigs_by_hash.py {input.genome} {input.rmhashes} \
+        python -m charcoal.remove_contigs_by_hash {input.genome} {input.rmhashes} \
             --fragment {wildcards.size} {output.clean} {output.dirty}
      """
 
@@ -199,7 +199,7 @@ rule clean_tax_only:
         output_dir + '/{f}.hash.{size}.tax.rm'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        charcoal/remove_tax_hashes.py {input} --rm-hashes {output}
+        python -m charcoal.remove_tax_hashes {input} --rm-hashes {output}
      """
 
 # do dumb cleaning, based solely on tip taxonomy
@@ -211,7 +211,7 @@ rule clean_tip_only:
         output_dir + '/{f}.hash.{size}.tree.rm'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        charcoal/remove_tips.py {input.tree} {input.hashes} \
+        python -m charcoal.remove_tips {input.tree} {input.hashes} \
               --rm-hashes {output}
      """
 
@@ -224,7 +224,7 @@ rule cut_tree:
         output_dir + '/{f}.hash.{size}.tree.cut'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        charcoal/cut_tree_1.py {input.tree} {input.hashes} \
+        python -m charcoal.cut_tree_1 {input.tree} {input.hashes} \
               --rm-hashes {output}
      """
 
@@ -243,7 +243,7 @@ rule together_json:
         csv5 = output_dir + '/{f}.hash.{size}.tree.json.node_to_children.csv',
     conda: 'conf/env-sourmash.yml'
     shell: """
-        ./charcoal/together_tree_to_json.py \
+        python -m charcoal.together_tree_to_json \
                {input.genome} {input.taxhashes} {input.tree} {output.json} \
                --fragment {wildcards.size}
     """
@@ -260,7 +260,7 @@ rule make_report:
     output:
         output_dir + '/{f}.hash.{size}.report.txt'
     shell: """
-        ./charcoal/report_and_summarize.py {input.genome} \
+        python -m charcoal.report_and_summarize {input.genome} \
             --tax-hashes {input.taxhashes} --matrix {input.matrix} \
             --tips-rm {input.tax_rm} \
             --tax-rm {input.tips_rm} \

@@ -11,7 +11,7 @@ import os
 
 import sourmash
 
-import utils                              # charcoal utils
+from . import utils                              # charcoal utils
 
 
 def main():

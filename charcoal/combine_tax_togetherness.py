@@ -10,7 +10,7 @@ from pickle import load, dump
 
 from sourmash.lca import lca_utils
 
-import utils
+from . import utils
 
 
 def do_cluster(mat, hashes_to_tax):

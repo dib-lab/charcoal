@@ -13,7 +13,7 @@ import screed
 import sourmash
 from sourmash.lca import lca_utils
 
-import utils                              # charcoal utils
+from . import utils                              # charcoal utils
 
 
 def main():

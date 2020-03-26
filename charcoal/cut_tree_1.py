@@ -11,7 +11,7 @@ import collections
 from pickle import load
 import pprint
 
-from utils import is_lineage_match, pop_to_rank
+from .utils import is_lineage_match, pop_to_rank
 
 
 def make_lca(node, node_id_to_tax):

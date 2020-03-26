@@ -12,7 +12,7 @@ import pylab
 import scipy.cluster.hierarchy as sch
 import collections
 
-import utils
+from . import utils
 
 
 def plot_composite_matrix(D, labeltext, show_labels=True, show_indices=True,

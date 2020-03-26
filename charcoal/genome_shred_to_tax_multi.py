@@ -14,8 +14,8 @@ import os
 import sourmash
 import screed
 from sourmash.lca import lca_utils
-import utils                              # charcoal utils
-from genome_shred_to_tax import summarize, classify_signature, shred_to_tax
+from . import utils                              # charcoal utils
+from .genome_shred_to_tax import summarize, classify_signature, shred_to_tax
 
 
 def main():
