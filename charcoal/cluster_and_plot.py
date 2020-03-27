@@ -100,13 +100,13 @@ def annotated_dendro(mat):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('matrix_csv')
-    p.add_argument('output_fig')
-    p.add_argument('--dendro', default=None)
-    p.add_argument('--newick', default=None)
+    p.add_argument('--load-matrix-csv', required=True)
+    p.add_argument('--output-fig', required=True)
+    p.add_argument('--dendro-out', default=None)
+    p.add_argument('--newick-out', default=None)
     args = p.parse_args()
 
-    mat = utils.load_matrix_csv(args.matrix_csv)
+    mat = utils.load_matrix_csv(args.load_matrix_csv)
     mat, n_orig_hashes = utils.make_distance_matrix(mat)
 
     n_hashes = mat.shape[0]
@@ -118,7 +118,7 @@ def main():
                               force=True)
     x.savefig(args.output_fig)
 
-    if args.newick:
+    if args.newick_out:
         Y = sch.linkage(mat, method='complete')
 
         ###
@@ -137,13 +137,13 @@ def main():
                 r = traverse(node.get_right(), indent=indent + ' ')
                 return "({},{}){}".format(l, r, node.get_id())
 
-        with open(args.newick, 'wt') as fp:
+        with open(args.newick_out, 'wt') as fp:
             print(traverse(rootnode), file=fp)
 
 
-    if args.dendro:
+    if args.dendro_out:
         y, Z = annotated_dendro(mat)
-        y.savefig(args.dendro)
+        y.savefig(args.dendro_out)
 
         CUT_POINT=2.0
         Y = sch.linkage(mat, method='complete')
