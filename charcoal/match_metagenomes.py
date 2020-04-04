@@ -16,19 +16,19 @@ from . import utils                              # charcoal utils
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('hashes_pickle')
-    p.add_argument('metagenome_sigs_list')
-    p.add_argument('matrix_csv_out')
-    p.add_argument('matrix_pickle')
+    p.add_argument('--load-hashes', required=True)
+    p.add_argument('--metagenome-sigs-list', required=True)
+    p.add_argument('--matrix-csv-out', required=True)
+    p.add_argument('--matrix-pickle-out', required=True)
     p.add_argument('-d', '--metagenome-sigs-dir', default=None)
     p.add_argument('-k', '--ksize', type=int, default=31)
     args = p.parse_args()
 
-    with open(args.hashes_pickle, 'rb') as fp:
+    with open(args.load_hashes, 'rb') as fp:
         hash_to_lengths = load(fp)
         assert hash_to_lengths.ksize == args.ksize
 
-    print('loaded {} hashes from {}'.format(len(hash_to_lengths), args.hashes_pickle))
+    print('loaded {} hashes from {}'.format(len(hash_to_lengths), args.load_hashes))
 
     with open(args.metagenome_sigs_list, 'rt') as fp:
         metagenome_sigs = [ x.strip() for x in fp ]
@@ -75,7 +75,7 @@ def main():
             w.writerow(y)
 
     mm.mat = matrix
-    with open(args.matrix_pickle, 'wb') as outfp:
+    with open(args.matrix_pickle_out, 'wb') as outfp:
         dump(mm, outfp)
 
     return 0

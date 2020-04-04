@@ -71,19 +71,21 @@ def do_cluster(mat, hashes_to_tax):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('matrix', help='output of match_metagenomes')
-    p.add_argument('taxhashes', help='output of genome_shred_to_tax')
+    p.add_argument('--load-matrix-pickle', help='output of match_metagenomes',
+                   required=True)
+    p.add_argument('--load-tax-hashes', help='output of genome_shred_to_tax',
+                   required=True)
     p.add_argument('--pickle-tree', default=None)
     args = p.parse_args()
 
     # output of match_metagenomes
-    print('calculating distance matrix from', args.matrix)
-    with open(args.matrix, 'rb') as fp:
+    print('calculating distance matrix from', args.load_matrix_pickle)
+    with open(args.load_matrix_pickle, 'rb') as fp:
         matrix_obj = load(fp)
     mat, n_orig_hashes = utils.make_distance_matrix(matrix_obj.mat)
 
     # output of genome_shred_to_tax
-    with open(args.taxhashes, 'rb') as fp:
+    with open(args.load_tax_hashes, 'rb') as fp:
         hashes_to_tax = load(fp)
 
     # some basic validation

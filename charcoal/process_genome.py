@@ -13,8 +13,8 @@ from . import utils                              # charcoal utils
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('genome')
-    p.add_argument('output')
+    p.add_argument('--genome', required=True)
+    p.add_argument('--save-hashes', required=True)
     p.add_argument('-k', '--ksize', default=31, type=int)
     p.add_argument('--scaled', default=1000, type=int)
     p.add_argument('--fragment', default=0, type=int)
@@ -64,7 +64,7 @@ def main():
     print('{} contigs / {} bp, {} hash values (missing {} contigs / {} bp)'.format(n, sum_bp, len(hash_to_lengths), n - m, sum_missed_bp))
 
     # save pickled version
-    with open(args.output, 'wb') as fp:
+    with open(args.save_hashes, 'wb') as fp:
         dump(hash_to_lengths, fp)
     
     return 0

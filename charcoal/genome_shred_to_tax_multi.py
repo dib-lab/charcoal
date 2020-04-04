@@ -20,8 +20,8 @@ from .genome_shred_to_tax import summarize, classify_signature, shred_to_tax
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('lca_db')
-    p.add_argument('genomes', nargs='+')
+    p.add_argument('--lca-db', required=True)
+    p.add_argument('--genomes', nargs='+', required=True)
     p.add_argument('--csv-output-template', default=None)
     p.add_argument('--fragment', default=100000, type=int)
     p.add_argument('--save-tax-hashes-template', default=None)

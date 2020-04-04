@@ -13,10 +13,10 @@ from pickle import dump
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('genome')
-    p.add_argument('hashlist')
-    p.add_argument('clean_output')
-    p.add_argument('dirty_output')
+    p.add_argument('--genome', required=True)
+    p.add_argument('--hashlist', required=True)
+    p.add_argument('--clean-output', required=True)
+    p.add_argument('--dirty-output', required=True)
     p.add_argument('-k', '--ksize', default=31, type=int)
     p.add_argument('--scaled', default=1000, type=int)
     p.add_argument('--fragment', default=0, type=int)
