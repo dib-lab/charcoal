@@ -3,7 +3,7 @@
 #
 
 # override this with --configfile on command line
-configfile: 'test-data/conf-test.yml'
+configfile: 'test-data/conf.yml'
 
 ### config stuff loaded from config file
 genome_list_file = config['genome_list']

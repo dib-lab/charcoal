@@ -8,9 +8,21 @@ analysis.
 
 ## Installing!
 
-You'll need snakemake and conda installed.
+Clone this repository and change into the top-level repo directory.
+The file `environment.yml` contains the necessary conda packages
+(python and snakemake) to run charcoal; see the Quickstart section
+for explicit instructions.
 
-Then, clone this repository and change into the top-level repo directory.
+### Quickstart:
+
+Clone the repository, change into it, create the environment, and activate it:
+
+```
+git clone https://github.com/ctb/charcoal
+cd ./charcoal/
+conda env create -f environment.yml -n charcoal
+conda activate charcoal
+```
 
 ## Running!
 
