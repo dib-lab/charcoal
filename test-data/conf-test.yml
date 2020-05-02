@@ -18,3 +18,12 @@ metagenome_sig_dir: test-data/fake-metagenomes/
 
 # put all generated files here
 output_dir: 'output.test'
+
+####
+
+# gather db
+gather_db: test-data/podar-ref.lca.json.gz
+
+sig_scaled: 1000
+sig_ksize: 31
+lineages_csv: test-data/podar-lineage.csv

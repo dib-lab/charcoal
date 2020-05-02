@@ -3,11 +3,12 @@
 #
 
 # override this with --configfile on command line
-configfile: 'test-data/conf.yml'
+configfile: 'test-data/conf-test.yml'
 
 ### config stuff loaded from config file
 genome_list_file = config['genome_list']
 genome_list = [ line.strip() for line in open(genome_list_file, 'rt') ]
+genome_list = [ line for line in genome_list if line ]   # remove empty lines
 
 genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
@@ -26,7 +27,12 @@ def output_files(filename_template, **kw):
 wildcard_constraints:
     size="\d+"
 
+print(genome_list)
 rule all:
+    input:
+        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list)
+
+rule old:
     input:
         expand(output_dir + '/{g}.hash.100000', g=genome_list),
         expand(output_dir + '/{g}.hash.10000', g=genome_list),
@@ -280,4 +286,50 @@ rule make_report:
             --tax-rm {input.tips_rm} \
             --cut1-rm {input.cut1_rm} \
             -o {output}
+    """
+
+rule contigs_sig:
+    input:
+        genome_dir + '/{filename}'
+    output:
+        output_dir + '/{filename}.sig'
+    conda: 'conf/env-sourmash.yml'
+    params:
+        scaled = config['sig_scaled'],
+        ksize = config['sig_ksize']
+    shell: """
+        sourmash compute -k {params.ksize} --scaled {params.scaled} \
+            {input} -o {output}
+    """
+
+rule gather_all:
+    input:
+        query = output_dir + '/{filename}.sig',
+        database = config['gather_db']
+    output:
+        csv = output_dir + '/{filename}.gather-matches.csv',
+        matches = output_dir + '/{filename}.gather-matches.sig',
+        txt = output_dir + '/{filename}.gather-matches.txt'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        sourmash gather {input.query} {input.database} -o {output.csv} \
+            --save-matches {output.matches} --threshold-bp=0 >& {output.txt}
+        cat {output.txt}
+        touch {output.csv} {output.matches}
+    """
+
+rule contigs_clean_just_taxonomy:
+    input:
+        genome = genome_dir + '/{f}',
+        matches = output_dir + '/{f}.gather-matches.sig',
+        lineages = config['lineages_csv']
+    output:
+        clean=output_dir + '/{f}.clean.fa.gz',
+        dirty=output_dir + '/{f}.dirty.fa.gz'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        python -m charcoal.just_taxonomy \
+            --genome {input.genome} --lineages_csv {input.lineages} \
+            --matches_sig {input.matches} \
+            --clean {output.clean} --dirty {output.dirty}
     """
