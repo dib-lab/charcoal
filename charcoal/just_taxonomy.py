@@ -105,14 +105,35 @@ def main():
                 # assignment outside of genus? dirty!
                 if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
                     clean = False
+                    print(f'---- contig {record.name}')
                     print(f'dirty! {ctg_lin[-1].rank}')
-                    print(f'contig {record.name} dirty, rank is {ctg_lin[-1].rank}',
+                    print(f'contig {record.name} dirty, REASON 1\nrank is {ctg_lin[-1].rank}',
                           file=report_fp)
+                    print('', file=report_fp)
+                    print(f'---- contig {record.name}', file=report_fp)
                 elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
                     clean = False
                     print(f'dirty! {ctg_lin}')
-                    print(f'contig {record.name} dirty, lineage is {ctg_lin}',
+                    print('', file=report_fp)
+                    print(f'---- contig {record.name}', file=report_fp)
+                    print(f'contig {record.name} dirty, REASON 2\nlineage is {ctg_lin}',
                           file=report_fp)
+
+                # summary reporting
+
+                if not clean:
+                    ctg_counts = Counter()
+                    for hashval, lineages in ctg_assign.items():
+                        for lineage in lineages:
+                            ctg_counts[lineage] += 1
+
+                    print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
+                    for lin, count in ctg_counts.most_common():
+                        print(f'   {count} {lin}', file=report_fp)
+
+                    print(f'\n** hashval lca counts', file=report_fp)
+                    for lin, count in ctg_tax_assign.most_common():
+                        print(f'   {count} {lin}', file=report_fp)
                 
         # if long contig / many hashes, ...
         
