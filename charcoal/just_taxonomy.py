@@ -205,7 +205,7 @@ def main():
             break
 
         (match, match_sig, _) = results[0]
-        print(f'  {match} - to {match_sig.name()}', file=report_fp)
+        print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
         clean_mh.remove_many(match_sig.minhash.get_mins())
         clean_sig = sourmash.SourmashSignature(clean_mh)
 
