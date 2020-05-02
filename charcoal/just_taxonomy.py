@@ -197,10 +197,9 @@ def main():
 
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
 
-    linear = sourmash.index.LinearIndex(siglist)
     clean_sig = sourmash.SourmashSignature(clean_mh)
     while 1:
-        results = linear.gather(clean_sig, threshold_bp=0)
+        results = lca_db.gather(clean_sig, threshold_bp=0)
         if not results:
             break
 
