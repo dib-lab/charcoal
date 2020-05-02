@@ -48,6 +48,13 @@ def pretty_print_lineage(lin):
         return f'{lin[-1].rank} {lin[-1].name}'
 
 
+def get_ident(sig):
+    ident = sig.name()
+    ident = ident.split()[0]
+    ident = ident.split('.')[0]
+    return ident
+    
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--genome', help='genome file', required=True)
@@ -76,9 +83,7 @@ def main():
     lca_db = LCA_Database(ksize=ksize, scaled=scaled)
 
     for ss in siglist:
-        ident = ss.name()
-        ident = ident.split()[0]
-        ident = ident.split('.')[0]
+        ident = get_ident(ss)
         lineage = tax_assign[ident]
 
         lca_db.insert(ss, ident=ident, lineage=lineage)
@@ -137,6 +142,23 @@ def main():
         mh.add_sequence(record.sequence, force=True)
 
         if mh:
+            # first, if there is more than one hash, use gather.
+            if len(mh) >= 2:
+                threshold_bp = mh.scaled*2
+                results = lca_db.gather(sourmash.SourmashSignature(mh))
+                if results:
+                    match = results[0][1]
+                    match_ident = get_ident(match)
+                    lineage = tax_assign[match_ident]
+                    if not utils.is_lineage_match(assign, lineage, 'genus'):
+                        clean=False
+                        print(f'contig {record.name} dirty, REASON 3\n   gather yields {pretty_print_lineage(lineage)}',
+                              file=report_fp)
+                        print('', file=report_fp)
+                        print(f'---- contig {record.name}', file=report_fp)
+
+        if mh and clean:
+            
             # get all of the hash taxonomy assignments for this contig
             ctg_assign = sourmash.lca.gather_assignments(mh.get_mins(),
                                                          [lca_db])
