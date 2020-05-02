@@ -8,7 +8,7 @@ CTB TODO:
 import sys
 import argparse
 import gzip
-from collections import Counter
+from collections import Counter, defaultdict
 
 import screed
 
@@ -17,6 +17,22 @@ from sourmash.lca.command_index import load_taxonomy_assignments
 from sourmash.lca import LCA_Database
 
 from . import utils
+
+
+def gather_assignments(hashvals, rank, dblist):
+    """
+    Gather assignments from across all the databases for all the hashvals.
+    """
+    assignments = defaultdict(set)
+    for hashval in hashvals:
+        for lca_db in dblist:
+            lineages = lca_db.get_lineage_assignments(hashval)
+            if lineages:
+                for lineage in lineages:
+                    lineage = utils.pop_to_rank(lineage, rank)
+                    assignments[hashval].add(lineage)
+
+    return assignments
 
 
 def pretty_print_lineage(lin):
@@ -75,8 +91,7 @@ def main():
         entire_mh.add_sequence(record.sequence, force=True)
 
     # get all of the hash taxonomy assignments for this contig
-    hash_assign = sourmash.lca.gather_assignments(entire_mh.get_mins(),
-                                                  [lca_db])
+    hash_assign = gather_assignments(entire_mh.get_mins(), 'genus', [lca_db])
 
     # count them and find major
     counts = Counter()
@@ -90,7 +105,7 @@ def main():
 
     # make sure it's strain or species level
     assign, count = next(iter(counts.most_common()))
-    f_major = count / len(hash_assign)
+    f_major = count / identified_counts
     print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(assign)}')
     if assign[-1].rank not in ('species', 'strain', 'genus'):
         print(f'rank of major assignment is f{assign[-1].rank}; quitting')
