@@ -27,7 +27,6 @@ def output_files(filename_template, **kw):
 wildcard_constraints:
     size="\d+"
 
-print(genome_list)
 rule all:
     input:
         expand(output_dir + '/{g}.clean.fa.gz', g=genome_list)
