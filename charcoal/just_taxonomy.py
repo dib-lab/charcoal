@@ -102,6 +102,9 @@ def main():
     dirty_fp = gzip.open(args.dirty, 'wt')
 
     # now, find disagreeing contigs.
+    dirty_bp = clean_bp = 0
+    dirty_n = clean_n = 0
+    
     print(f'pass 2: reading contigs from {args.genome}')
     for n, record in enumerate(screed.open(args.genome)):
         clean = True               # default to clean
@@ -153,8 +156,18 @@ def main():
                 
         if clean:
             clean_fp.write(f'>{record.name}\n{record.sequence}\n')
+            clean_n += 1
+            clean_bp += len(record.sequence)
         else:
             dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
+            dirty_n += 1
+            dirty_bp += len(record.sequence)
+
+    print('--------------', file=report_fp)
+    print(f'kept {clean_n} contigs containing {int(clean_bp)/1000} kb.',
+          file=report_fp)
+    print(f'removed {dirty_n} contigs containing {int(dirty_bp)/1000} kb.',
+          file=report_fp)
 
 
 if __name__ == '__main__':
