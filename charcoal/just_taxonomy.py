@@ -112,6 +112,7 @@ def main():
     # now, find disagreeing contigs.
     dirty_bp = clean_bp = 0
     dirty_n = clean_n = 0
+    clean_mh = empty_mh.copy_and_clear()
     
     print(f'pass 2: reading contigs from {args.genome}')
     for n, record in enumerate(screed.open(args.genome)):
@@ -161,11 +162,13 @@ def main():
                     print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
                     for lin, count in ctg_counts.most_common():
                         print(f'   {count} {pretty_print_lineage(lin)}', file=report_fp)
-                
+
         if clean:
             clean_fp.write(f'>{record.name}\n{record.sequence}\n')
             clean_n += 1
             clean_bp += len(record.sequence)
+
+            clean_mh.add_sequence(record.sequence, force=True)
         else:
             dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
             dirty_n += 1
@@ -177,6 +180,19 @@ def main():
     print(f'removed {dirty_n} contigs containing {int(dirty_bp)/1000} kb.',
           file=report_fp)
 
+    print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
+
+    linear = sourmash.index.LinearIndex(siglist)
+    clean_sig = sourmash.SourmashSignature(clean_mh)
+    while 1:
+        results = linear.gather(clean_sig, threshold_bp=0)
+        if not results:
+            break
+
+        (match, match_sig, _) = results[0]
+        print(f'  {match} - to {match_sig.name()}', file=report_fp)
+        clean_mh.remove_many(match_sig.minhash.get_mins())
+        clean_sig = sourmash.SourmashSignature(clean_mh)
 
 if __name__ == '__main__':
     main()
