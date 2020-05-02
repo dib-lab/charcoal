@@ -98,7 +98,7 @@ def main():
     print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(assign)}', file=report_fp)
     print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
     if f_major < 0.8:
-        print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!')
+        print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
 
     print(f'\n** hashval lineage counts for genome - {len(hash_assign)}', file=report_fp)
     for lin, count in counts.most_common():
