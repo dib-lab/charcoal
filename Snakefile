@@ -325,12 +325,14 @@ rule contigs_clean_just_taxonomy:
     output:
         clean=output_dir + '/{f}.clean.fa.gz',
         dirty=output_dir + '/{f}.dirty.fa.gz',
-        report=output_dir + '/{f}.report.txt'
+        report=output_dir + '/{f}.report.txt',
+        csv=output_dir + '/{f}.summary.csv'
     conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \
             --matches_sig {input.matches} \
             --clean {output.clean} --dirty {output.dirty} \
-            --report {output.report}
+            --report {output.report} --summary {output.csv}
+
     """

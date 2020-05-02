@@ -9,6 +9,7 @@ import sys
 import argparse
 import gzip
 from collections import Counter, defaultdict
+import csv
 
 import screed
 
@@ -63,6 +64,7 @@ def main():
     p.add_argument('--clean', help='cleaned contigs', required=True)
     p.add_argument('--dirty', help='dirty contigs', required=True)
     p.add_argument('--report', help='report output', required=True)
+    p.add_argument('--summary', help='CSV one line output')
     args = p.parse_args()
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -229,6 +231,11 @@ def main():
         print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
         clean_mh.remove_many(match_sig.minhash.get_mins())
         clean_sig = sourmash.SourmashSignature(clean_mh)
+
+    if args.summary:
+        with open(args.summary, 'wt') as fp:
+            w = csv.writer(fp)
+            w.writerow([clean_n, clean_bp, dirty_n, dirty_bp,f_major])
 
 if __name__ == '__main__':
     main()
