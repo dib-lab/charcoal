@@ -5,6 +5,7 @@ Remove bad contigs based solely on taxonomy.
 CTB TODO:
 * optionally eliminate contigs with no taxonomy
 """
+import sys
 import argparse
 import gzip
 from collections import Counter
@@ -84,13 +85,14 @@ def main():
         if lineages:
             identified_counts += 1
             for lineage in lineages:
+                lineage = utils.pop_to_rank(lineage, 'genus')
                 counts[lineage] += 1
 
     # make sure it's strain or species level
     assign, count = next(iter(counts.most_common()))
     f_major = count / len(hash_assign)
     print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(assign)}')
-    if assign[-1].rank not in ('species', 'strain'):
+    if assign[-1].rank not in ('species', 'strain', 'genus'):
         print(f'rank of major assignment is f{assign[-1].rank}; quitting')
         sys.exit(-1)
 
