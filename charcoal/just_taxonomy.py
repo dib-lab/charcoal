@@ -100,6 +100,10 @@ def main():
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!')
 
+    print(f'\n** hashval lineage counts for genome - {len(hash_assign)}', file=report_fp)
+    for lin, count in counts.most_common():
+        print(f'   {count} {pretty_print_lineage(lin)}', file=report_fp)
+
     clean_fp = gzip.open(args.clean, 'wt')
     dirty_fp = gzip.open(args.dirty, 'wt')
 
@@ -126,7 +130,7 @@ def main():
                 # assignment outside of genus? dirty!
                 if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
                     clean = False
-                    print(f'---- contig {record.name}')
+                    print(f'\n---- contig {record.name}')
                     print(f'dirty! {ctg_lin[-1].rank}')
                     print(f'contig {record.name} dirty, REASON 1\nrank is {ctg_lin[-1].rank}',
                           file=report_fp)
