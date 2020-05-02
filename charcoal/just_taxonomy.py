@@ -25,6 +25,7 @@ def main():
     p.add_argument('--matches_sig', help='all relevant matches', required=True)
     p.add_argument('--clean', help='cleaned contigs', required=True)
     p.add_argument('--dirty', help='dirty contigs', required=True)
+    p.add_argument('--report', help='report output', required=True)
     args = p.parse_args()
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -77,6 +78,10 @@ def main():
         print(f'rank of major assignment is f{assign[-1].rank}; quitting')
         sys.exit(-1)
 
+    report_fp = open(args.report, 'wt')
+    print(f'{f_major*100:.1f}% of hashes identify as {assign}', file=report_fp)
+    print(f'({len(entire_mh)} hashes, {count} in most common)', file=report_fp)
+
     clean_fp = gzip.open(args.clean, 'wt')
     dirty_fp = gzip.open(args.dirty, 'wt')
 
@@ -101,9 +106,13 @@ def main():
                 if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
                     clean = False
                     print(f'dirty! {ctg_lin[-1].rank}')
+                    print(f'contig {record.name} dirty, rank is {ctg_lin[-1].rank}',
+                          file=report_fp)
                 elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
                     clean = False
                     print(f'dirty! {ctg_lin}')
+                    print(f'contig {record.name} dirty, lineage is {ctg_lin}',
+                          file=report_fp)
                 
         # if long contig / many hashes, ...
         

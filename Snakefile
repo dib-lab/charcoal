@@ -324,11 +324,13 @@ rule contigs_clean_just_taxonomy:
         lineages = config['lineages_csv']
     output:
         clean=output_dir + '/{f}.clean.fa.gz',
-        dirty=output_dir + '/{f}.dirty.fa.gz'
+        dirty=output_dir + '/{f}.dirty.fa.gz',
+        report=output_dir + '/{f}.report.txt'
     conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \
             --matches_sig {input.matches} \
-            --clean {output.clean} --dirty {output.dirty}
+            --clean {output.clean} --dirty {output.dirty} \
+            --report {output.report}
     """
