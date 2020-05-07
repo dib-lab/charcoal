@@ -51,6 +51,7 @@ class LineageDB(object):
     `lid` as values.
 
     `ident_to_lid` is a dictionary from unique str identifer to integer `lid`.
+    `ident_to_lineage` is a dict from identifier to lineage.
     """
     def __init__(self):
         self._next_lid = 0
@@ -58,6 +59,7 @@ class LineageDB(object):
         self.lid_to_lineage = {}
         self.ident_to_lid = {}
         self.lid_to_idents = defaultdict(set)
+        self.ident_to_lineage = {}
 
     def _invalidate_cache(self):
         if hasattr(self, '_cache'):
@@ -102,6 +104,7 @@ class LineageDB(object):
 
         self.ident_to_lid[ident] = lid
         self.lid_to_idents[lid].add(ident)
+        self.ident_to_lineage[ident] = lineage
 
         return lid
 
@@ -227,6 +230,7 @@ def test_lineage_db_1():
     assert ldb.lid_to_lineage[lid] == lineage
     assert ldb.ident_to_lid['uniq'] == lid
     assert 'uniq' in ldb.lid_to_idents[lid]
+    assert ldb.ident_to_lineage['uniq'] == lineage
 
 
 def test_lineage_db_1_tuple():

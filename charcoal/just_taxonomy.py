@@ -22,6 +22,13 @@ from . import lineage_db
 from .lineage_db import LineageDB
 
 
+def get_idents_for_hashval(lca_db, hashval):
+    idx_list = lca_db.hashval_to_idx.get(hashval, [])
+    for idx in idx_list:
+        ident = lca_db.idx_to_ident[idx]
+        yield ident
+
+
 def gather_assignments(hashvals, rank, dblist, ldb):
     """
     Gather assignments from across all the databases for all the hashvals.
@@ -29,19 +36,13 @@ def gather_assignments(hashvals, rank, dblist, ldb):
     assignments = defaultdict(set)
     for hashval in hashvals:
         for lca_db in dblist:
-            idx_list = lca_db.hashval_to_idx.get(hashval, [])
             lineages = set()
-            for idx in idx_list:
-                ident = lca_db.idx_to_ident[idx]
-                lid = ldb.ident_to_lid[ident]
-                lineage = ldb.lid_to_lineage[lid]
-                lineages.add(lineage)
+            for ident in get_idents_for_hashval(lca_db, hashval):
+                lineage = ldb.ident_to_lineage[ident]
 
-            if lineages:
-                for lineage in lineages:
-                    if rank:
-                        lineage = utils.pop_to_rank(lineage, rank)
-                    assignments[hashval].add(lineage)
+                if rank:
+                    lineage = utils.pop_to_rank(lineage, rank)
+                assignments[hashval].add(lineage)
 
     return assignments
 
