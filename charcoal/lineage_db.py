@@ -54,32 +54,12 @@ class LineageDB(object):
     `ident_to_lineage` is a dict from identifier to lineage.
     """
     def __init__(self):
-        self._next_lid = 0
-        self.lineage_to_lid = {}
-        self.lid_to_lineage = {}
-        self.ident_to_lid = {}
-        self.lid_to_idents = defaultdict(set)
+        self.lineage_to_idents = defaultdict(set)
         self.ident_to_lineage = {}
 
     def _invalidate_cache(self):
         if hasattr(self, '_cache'):
             del self._cache
-
-    def _get_lineage_id(self, lineage):
-        "Get (create if nec) a unique lineage ID for each LineagePair tuples."
-        # does one exist already?
-        lid = self.lineage_to_lid.get(lineage)
-
-        # nope - create one. Increment next_lid.
-        if lid is None:
-            lid = self._next_lid
-            self._next_lid += 1
-
-            # build mappings
-            self.lineage_to_lid[lineage] = lid
-            self.lid_to_lineage[lid] = lineage
-
-        return lid
 
     def insert(self, ident, lineage):
         """Add a new identity / lineage pair into the database.
@@ -88,7 +68,7 @@ class LineageDB(object):
 
         'lineage', if specified, must contain a tuple of LineagePair objects.
         """
-        if ident in self.ident_to_lid:
+        if ident in self.ident_to_lineage:
             raise ValueError("identifier {} is already in this lineage db.".format(ident))
 
         # before adding, invalide any caching from @cached_property
@@ -96,17 +76,11 @@ class LineageDB(object):
 
         try:
             lineage = tuple(lineage)
-
-            # (LineagePairs*) -> integer lineage ids (lids)
-            lid = self._get_lineage_id(lineage)
+            self.lineage_to_idents[lineage].add(ident)
         except TypeError:
             raise ValueError('lineage cannot be used as a key?!')
 
-        self.ident_to_lid[ident] = lid
-        self.lid_to_idents[lid].add(ident)
         self.ident_to_lineage[ident] = lineage
-
-        return lid
 
     def __repr__(self):
         return "LineageDB('{}')".format(self.filename)
@@ -225,11 +199,8 @@ def test_lineage_db_1():
 
     ldb = LineageDB()
     lid = ldb.insert('uniq', lineage)
-    assert lid == 0
-    assert ldb.lineage_to_lid[lineage] == lid
-    assert ldb.lid_to_lineage[lid] == lineage
-    assert ldb.ident_to_lid['uniq'] == lid
-    assert 'uniq' in ldb.lid_to_idents[lid]
+
+    assert 'uniq' in ldb.lineage_to_idents[lineage]
     assert ldb.ident_to_lineage['uniq'] == lineage
 
 
@@ -241,7 +212,7 @@ def test_lineage_db_1_tuple():
     ldb = LineageDB()
 
     with pytest.raises(ValueError):
-        lid = ldb.insert('uniq', lineage)
+        ldb.insert('uniq', lineage)
 
 
 def test_lineage_db_1_non_iter():
@@ -251,4 +222,4 @@ def test_lineage_db_1_non_iter():
     ldb = LineageDB()
 
     with pytest.raises(ValueError):
-        lid = ldb.insert('uniq', lineage)
+        ldb.insert('uniq', lineage)
