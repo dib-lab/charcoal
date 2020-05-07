@@ -1,6 +1,12 @@
 """Lineage database and associated utilities.
 
 Extracted from sourmash LCA Databases.
+
+TODO:
+* implement load, save
+
+CTB:
+* add strict taxonomy enforcement within? ldb-specific taxlist?
 """
 
 from __future__ import print_function, division

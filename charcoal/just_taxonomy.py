@@ -18,22 +18,52 @@ from sourmash.lca.command_index import load_taxonomy_assignments
 from sourmash.lca import LCA_Database
 
 from . import utils
+from . import lineage_db
+from .lineage_db import LineageDB
 
 
-def gather_assignments(hashvals, rank, dblist):
+def gather_assignments(hashvals, rank, dblist, ldb):
     """
     Gather assignments from across all the databases for all the hashvals.
     """
     assignments = defaultdict(set)
     for hashval in hashvals:
         for lca_db in dblist:
-            lineages = lca_db.get_lineage_assignments(hashval)
+            idx_list = lca_db.hashval_to_idx.get(hashval, [])
+            lineages = set()
+            for idx in idx_list:
+                ident = lca_db.idx_to_ident[idx]
+                lid = ldb.ident_to_lid[ident]
+                lineage = ldb.lid_to_lineage[lid]
+                lineages.add(lineage)
+
             if lineages:
                 for lineage in lineages:
-                    lineage = utils.pop_to_rank(lineage, rank)
+                    if rank:
+                        lineage = utils.pop_to_rank(lineage, rank)
                     assignments[hashval].add(lineage)
 
     return assignments
+
+
+def count_lca_for_assignments(assignments):
+    """
+    For each hashval, count the LCA across its assignments.
+    """
+    counts = Counter()
+    for hashval in assignments:
+
+        # for each list of tuple_info [(rank, name), ...] build
+        # a tree that lets us discover lowest-common-ancestor.
+        lineages = assignments[hashval]
+        tree = sourmash.lca.build_tree(lineages)
+
+        # now find either a leaf or the first node with multiple
+        # children; that's our lowest-common-ancestor node.
+        lca, reason = sourmash.lca.find_lca(tree)
+        counts[lca] += 1
+
+    return counts
 
 
 def pretty_print_lineage(lin):
@@ -78,17 +108,22 @@ def main():
         print('no matches for this genome, exiting.')
         sys.exit(-1)
 
+    # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
     ksize = empty_mh.ksize
     scaled = empty_mh.scaled
 
+    # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled)
+    ldb = LineageDB()
 
+    # ...with specific matches.
     for ss in siglist:
         ident = get_ident(ss)
         lineage = tax_assign[ident]
 
-        lca_db.insert(ss, ident=ident, lineage=lineage)
+        lca_db.insert(ss, ident=ident)
+        ldb.insert(ident, lineage)
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
@@ -98,7 +133,7 @@ def main():
         entire_mh.add_sequence(record.sequence, force=True)
 
     # get all of the hash taxonomy assignments for this contig
-    hash_assign = gather_assignments(entire_mh.get_mins(), 'genus', [lca_db])
+    hash_assign = gather_assignments(entire_mh.get_mins(), 'genus', [lca_db], ldb)
 
     # count them and find major
     counts = Counter()
@@ -162,10 +197,9 @@ def main():
         if mh and clean:
             
             # get all of the hash taxonomy assignments for this contig
-            ctg_assign = sourmash.lca.gather_assignments(mh.get_mins(),
-                                                         [lca_db])
+            ctg_assign = gather_assignments(mh.get_mins(), None, [lca_db], ldb)
 
-            ctg_tax_assign = sourmash.lca.count_lca_for_assignments(ctg_assign)
+            ctg_tax_assign = count_lca_for_assignments(ctg_assign)
             if ctg_tax_assign:
                 ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
 
