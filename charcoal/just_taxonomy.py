@@ -23,6 +23,7 @@ from .lineage_db import LineageDB
 
 
 def get_idents_for_hashval(lca_db, hashval):
+    "Get the identifiers associated with this hashval."
     idx_list = lca_db.hashval_to_idx.get(hashval, [])
     for idx in idx_list:
         ident = lca_db.idx_to_ident[idx]
@@ -31,7 +32,8 @@ def get_idents_for_hashval(lca_db, hashval):
 
 def gather_assignments(hashvals, rank, dblist, ldb):
     """
-    Gather assignments from across all the databases for all the hashvals.
+    Gather lineage assignments from across all the databases for all the
+    hashvals.
     """
     assignments = defaultdict(set)
     for hashval in hashvals:
@@ -68,6 +70,7 @@ def count_lca_for_assignments(assignments):
 
 
 def pretty_print_lineage(lin):
+    "Nice output names for lineages."
     if lin[-1].rank == 'strain':
         strain = lin[-1].name
         return f'{strain}'
@@ -81,6 +84,7 @@ def pretty_print_lineage(lin):
 
 
 def get_ident(sig):
+    "Hack and slash identifiers."
     ident = sig.name()
     ident = ident.split()[0]
     ident = ident.split('.')[0]
@@ -164,10 +168,11 @@ def main():
     for lin, count in counts.most_common():
         print(f'   {count} {pretty_print_lineage(lin)}', file=report_fp)
 
+    # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
     dirty_fp = gzip.open(args.dirty, 'wt')
 
-    # now, find disagreeing contigs.
+    # now, find bad contigs.
     dirty_bp = clean_bp = 0
     dirty_n = clean_n = 0
     clean_mh = empty_mh.copy_and_clear()
@@ -195,6 +200,8 @@ def main():
                         print('', file=report_fp)
                         print(f'---- contig {record.name}', file=report_fp)
 
+        # did we find a dirty contig in step 1? if NOT, go into LCA style
+        # approaches.
         if mh and clean:
             
             # get all of the hash taxonomy assignments for this contig
@@ -237,6 +244,7 @@ def main():
                     for lin, count in ctg_counts.most_common():
                         print(f'   {count} {pretty_print_lineage(lin)}', file=report_fp)
 
+        # write out contigs -> clean or dirty files.
         if clean:
             clean_fp.write(f'>{record.name}\n{record.sequence}\n')
             clean_n += 1
@@ -247,16 +255,25 @@ def main():
             dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
             dirty_n += 1
             dirty_bp += len(record.sequence)
+    # END contig loop
 
+    # do some reporting.
     print('--------------', file=report_fp)
     print(f'kept {clean_n} contigs containing {int(clean_bp)/1000} kb.',
           file=report_fp)
     print(f'removed {dirty_n} contigs containing {int(dirty_bp)/1000} kb.',
           file=report_fp)
 
+    # look at what our database says about remaining contamination,
+    # across all "clean" contigs. (Need to dig into this more to figure
+    # out exactly why we still have any :)
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
+    # CTB: add breakdown of dirty contigs?
 
+    # build signature from hashes in clean mh
     clean_sig = sourmash.SourmashSignature(clean_mh)
+
+    # do the gather:
     while 1:
         results = lca_db.gather(clean_sig, threshold_bp=0)
         if not results:
@@ -267,6 +284,7 @@ def main():
         clean_mh.remove_many(match_sig.minhash.get_mins())
         clean_sig = sourmash.SourmashSignature(clean_mh)
 
+    # write out a one line summary?
     if args.summary:
         with open(args.summary, 'wt') as fp:
             w = csv.writer(fp)
