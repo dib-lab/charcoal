@@ -3,7 +3,8 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - sourmash>3.2,<4
+    - sourmash>=3.3,<4
+    - pytest
     - pip
     - pip:
       - dendropy==4.4.0
