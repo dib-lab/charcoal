@@ -164,9 +164,10 @@ def main():
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
 
-    print(f'\n** hashval lineage counts for genome - {len(hash_assign)}', file=report_fp)
+    print(f'\n** hashval lineage counts for genome - {len(hash_assign)} => {len(hash_assign)*scaled/1000:.0f} kb', file=report_fp)
     for lin, count in counts.most_common():
-        print(f'   {count} {pretty_print_lineage(lin)}', file=report_fp)
+        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+    print('', file=report_fp)
 
     # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
@@ -182,6 +183,7 @@ def main():
     n_reason_3 = 0
     
     print(f'pass 2: reading contigs from {args.genome}')
+    print(f'**\n** walking through contigs:\n**\n', file=report_fp)
     for n, record in enumerate(screed.open(args.genome)):
         clean = True               # default to clean
 
@@ -205,10 +207,10 @@ def main():
                         clean=False
                         n_reason_3 += 1
                         common_kb = mh.count_common(match.minhash) * scaled / 1000
-                        print(f'contig {record.name} dirty, REASON 3\n   gather yields match of {common_kb:.0f}kb to {pretty_print_lineage(lineage)}',
+                        print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+                        print(f'contig dirty, REASON 3\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(lineage)}',
                               file=report_fp)
                         print('', file=report_fp)
-                        print(f'---- contig {record.name}', file=report_fp)
 
         # did we find a dirty contig in step 1? if NOT, go into LCA style
         # approaches.
@@ -225,19 +227,18 @@ def main():
                 if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
                     clean = False
                     n_reason_1 += 1
-                    print(f'\n---- contig {record.name}')
-                    print(f'dirty! {ctg_lin[-1].rank}')
-                    print(f'contig {record.name} dirty, REASON 1\nrank is {ctg_lin[-1].rank}',
+                    print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+                    print(f'dirty! {record.name} {ctg_lin[-1].rank}')
+                    print(f'contig dirty, REASON 1\nlca rank is {ctg_lin[-1].rank}',
                           file=report_fp)
                     print('', file=report_fp)
-                    print(f'---- contig {record.name}', file=report_fp)
                 elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
                     clean = False
                     n_reason_2 += 1
                     print(f'dirty! {ctg_lin}')
                     print('', file=report_fp)
-                    print(f'---- contig {record.name}', file=report_fp)
-                    print(f'contig {record.name} dirty, REASON 2\nlineage is {pretty_print_lineage(ctg_lin)}',
+                    print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+                    print(f'contig dirty, REASON 2\nlineage is {pretty_print_lineage(ctg_lin)}',
                           file=report_fp)
 
                 # summary reporting
@@ -251,10 +252,10 @@ def main():
 
                     print(f'\n** hashval lca counts', file=report_fp)
                     for lin, count in ctg_tax_assign.most_common():
-                        print(f'   {count*scaled:.0f}kb {pretty_print_lineage(lin)}', file=report_fp)
+                        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
                     print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
                     for lin, count in ctg_counts.most_common():
-                        print(f'   {count*scaled:.0f}kb {pretty_print_lineage(lin)}', file=report_fp)
+                        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
 
         # write out contigs -> clean or dirty files.
         if clean:
