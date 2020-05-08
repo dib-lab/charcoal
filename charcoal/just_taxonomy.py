@@ -228,7 +228,7 @@ def main():
                     print(f'---- contig {record.name}', file=report_fp)
                 elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
                     clean = False
-                    n_raeson_2 += 1
+                    n_reason_2 += 1
                     print(f'dirty! {ctg_lin}')
                     print('', file=report_fp)
                     print(f'---- contig {record.name}', file=report_fp)
