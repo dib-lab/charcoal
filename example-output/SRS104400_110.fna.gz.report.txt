@@ -1,0 +1,1836 @@
+38.8% of hashes identify as genus g__Lachnospira
+(3605 identified hashes, 1399 in most common)
+** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!
+
+** hashval lineage counts for genome - 3605 => 3605 kb
+   1399 kb genus g__Lachnospira
+   521 kb genus g__Bacteroides
+   306 kb genus g__Bacteroides_B
+   269 kb genus g__Blautia_A
+   196 kb genus g__Faecalicatena
+   193 kb genus g__Agathobacter
+   166 kb genus g__Faecalibacterium
+   156 kb genus g__Bacteroides_A
+   145 kb genus g__Dorea
+   104 kb genus g__Eubacterium_I
+   101 kb genus g__Prevotella
+   98 kb genus g__Coprococcus_B
+   81 kb genus g__Lawsonibacter
+   80 kb genus g__Acetatifactor
+   80 kb genus g__Monoglobus
+   74 kb genus g__Roseburia
+   71 kb genus g__Fusicatenibacter
+   62 kb genus g__43-108
+   55 kb genus g__Parabacteroides
+   48 kb genus g__Tyzzerella
+   46 kb genus g__Alistipes
+   46 kb genus g__Blautia
+   43 kb genus g__Bacteroides_F
+   41 kb genus g__Eisenbergiella
+   32 kb genus g__Clostridium_Q
+   32 kb genus g__CAG-603
+   29 kb genus g__Coprococcus
+   29 kb genus g__UBA2882
+   27 kb genus g__Fournierella
+   27 kb genus g__Butyrivibrio_A
+   26 kb genus g__Oscillibacter
+   24 kb genus g__GCA-900066135
+   23 kb genus g__Gemmiger
+   20 kb genus g__F23-B02
+   20 kb genus g__COE1
+   20 kb genus g__UBA7182
+   19 kb genus g__Eubacterium_E
+   18 kb genus g__CAG-631
+   18 kb genus g__CAG-45
+   17 kb genus g__Odoribacter
+   17 kb genus g__Flavonifractor
+   16 kb genus g__Prevotellamassilia
+   16 kb genus g__ER4
+   15 kb genus g__KLE1615
+   15 kb genus g__QALW01
+   14 kb genus g__CAG-170
+   14 kb genus g__CAG-180
+   14 kb genus g__An200
+   14 kb genus g__Provencibacterium
+   14 kb genus g__Angelakisella
+   14 kb genus g__CAG-127
+   13 kb genus g__CAG-83
+   13 kb genus g__CAG-81
+   13 kb genus g__Stomatobaculum
+   12 kb genus g__CAG-145
+   12 kb genus g__UBA1375
+   11 kb genus g__Clostridium_M
+   10 kb genus g__QAMX01
+   10 kb genus g__Anaerotignum
+   10 kb genus g__Anaeromassilibacillus
+   9 kb genus g__CAG-390
+   9 kb genus g__Paraprevotella
+   9 kb genus g__Acetivibrio_A
+   9 kb genus g__GCA-900066575
+   8 kb genus g__UBA11524
+   8 kb genus g__Ruminococcus_E
+   7 kb genus g__UBA3382
+   6 kb genus g__Marseille-P4683
+   5 kb genus g__CHKCI006
+   5 kb genus g__Agathobaculum
+   5 kb genus g__CAG-1435
+   5 kb genus g__Traorella
+   5 kb genus g__Clostridium_A
+   4 kb genus g__CAG-590
+   4 kb genus g__CAG-279
+   4 kb genus g__CAG-95
+   3 kb genus g__UBA1777
+   3 kb genus g__Veillonella_A
+   3 kb genus g__Muribaculum
+   3 kb genus g__OEMR01
+   3 kb genus g__UBA2727
+   3 kb genus g__CAG-267
+   3 kb genus g__Absiella
+   2 kb genus g__CAG-177
+   2 kb genus g__Ruminococcus_C
+   2 kb genus g__Ruminococcus_D
+   2 kb genus g__An181
+   2 kb genus g__Intestinimonas
+   1 kb genus g__CAG-882
+   1 kb genus g__C941
+   1 kb genus g__Acutalibacter
+   1 kb genus g__Soleaferrea
+   1 kb genus g__Coprobacter
+   1 kb genus g__Leptotrichia
+   1 kb genus g__Solobacterium
+   1 kb genus g__Hoeflea
+   1 kb genus g__Raoultibacter
+   1 kb genus g__UBA7102
+   1 kb genus g__Catenibacterium
+   1 kb genus g__Anaerobium
+   1 kb genus g__Hungatella_A
+   1 kb genus g__UBA1758
+   1 kb genus g__Bact-11
+   1 kb genus g__UBA4263
+   1 kb genus g__RC9
+   1 kb genus g__Eubacterium_R
+
+**
+** walking through contigs:
+**
+
+---- contig SRS104400|110|k99_217 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Dorea longicatena_B
+
+---- contig SRS104400|110|k99_443 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-603 sp900066105
+
+---- contig SRS104400|110|k99_563 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_1284 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Faecalicatena glycyrrhizinilyticum
+
+---- contig SRS104400|110|k99_1566 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Blautia_A obeum
+
+---- contig SRS104400|110|k99_1893 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Faecalibacterium prausnitzii_K
+
+---- contig SRS104400|110|k99_2071 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_2886 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Hoeflea sp000961635
+
+---- contig SRS104400|110|k99_3471 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Angelakisella massiliensis
+
+---- contig SRS104400|110|k99_3825 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Ruminococcus_C callidus
+
+---- contig SRS104400|110|k99_3898 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_4157 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_4196 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Monoglobus pectinilyticus
+
+---- contig SRS104400|110|k99_4739 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides timonensis
+
+---- contig SRS104400|110|k99_4941 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides timonensis
+
+---- contig SRS104400|110|k99_5054 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__UBA1777 sp002493305
+
+---- contig SRS104400|110|k99_5501 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Faecalibacterium prausnitzii_C
+
+---- contig SRS104400|110|k99_5672 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 11 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_5877 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_6519 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_H
+
+---- contig SRS104400|110|k99_6879 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Acetatifactor sp900066565
+
+---- contig SRS104400|110|k99_6889 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_7137 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Eubacterium_E hallii_A
+
+---- contig SRS104400|110|k99_7203 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Coprococcus eutactus_A
+
+---- contig SRS104400|110|k99_8072 (2 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_9108 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Alistipes onderdonkii
+
+---- contig SRS104400|110|k99_9166 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Dorea formicigenerans
+
+---- contig SRS104400|110|k99_9495 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_9877 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Oscillibacter sp001916835
+
+---- contig SRS104400|110|k99_10002 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Blautia_A wexlerae
+
+---- contig SRS104400|110|k99_10110 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__CHKCI006 sp900018345
+
+---- contig SRS104400|110|k99_10251 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B massiliensis
+
+---- contig SRS104400|110|k99_10966 (18 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides_A sp000436795
+
+---- contig SRS104400|110|k99_11248 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__CAG-180 sp002314305
+
+
+---- contig SRS104400|110|k99_11255 (5 kb)
+contig dirty, REASON 1
+lca rank is family
+
+
+** hashval lca counts
+   4 kb family f__Lachnospiraceae
+   1 kb genus g__Lachnospira
+   1 kb s__Lachnospira eligens
+
+** hashval lineage counts - 6
+   6 kb s__Lachnospira eligens
+   4 kb s__Agathobacter faecis
+   3 kb s__Eubacterium_I ramulus_A
+   3 kb s__Roseburia inulinivorans
+   2 kb s__Lachnospira rogosae
+   1 kb s__Acetatifactor sp900066365
+---- contig SRS104400|110|k99_11380 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Bacteroides faecis
+
+---- contig SRS104400|110|k99_12090 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Alistipes putredinis
+
+---- contig SRS104400|110|k99_12133 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Blautia_A sp900066355
+
+---- contig SRS104400|110|k99_12204 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides acidifaciens
+
+---- contig SRS104400|110|k99_12321 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Roseburia inulinivorans
+
+
+---- contig SRS104400|110|k99_12339 (2 kb)
+contig dirty, REASON 2
+lineage is s__Bacteroides_F pectinophilus
+
+** hashval lca counts
+   1 kb s__Bacteroides_F pectinophilus
+
+** hashval lineage counts - 1
+   1 kb s__Bacteroides_F pectinophilus
+---- contig SRS104400|110|k99_12367 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_12613 (15 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__CAG-631 sp000433015
+
+---- contig SRS104400|110|k99_12775 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_12982 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-1435 sp000433775
+
+
+---- contig SRS104400|110|k99_13936 (3 kb)
+contig dirty, REASON 2
+lineage is s__Coprococcus eutactus_A
+
+** hashval lca counts
+   1 kb s__Coprococcus eutactus_A
+
+** hashval lineage counts - 1
+   1 kb s__Coprococcus eutactus_A
+---- contig SRS104400|110|k99_14076 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Blautia_A wexlerae
+
+---- contig SRS104400|110|k99_14081 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides faecichinchillae
+
+---- contig SRS104400|110|k99_14171 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__COE1 sp003513705
+
+---- contig SRS104400|110|k99_15216 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_15805 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_15825 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_A plebeius_A
+
+---- contig SRS104400|110|k99_16001 (18 kb)
+contig dirty, REASON 3
+   gather yields match of 21 kb to s__Monoglobus pectinilyticus
+
+---- contig SRS104400|110|k99_16199 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides_F pectinophilus
+
+---- contig SRS104400|110|k99_16355 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_C
+
+---- contig SRS104400|110|k99_16632 (17 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Coprococcus eutactus_A
+
+---- contig SRS104400|110|k99_16664 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides caecimuris
+
+---- contig SRS104400|110|k99_16809 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_16933 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_E
+
+---- contig SRS104400|110|k99_17071 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides xylanisolvens
+
+---- contig SRS104400|110|k99_17098 (19 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_17222 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Faecalicatena sp900120155
+
+---- contig SRS104400|110|k99_17958 (18 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B sartorii
+
+---- contig SRS104400|110|k99_18326 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Roseburia inulinivorans
+
+---- contig SRS104400|110|k99_18588 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Roseburia hominis
+
+---- contig SRS104400|110|k99_18636 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Lawsonibacter sp900066645
+
+---- contig SRS104400|110|k99_19519 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Dorea formicigenerans
+
+---- contig SRS104400|110|k99_19543 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_G
+
+---- contig SRS104400|110|k99_19711 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 15 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_19715 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-177 sp000431775
+
+---- contig SRS104400|110|k99_20115 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Fournierella sp002161595
+
+---- contig SRS104400|110|k99_20355 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__F23-B02 sp003533405
+
+---- contig SRS104400|110|k99_20536 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_21104 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Fusicatenibacter saccharivorans
+
+---- contig SRS104400|110|k99_21117 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_21285 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Blautia_A sp900066505
+
+---- contig SRS104400|110|k99_21368 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_21697 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_21910 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_22385 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_22656 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Eisenbergiella massiliensis
+
+---- contig SRS104400|110|k99_22844 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-170 sp000432135
+
+---- contig SRS104400|110|k99_24152 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_24175 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_24398 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-127 sp002404515
+
+---- contig SRS104400|110|k99_24608 (25 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_24806 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_24850 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 11 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_24862 (28 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Clostridium_M sp000431375
+
+---- contig SRS104400|110|k99_25531 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_25705 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 13 kb to s__Faecalicatena sp900066545
+
+---- contig SRS104400|110|k99_26458 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_26466 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Agathobacter faecis
+
+---- contig SRS104400|110|k99_26958 (18 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_27096 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_C
+
+---- contig SRS104400|110|k99_27220 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 11 kb to s__Bacteroides salyersiae
+
+---- contig SRS104400|110|k99_27425 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_E
+
+
+---- contig SRS104400|110|k99_27713 (4 kb)
+contig dirty, REASON 1
+lca rank is family
+
+
+** hashval lca counts
+   1 kb family f__Lachnospiraceae
+
+** hashval lineage counts - 1
+   1 kb s__Blautia_A wexlerae
+   1 kb s__Fusicatenibacter saccharivorans
+   1 kb s__CAG-603 sp900066105
+   1 kb s__Blautia_A massiliensis
+   1 kb s__Roseburia hominis
+   1 kb s__Eisenbergiella sp900066775
+---- contig SRS104400|110|k99_27844 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_27983 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Eisenbergiella sp900066775
+
+---- contig SRS104400|110|k99_28135 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides gallinarum
+
+---- contig SRS104400|110|k99_28304 (23 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Parabacteroides distasonis
+
+---- contig SRS104400|110|k99_28533 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides fluxus
+
+---- contig SRS104400|110|k99_28898 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_29098 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Flavonifractor sp002159455
+
+---- contig SRS104400|110|k99_29250 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Eubacterium_E hallii_A
+
+---- contig SRS104400|110|k99_30180 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_31003 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-170 sp000432135
+
+---- contig SRS104400|110|k99_31136 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Parabacteroides johnsonii
+
+---- contig SRS104400|110|k99_31196 (27 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__UBA2727 sp900100095
+
+---- contig SRS104400|110|k99_31199 (2 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__KLE1615 sp900066985
+
+---- contig SRS104400|110|k99_31846 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Parabacteroides merdae
+
+---- contig SRS104400|110|k99_32338 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter faecis
+
+---- contig SRS104400|110|k99_32469 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Agathobacter faecis
+
+
+---- contig SRS104400|110|k99_32541 (4 kb)
+contig dirty, REASON 2
+lineage is s__Faecalibacterium prausnitzii_J
+
+** hashval lca counts
+   1 kb s__Faecalibacterium prausnitzii_J
+
+** hashval lineage counts - 1
+   1 kb s__Faecalibacterium prausnitzii_J
+---- contig SRS104400|110|k99_33425 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_J
+
+---- contig SRS104400|110|k99_33871 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__CAG-127 sp002404515
+
+---- contig SRS104400|110|k99_34656 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Ruminococcus_E bromii_B
+
+---- contig SRS104400|110|k99_34774 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_35534 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Faecalibacterium prausnitzii_E
+
+---- contig SRS104400|110|k99_36660 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Fournierella sp002161595
+
+---- contig SRS104400|110|k99_37332 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__CAG-267 sp001917135
+
+---- contig SRS104400|110|k99_38395 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Eubacterium_E hallii_A
+
+---- contig SRS104400|110|k99_39307 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Angelakisella massiliensis
+
+---- contig SRS104400|110|k99_39326 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides stercoris
+
+---- contig SRS104400|110|k99_39557 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 11 kb to s__Faecalibacterium prausnitzii_K
+
+---- contig SRS104400|110|k99_39821 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Fusicatenibacter saccharivorans
+
+---- contig SRS104400|110|k99_39918 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_40407 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalicatena sp002159505
+
+---- contig SRS104400|110|k99_41898 (124 kb)
+contig dirty, REASON 3
+   gather yields match of 11 kb to s__Prevotellamassilia timonensis
+
+---- contig SRS104400|110|k99_42436 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_F
+
+---- contig SRS104400|110|k99_43093 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_43376 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides massiliensis
+
+---- contig SRS104400|110|k99_43440 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_44519 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_45198 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_45821 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Odoribacter massiliensis
+
+---- contig SRS104400|110|k99_46711 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides cellulosilyticus
+
+---- contig SRS104400|110|k99_46779 (15 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Agathobacter faecis
+
+---- contig SRS104400|110|k99_47097 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Acetatifactor sp900066565
+
+---- contig SRS104400|110|k99_47682 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Ruminococcus_E sp003526955
+
+---- contig SRS104400|110|k99_47977 (22 kb)
+contig dirty, REASON 3
+   gather yields match of 29 kb to s__Blautia_A obeum_B
+
+---- contig SRS104400|110|k99_48254 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_48333 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Blautia_A massiliensis
+
+---- contig SRS104400|110|k99_48872 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__ER4 sp003522105
+
+---- contig SRS104400|110|k99_49388 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Lawsonibacter sp000492175
+
+---- contig SRS104400|110|k99_49494 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-603 sp900066105
+
+---- contig SRS104400|110|k99_49658 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides sp003545565
+
+---- contig SRS104400|110|k99_49726 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Gemmiger sp003476825
+
+---- contig SRS104400|110|k99_49883 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_50574 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__KLE1615 sp900066985
+
+---- contig SRS104400|110|k99_50619 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_G
+
+---- contig SRS104400|110|k99_51256 (34 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Blautia sp002161285
+
+---- contig SRS104400|110|k99_51667 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-390 sp000437015
+
+---- contig SRS104400|110|k99_51819 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_51820 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_51878 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_52187 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__COE1 sp001916965
+
+---- contig SRS104400|110|k99_52280 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CHKCI006 sp900018345
+
+---- contig SRS104400|110|k99_52319 (31 kb)
+contig dirty, REASON 3
+   gather yields match of 36 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_52562 (35 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__QAMX01 sp003149835
+
+---- contig SRS104400|110|k99_52652 (2 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Alistipes obesi
+
+---- contig SRS104400|110|k99_52720 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_F pectinophilus
+
+---- contig SRS104400|110|k99_52785 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Lawsonibacter sp002160305
+
+---- contig SRS104400|110|k99_53166 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides acidifaciens
+
+---- contig SRS104400|110|k99_53346 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_54241 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Blautia_A sp900066145
+
+---- contig SRS104400|110|k99_54529 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_54671 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Parabacteroides johnsonii
+
+---- contig SRS104400|110|k99_55224 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_55544 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-170 sp000436735
+
+---- contig SRS104400|110|k99_55960 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Blautia_A sp900066205
+
+---- contig SRS104400|110|k99_57109 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_57378 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Faecalicatena lactaris
+
+---- contig SRS104400|110|k99_58036 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-83 sp003539495
+
+---- contig SRS104400|110|k99_58645 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_A mediterraneensis
+
+---- contig SRS104400|110|k99_59305 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Marseille-P4683 sp900232885
+
+---- contig SRS104400|110|k99_59510 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_60000 (23 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__RC9 sp000433355
+
+---- contig SRS104400|110|k99_60362 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Acetatifactor sp900066565
+
+---- contig SRS104400|110|k99_60955 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter faecis
+
+---- contig SRS104400|110|k99_61529 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-45 sp900066395
+
+---- contig SRS104400|110|k99_61636 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Faecalibacterium prausnitzii_K
+
+---- contig SRS104400|110|k99_62627 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Eisenbergiella sp900066775
+
+---- contig SRS104400|110|k99_62641 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Anaeromassilibacillus sp002159845
+
+---- contig SRS104400|110|k99_63272 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Blautia_A wexlerae
+
+---- contig SRS104400|110|k99_63685 (45 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Ruminococcus_E bromii_B
+
+---- contig SRS104400|110|k99_63720 (23 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__F23-B02 sp001916715
+
+---- contig SRS104400|110|k99_64720 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Stomatobaculum naviforme
+
+---- contig SRS104400|110|k99_65961 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_67428 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__CAG-45 sp900066395
+
+---- contig SRS104400|110|k99_68300 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__CAG-81 sp900066535
+
+---- contig SRS104400|110|k99_68611 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_K
+
+---- contig SRS104400|110|k99_68820 (51 kb)
+contig dirty, REASON 3
+   gather yields match of 61 kb to s__Dorea formicigenerans
+
+---- contig SRS104400|110|k99_69380 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_70420 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_72789 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Faecalicatena sp000509105
+
+---- contig SRS104400|110|k99_72980 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_72998 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides massiliensis
+
+---- contig SRS104400|110|k99_73036 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Blautia_A sp900066335
+
+---- contig SRS104400|110|k99_74130 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Bacteroides_A coprocola
+
+---- contig SRS104400|110|k99_74338 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides intestinalis
+
+
+---- contig SRS104400|110|k99_74899 (4 kb)
+contig dirty, REASON 2
+lineage is s__Blautia_A massiliensis
+
+** hashval lca counts
+   1 kb s__Blautia_A massiliensis
+
+** hashval lineage counts - 1
+   1 kb s__Blautia_A massiliensis
+---- contig SRS104400|110|k99_75029 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Blautia_A sp900066505
+
+---- contig SRS104400|110|k99_75627 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Oscillibacter sp001916835
+
+---- contig SRS104400|110|k99_75847 (33 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_F
+
+---- contig SRS104400|110|k99_75849 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-390 sp000437015
+
+---- contig SRS104400|110|k99_76150 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Parabacteroides sp002159645
+
+---- contig SRS104400|110|k99_76213 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_76564 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_76742 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_76744 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Roseburia hominis
+
+---- contig SRS104400|110|k99_77450 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_77524 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_77806 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-45 sp900066395
+
+---- contig SRS104400|110|k99_78314 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_G
+
+---- contig SRS104400|110|k99_78454 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_78769 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Blautia_A sp900066335
+
+---- contig SRS104400|110|k99_79058 (22 kb)
+contig dirty, REASON 3
+   gather yields match of 21 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_79234 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_79684 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides_A sp000434735
+
+---- contig SRS104400|110|k99_80148 (15 kb)
+contig dirty, REASON 3
+   gather yields match of 13 kb to s__CAG-631 sp000433015
+
+---- contig SRS104400|110|k99_80277 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Soleaferrea massiliensis
+
+---- contig SRS104400|110|k99_80369 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_80371 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides pyogenes_A
+
+---- contig SRS104400|110|k99_80713 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Fusicatenibacter saccharivorans
+
+---- contig SRS104400|110|k99_80986 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__An200 sp002160025
+
+---- contig SRS104400|110|k99_81251 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides salyersiae
+
+---- contig SRS104400|110|k99_81346 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Lawsonibacter sp000492175
+
+---- contig SRS104400|110|k99_81427 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_81681 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_81857 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides faecichinchillae
+
+---- contig SRS104400|110|k99_82164 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Faecalibacterium prausnitzii_E
+
+---- contig SRS104400|110|k99_82716 (57 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Leptotrichia sp002240055
+
+---- contig SRS104400|110|k99_83517 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_D
+
+---- contig SRS104400|110|k99_84433 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Prevotella copri_A
+
+---- contig SRS104400|110|k99_84743 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_E
+
+---- contig SRS104400|110|k99_84869 (74 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_84948 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Fusicatenibacter saccharivorans
+
+---- contig SRS104400|110|k99_84993 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_85758 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Blautia sp001304935
+
+---- contig SRS104400|110|k99_86954 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_87117 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_87183 (35 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_88068 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Flavonifractor sp002159265
+
+---- contig SRS104400|110|k99_88565 (22 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_88764 (38 kb)
+contig dirty, REASON 3
+   gather yields match of 17 kb to s__Parabacteroides merdae
+
+---- contig SRS104400|110|k99_89620 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 13 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_89629 (17 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_90515 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_A coprocola
+
+---- contig SRS104400|110|k99_91091 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Flavonifractor sp900199495
+
+---- contig SRS104400|110|k99_91098 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_J
+
+---- contig SRS104400|110|k99_91353 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Oscillibacter sp900066435
+
+---- contig SRS104400|110|k99_91510 (2 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_91629 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Parabacteroides merdae
+
+---- contig SRS104400|110|k99_91775 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Blautia_A obeum_B
+
+---- contig SRS104400|110|k99_93370 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Alistipes onderdonkii
+
+---- contig SRS104400|110|k99_94034 (53 kb)
+contig dirty, REASON 3
+   gather yields match of 36 kb to s__Bacteroides stercoris
+
+---- contig SRS104400|110|k99_94344 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-83 sp000431575
+
+---- contig SRS104400|110|k99_95582 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Dorea sp000433535
+
+---- contig SRS104400|110|k99_95583 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Roseburia inulinivorans
+
+---- contig SRS104400|110|k99_96143 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Fusicatenibacter saccharivorans
+
+
+---- contig SRS104400|110|k99_97480 (2 kb)
+contig dirty, REASON 2
+lineage is s__CAG-81 sp900066055
+
+** hashval lca counts
+   1 kb s__CAG-81 sp900066055
+
+** hashval lineage counts - 1
+   1 kb s__CAG-81 sp900066055
+---- contig SRS104400|110|k99_97729 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Prevotella sp900290275
+
+---- contig SRS104400|110|k99_97830 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_98361 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 12 kb to s__Acetatifactor sp900066365
+
+---- contig SRS104400|110|k99_99064 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__UBA4263 sp002395225
+
+---- contig SRS104400|110|k99_99225 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_99499 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_100615 (28 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_100668 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_100887 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_102266 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_103025 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__CAG-279 sp000437795
+
+
+---- contig SRS104400|110|k99_104902 (4 kb)
+contig dirty, REASON 1
+lca rank is order
+
+
+** hashval lca counts
+   1 kb order o__Bacteroidales
+
+** hashval lineage counts - 1
+   1 kb s__Bacteroides acidifaciens
+   1 kb s__Alistipes shahii
+   1 kb s__Bacteroides caecimuris
+---- contig SRS104400|110|k99_104971 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_104996 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_107471 (22 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__CAG-180 sp002314305
+
+---- contig SRS104400|110|k99_107630 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 15 kb to s__Blautia_A sp900066355
+
+---- contig SRS104400|110|k99_108504 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Alistipes senegalensis
+
+---- contig SRS104400|110|k99_111551 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-170 sp000432135
+
+---- contig SRS104400|110|k99_112593 (15 kb)
+contig dirty, REASON 3
+   gather yields match of 14 kb to s__Butyrivibrio_A crossotus
+
+---- contig SRS104400|110|k99_112724 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bact-11 sp002314725
+
+---- contig SRS104400|110|k99_114973 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Dorea faecis
+
+---- contig SRS104400|110|k99_115408 (17 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__An200 sp002160025
+
+---- contig SRS104400|110|k99_116849 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Faecalicatena torques
+
+---- contig SRS104400|110|k99_117102 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Anaerobium acetethylicum
+
+---- contig SRS104400|110|k99_117227 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_118047 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_119218 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_119373 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_119477 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Blautia_A obeum
+
+---- contig SRS104400|110|k99_119490 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides xylanisolvens
+
+---- contig SRS104400|110|k99_119758 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Dorea formicigenerans
+
+---- contig SRS104400|110|k99_119837 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 15 kb to s__QALW01 sp003150515
+
+---- contig SRS104400|110|k99_120591 (26 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__CAG-180 sp002314305
+
+
+---- contig SRS104400|110|k99_121474 (2 kb)
+contig dirty, REASON 1
+lca rank is family
+
+
+** hashval lca counts
+   1 kb family f__Bacteroidaceae
+
+** hashval lineage counts - 1
+   1 kb s__Prevotella lascolaii
+   1 kb s__Bacteroides xylanisolvens
+---- contig SRS104400|110|k99_121670 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__UBA11524 sp000437595
+
+---- contig SRS104400|110|k99_122191 (15 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Roseburia hominis
+
+---- contig SRS104400|110|k99_124031 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_I
+
+---- contig SRS104400|110|k99_126149 (17 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_126680 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__CAG-81 sp900066055
+
+---- contig SRS104400|110|k99_127928 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_128117 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Clostridium_A leptum
+
+---- contig SRS104400|110|k99_128691 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Alistipes onderdonkii
+
+---- contig SRS104400|110|k99_130904 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_131114 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_133563 (42 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_L
+
+---- contig SRS104400|110|k99_135723 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_136448 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides cellulosilyticus
+
+---- contig SRS104400|110|k99_136638 (2 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B sartorii
+
+---- contig SRS104400|110|k99_136806 (21 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides_B massiliensis
+
+---- contig SRS104400|110|k99_137840 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Alistipes sp002428825
+
+---- contig SRS104400|110|k99_137914 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_138865 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Clostridium_M sp001517625
+
+---- contig SRS104400|110|k99_139323 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_139662 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_140372 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_140785 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_143616 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Roseburia hominis
+
+---- contig SRS104400|110|k99_144324 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_144505 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Bacteroides intestinalis
+
+---- contig SRS104400|110|k99_144627 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Lawsonibacter sp900066825
+
+---- contig SRS104400|110|k99_145567 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Butyrivibrio_A crossotus
+
+---- contig SRS104400|110|k99_146013 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Eisenbergiella sp900066775
+
+---- contig SRS104400|110|k99_146770 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_147020 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_147373 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Prevotella sp002265625
+
+---- contig SRS104400|110|k99_149152 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides_A coprophilus
+
+---- contig SRS104400|110|k99_149199 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Dorea formicigenerans
+
+---- contig SRS104400|110|k99_149362 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__ER4 sp003522105
+
+---- contig SRS104400|110|k99_151611 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_152500 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Faecalibacterium prausnitzii_G
+
+---- contig SRS104400|110|k99_152732 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 13 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_153461 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Coprococcus_B comes
+
+---- contig SRS104400|110|k99_154057 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Prevotella sp002265625
+
+---- contig SRS104400|110|k99_154429 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_154543 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Acetatifactor sp900066565
+
+---- contig SRS104400|110|k99_154937 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Prevotella lascolaii
+
+---- contig SRS104400|110|k99_156166 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Prevotella lascolaii
+
+---- contig SRS104400|110|k99_156256 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides cellulosilyticus
+
+---- contig SRS104400|110|k99_156694 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_157291 (37 kb)
+contig dirty, REASON 3
+   gather yields match of 46 kb to s__Monoglobus pectinilyticus
+
+---- contig SRS104400|110|k99_157680 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Blautia_A sp900066505
+
+---- contig SRS104400|110|k99_157773 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Faecalibacterium prausnitzii_D
+
+---- contig SRS104400|110|k99_158648 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_161235 (24 kb)
+contig dirty, REASON 3
+   gather yields match of 16 kb to s__Bacteroides fluxus
+
+---- contig SRS104400|110|k99_162794 (18 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Eisenbergiella sp900066775
+
+---- contig SRS104400|110|k99_163004 (20 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides xylanisolvens
+
+---- contig SRS104400|110|k99_165479 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_165520 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_166076 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 16 kb to s__Oscillibacter sp900066435
+
+---- contig SRS104400|110|k99_166886 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Fusicatenibacter saccharivorans
+
+---- contig SRS104400|110|k99_167857 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Faecalibacterium prausnitzii_A
+
+---- contig SRS104400|110|k99_167887 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Lawsonibacter sp900066645
+
+---- contig SRS104400|110|k99_169076 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__CAG-145 sp002320005
+
+---- contig SRS104400|110|k99_169487 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__CAG-45 sp900066395
+
+---- contig SRS104400|110|k99_172048 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides faecis
+
+---- contig SRS104400|110|k99_172175 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides intestinalis
+
+---- contig SRS104400|110|k99_173516 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides thetaiotaomicron
+
+---- contig SRS104400|110|k99_173771 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 6 kb to s__Provencibacterium massiliense
+
+---- contig SRS104400|110|k99_175890 (17 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__UBA3382 sp002159555
+
+---- contig SRS104400|110|k99_176133 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_176636 (29 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-145 sp002439735
+
+---- contig SRS104400|110|k99_177354 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides ovatus
+
+---- contig SRS104400|110|k99_179026 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 11 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_182105 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Acetatifactor sp900066565
+
+---- contig SRS104400|110|k99_182580 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Agathobacter sp900317585
+
+---- contig SRS104400|110|k99_183573 (16 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_183626 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter faecis
+
+---- contig SRS104400|110|k99_184575 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Anaeromassilibacillus sp002159845
+
+---- contig SRS104400|110|k99_184885 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Alistipes shahii
+
+---- contig SRS104400|110|k99_184909 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__CAG-83 sp001916855
+
+---- contig SRS104400|110|k99_184969 (4 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Gemmiger formicilis
+
+---- contig SRS104400|110|k99_185053 (18 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__F23-B02 sp001916715
+
+---- contig SRS104400|110|k99_185300 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_187009 (60 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Blautia_A sp900066145
+
+---- contig SRS104400|110|k99_187688 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_188873 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__CAG-882 sp000435595
+
+---- contig SRS104400|110|k99_189451 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Alistipes senegalensis
+
+---- contig SRS104400|110|k99_189500 (12 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_C
+
+---- contig SRS104400|110|k99_189566 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Parabacteroides timonensis
+
+---- contig SRS104400|110|k99_190083 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Agathobacter rectale
+
+---- contig SRS104400|110|k99_190542 (43 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_L
+
+---- contig SRS104400|110|k99_190854 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Tyzzerella nexilis
+
+---- contig SRS104400|110|k99_191333 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides pyogenes_A
+
+---- contig SRS104400|110|k99_192102 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalicatena sp002159505
+
+---- contig SRS104400|110|k99_192770 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Coprococcus eutactus_A
+
+---- contig SRS104400|110|k99_193717 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__43-108 sp001915545
+
+---- contig SRS104400|110|k99_194151 (3 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Faecalibacterium prausnitzii_C
+
+---- contig SRS104400|110|k99_194739 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 4 kb to s__Bacteroides togonis
+
+---- contig SRS104400|110|k99_194746 (11 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Bacteroides_B dorei
+
+
+---- contig SRS104400|110|k99_195054 (5 kb)
+contig dirty, REASON 2
+lineage is s__Agathobacter faecis
+
+** hashval lca counts
+   1 kb s__Agathobacter faecis
+
+** hashval lineage counts - 1
+   1 kb s__Agathobacter faecis
+---- contig SRS104400|110|k99_196715 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Bacteroides_B vulgatus
+
+---- contig SRS104400|110|k99_197049 (14 kb)
+contig dirty, REASON 3
+   gather yields match of 8 kb to s__Bacteroides fluxus
+
+---- contig SRS104400|110|k99_197959 (13 kb)
+contig dirty, REASON 3
+   gather yields match of 13 kb to s__UBA7182 sp002160135
+
+---- contig SRS104400|110|k99_198049 (7 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Bacteroides_B dorei
+
+---- contig SRS104400|110|k99_198220 (23 kb)
+contig dirty, REASON 3
+   gather yields match of 29 kb to s__UBA2882 sp900317505
+
+---- contig SRS104400|110|k99_198442 (17 kb)
+contig dirty, REASON 3
+   gather yields match of 2 kb to s__Ruminococcus_D bicirculans
+
+---- contig SRS104400|110|k99_199124 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Butyrivibrio_A crossotus
+
+---- contig SRS104400|110|k99_199136 (10 kb)
+contig dirty, REASON 3
+   gather yields match of 7 kb to s__Faecalibacterium prausnitzii_F
+
+---- contig SRS104400|110|k99_199859 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 10 kb to s__Bacteroides stercoris
+
+---- contig SRS104400|110|k99_199909 (5 kb)
+contig dirty, REASON 3
+   gather yields match of 3 kb to s__Bacteroides uniformis
+
+---- contig SRS104400|110|k99_200082 (9 kb)
+contig dirty, REASON 3
+   gather yields match of 1 kb to s__Faecalibacterium prausnitzii_C
+
+---- contig SRS104400|110|k99_200649 (6 kb)
+contig dirty, REASON 3
+   gather yields match of 9 kb to s__Coprococcus eutactus
+
+---- contig SRS104400|110|k99_200790 (8 kb)
+contig dirty, REASON 3
+   gather yields match of 5 kb to s__Bacteroides_B dorei
+
+--------------
+kept 322 contigs containing 3911.598 kb.
+removed 406 contigs containing 4167.785 kb.
+
+breakdown of clean contigs w/gather:
+  35.467% - to GCA_900316325 s__Lachnospira sp900316325
+  0.484% - to GCF_000155855 s__Bacteroides_F pectinophilus
+  0.324% - to GCF_000146185 s__Lachnospira eligens
+  0.122% - to GCA_003451515 s__Lachnospira sp003451515
+  0.122% - to GCA_000436535 s__Lachnospira sp000436535
+  0.122% - to GCF_900112995 s__Lachnospira rogosae
+  0.082% - to GCF_900104665 s__Traorella massiliensis
+  0.041% - to GCF_000173795 s__Catenibacterium mitsuokai
+  0.041% - to GCA_003537285 s__Lachnospira sp003537285
+  0.041% - to GCA_000431435 s__Veillonella_A sp000431435
+  0.041% - to GCF_000225345 s__Roseburia hominis
+  0.041% - to GCA_002358555 s__Hungatella_A sp002358555
