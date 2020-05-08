@@ -3,6 +3,7 @@ channels:
     - bioconda
     - defaults
 dependencies:
+    - python>=3.6
     - sourmash>=3.3,<4
     - pytest
     - pip

@@ -29,7 +29,8 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list)
+        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
+        output_dir + '/just_taxonomy.combined_summary.csv',
 
 rule old:
     input:
@@ -336,3 +337,28 @@ rule contigs_clean_just_taxonomy:
             --report {output.report} --summary {output.csv}
 
     """
+
+
+rule combined_summary:
+    input:
+        expand(output_dir + '/{g}.summary.csv', g=genome_list),
+    output:
+        output_dir + '/just_taxonomy.combined_summary.csv',
+    conda: 'conf/env-sourmash.yml'
+    run:
+        # combine all of the summary CSV files
+        import csv
+        with open(output[0], 'wt') as fp:
+            w = csv.writer(fp)
+            header = ["genomefile","clean_n", "clean_bp", "dirty_n", "dirty_bp","f_major","n_reason_1", "n_reason_2", "n_reason_3"]
+            w.writerow(header)
+
+            for i in input:
+                with open(i, 'rt') as in_fp:
+                   r = csv.reader(in_fp)
+                   rows = list(r)
+                   assert len(rows) == 1
+                   row = rows[0]
+                   assert len(row) == len(header)
+
+                   w.writerow(row)

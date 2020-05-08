@@ -176,6 +176,10 @@ def main():
     dirty_bp = clean_bp = 0
     dirty_n = clean_n = 0
     clean_mh = empty_mh.copy_and_clear()
+
+    n_reason_1 = 0
+    n_reason_2 = 0
+    n_reason_3 = 0
     
     print(f'pass 2: reading contigs from {args.genome}')
     for n, record in enumerate(screed.open(args.genome)):
@@ -195,6 +199,7 @@ def main():
                     lineage = tax_assign[match_ident]
                     if not utils.is_lineage_match(assign, lineage, 'genus'):
                         clean=False
+                        n_reason_3 += 1
                         print(f'contig {record.name} dirty, REASON 3\n   gather yields {pretty_print_lineage(lineage)}',
                               file=report_fp)
                         print('', file=report_fp)
@@ -214,6 +219,7 @@ def main():
                 # assignment outside of genus? dirty!
                 if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
                     clean = False
+                    n_reason_1 += 1
                     print(f'\n---- contig {record.name}')
                     print(f'dirty! {ctg_lin[-1].rank}')
                     print(f'contig {record.name} dirty, REASON 1\nrank is {ctg_lin[-1].rank}',
@@ -222,6 +228,7 @@ def main():
                     print(f'---- contig {record.name}', file=report_fp)
                 elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
                     clean = False
+                    n_raeson_2 += 1
                     print(f'dirty! {ctg_lin}')
                     print('', file=report_fp)
                     print(f'---- contig {record.name}', file=report_fp)
@@ -288,7 +295,7 @@ def main():
     if args.summary:
         with open(args.summary, 'wt') as fp:
             w = csv.writer(fp)
-            w.writerow([clean_n, clean_bp, dirty_n, dirty_bp,f_major])
+            w.writerow([args.genome,clean_n, clean_bp, dirty_n, dirty_bp,f_major,n_reason_1, n_reason_2, n_reason_3])
 
 if __name__ == '__main__':
     main()
