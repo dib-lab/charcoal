@@ -117,7 +117,7 @@ def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_f
         common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
 
         print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\' genus\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
+        print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s genus\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
               file=report_fp)
         print('', file=report_fp)
 
