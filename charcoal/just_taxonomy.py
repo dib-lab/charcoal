@@ -91,11 +91,6 @@ def get_ident(sig):
     return ident
 
 
-class ContigInfo(object):
-    def __init__(self, name, size, reason_num, lineage_info):
-        pass
-
-
 def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_fp):
     threshold_bp = contig_mh.scaled*2
     results = lca_db.gather(sourmash.SourmashSignature(contig_mh))
@@ -247,8 +242,6 @@ def main():
     n_reason_2 = 0
     n_reason_3 = 0
 
-    contig_info_list = []
-    
     print(f'pass 2: reading contigs from {args.genome}')
     print(f'**\n** walking through contigs:\n**\n', file=report_fp)
     for n, record in enumerate(screed.open(args.genome)):
