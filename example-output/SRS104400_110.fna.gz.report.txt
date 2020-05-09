@@ -264,8 +264,8 @@ lca rank is family
 ** hashval lineage counts - 6
    6 kb s__Lachnospira eligens
    4 kb s__Agathobacter faecis
-   3 kb s__Eubacterium_I ramulus_A
    3 kb s__Roseburia inulinivorans
+   3 kb s__Eubacterium_I ramulus_A
    2 kb s__Lachnospira rogosae
    1 kb s__Acetatifactor sp900066365
 ---- contig SRS104400|110|k99_11380 (7 kb)
@@ -538,11 +538,11 @@ lca rank is family
    1 kb family f__Lachnospiraceae
 
 ** hashval lineage counts - 1
-   1 kb s__CAG-603 sp900066105
    1 kb s__Eisenbergiella sp900066775
    1 kb s__Blautia_A massiliensis
-   1 kb s__Roseburia hominis
    1 kb s__Fusicatenibacter saccharivorans
+   1 kb s__Roseburia hominis
+   1 kb s__CAG-603 sp900066105
    1 kb s__Blautia_A wexlerae
 ---- contig SRS104400|110|k99_27844 (9 kb)
 contig dirty, REASON 3 - gather matches to lineage outside of genome's genus
