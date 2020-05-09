@@ -213,7 +213,7 @@ def main():
     genome_lineage, count = next(iter(counts.most_common()))
     f_major = count / identified_counts
     print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}')
-    if genome_lineage[-1].rank not in ('species', 'strain', 'genus'):
+    if genome_lineage[-1].rank != 'genus':
         print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
         sys.exit(-1)
 
@@ -342,15 +342,17 @@ def main():
         clean_sig = sourmash.SourmashSignature(clean_mh)
 
     nearest_size = 0
+    match_lineage = ""
     if first_match:
         nearest_size = len(first_match.minhash) * first_match.minhash.scaled
+        ident = get_ident(first_match)
+        match_lineage = ldb.ident_to_lineage[ident]
 
     # write out a one line summary?
     if args.summary:
         with open(args.summary, 'wt') as fp:
-            full_lineage = sourmash.lca.display_lineage(genome_lineage)
-            short_lineage = pretty_print_lineage(genome_lineage)
-            nearest_size = 0
+            full_lineage = sourmash.lca.display_lineage(match_lineage)
+            short_lineage = pretty_print_lineage(match_lineage)
             w = csv.writer(fp)
             w.writerow([args.genome, short_lineage, full_lineage,
                         nearest_size, clean_n, clean_bp, dirty_n, dirty_bp,
