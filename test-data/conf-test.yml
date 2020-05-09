@@ -21,7 +21,9 @@ output_dir: 'output.test'
 
 ####
 
-gather_db: test-data/podar-ref.lca.json.gz
+gather_db:
+- test-data/podar-ref.lca.json.gz
+- test-data/LoombaR_2017__SID1050_bax__bin.11.fa.gz.gather-matches.sig.gz
 
 sig_scaled: 1000
 sig_ksize: 31

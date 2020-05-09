@@ -305,14 +305,14 @@ rule contigs_sig:
 rule gather_all:
     input:
         query = output_dir + '/{filename}.sig',
-        database = config['gather_db']
+        databases = config['gather_db']
     output:
         csv = output_dir + '/{filename}.gather-matches.csv',
         matches = output_dir + '/{filename}.gather-matches.sig',
         txt = output_dir + '/{filename}.gather-matches.txt'
     conda: 'conf/env-sourmash.yml'
     shell: """
-        sourmash gather {input.query} {input.database} -o {output.csv} \
+        sourmash gather {input.query} {input.databases} -o {output.csv} \
             --save-matches {output.matches} --threshold-bp=0 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
