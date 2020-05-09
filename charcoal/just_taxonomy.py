@@ -111,16 +111,17 @@ def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_f
     contig_lineage = lineage_db.ident_to_lineage[match_ident]
 
     # if it matched outside genus, => dirty.
+    clean = True
     if not utils.is_lineage_match(genome_lineage, contig_lineage, 'genus'):
         clean=False
         common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
 
         print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 3\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
+        print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\' genus\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
               file=report_fp)
         print('', file=report_fp)
 
-    return False
+    return clean
 
 
 def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
@@ -135,6 +136,23 @@ def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
     print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
     for lin, count in ctg_counts.most_common():
         print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+
+
+class WriteAndTrackFasta(object):
+    def __init__(self, outfp, mh_ex):
+        self.minhash = mh_ex.copy_and_clear()
+        self.outfp = outfp
+        self.n = 0
+        self.bp = 0
+
+    def write(self, record):
+        self.outfp.write(f'>{record.name}\n{record.sequence}\n')
+        self.minhash.add_sequence(record.sequence, force=True)
+        self.n += 1
+        self.bp += len(record.sequence)
+
+    def close(self):
+        self.outfp.close()
 
 
 def main():
@@ -217,13 +235,14 @@ def main():
 
     # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
+    clean_out = WriteAndTrackFasta(clean_fp, empty_mh)
     dirty_fp = gzip.open(args.dirty, 'wt')
+    dirty_out = WriteAndTrackFasta(dirty_fp, empty_mh)
+
+    missed_n = 0
+    missed_bp = 0
 
     # now, find bad contigs.
-    dirty_bp = clean_bp = 0
-    dirty_n = clean_n = 0
-    clean_mh = empty_mh.copy_and_clear()
-
     n_reason_1 = 0
     n_reason_2 = 0
     n_reason_3 = 0
@@ -233,26 +252,30 @@ def main():
     print(f'pass 2: reading contigs from {args.genome}')
     print(f'**\n** walking through contigs:\n**\n', file=report_fp)
     for n, record in enumerate(screed.open(args.genome)):
-        clean = True               # default to clean
-
+        # make a new minhash and start examining it.
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
 
+        clean = True               # default to clean
+        if not mh:                 # no hashes?
+            missed_n += 1
+            missed_bp += len(record.sequence)
 
-        clean = True
         if mh and len(mh) >= 2:
             clean = check_gather(record, mh, assign, lca_db, ldb, report_fp)
-            n_reason_3 += 1
+            if not clean:
+                n_reason_3 += 1
 
         # did we find a dirty contig in step 1? if NOT, go into LCA style
         # approaches.
         if mh and clean:
             
-            # get all of the hash taxonomy assignments for this contig
+            # get _all_ of the hash taxonomy assignments for this contig
             ctg_assign = gather_assignments(mh.get_mins(), None, [lca_db], ldb)
 
             ctg_tax_assign = count_lca_for_assignments(ctg_assign)
             if ctg_tax_assign:
+                # get top assignment for contig.
                 ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
 
                 # assignment outside of genus? dirty!
@@ -260,43 +283,44 @@ def main():
                     clean = False
                     n_reason_1 += 1
                     print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-                    print(f'contig dirty, REASON 1\nlca rank is {ctg_lin[-1].rank}',
+                    print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {ctg_lin[-1].rank}',
                           file=report_fp)
                     print('', file=report_fp)
                 elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
                     clean = False
                     n_reason_2 += 1
-                    print(f'dirty! {ctg_lin}')
                     print('', file=report_fp)
                     print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-                    print(f'contig dirty, REASON 2\nlineage is {pretty_print_lineage(ctg_lin)}',
+                    print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s genus\nlineage is {pretty_print_lineage(ctg_lin)}',
                           file=report_fp)
 
-                # summary reporting
-
+                # summary reporting --
                 if not clean:
                     report_lca_summary(report_fp, ctg_tax_assign,
                                        ctg_assign, scaled)
 
         # write out contigs -> clean or dirty files.
         if clean:
-            clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            clean_n += 1
-            clean_bp += len(record.sequence)
-
-            clean_mh.add_sequence(record.sequence, force=True)
+            clean_out.write(record)
         else:
-            dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
-            dirty_n += 1
-            dirty_bp += len(record.sequence)
+            dirty_out.write(record)
+
     # END contig loop
+
+    clean_n = clean_out.n
+    clean_bp = clean_out.bp
+    dirty_n = dirty_out.n
+    dirty_bp = dirty_out.bp
+
+    assert n_reason_1 + n_reason_2 + n_reason_3 == dirty_n
 
     # do some reporting.
     print('--------------', file=report_fp)
-    print(f'kept {clean_n} contigs containing {int(clean_bp)/1000} kb.',
+    print(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.',
           file=report_fp)
-    print(f'removed {dirty_n} contigs containing {int(dirty_bp)/1000} kb.',
+    print(f'removed {dirty_n} contigs containing {int(dirty_bp/1000)} kb.',
           file=report_fp)
+    print(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, so counted as clean', file=report_fp)
 
     # look at what our database says about remaining contamination,
     # across all "clean" contigs. (Need to dig into this more to figure
@@ -305,6 +329,7 @@ def main():
     # CTB: add breakdown of dirty contigs?
 
     # build signature from hashes in clean mh
+    clean_mh = clean_out.minhash
     clean_sig = sourmash.SourmashSignature(clean_mh)
 
     # do the gather:
@@ -322,7 +347,7 @@ def main():
     if args.summary:
         with open(args.summary, 'wt') as fp:
             w = csv.writer(fp)
-            w.writerow([args.genome,clean_n, clean_bp, dirty_n, dirty_bp,f_major,n_reason_1, n_reason_2, n_reason_3])
+            w.writerow([args.genome,clean_n, clean_bp, dirty_n, dirty_bp, missed_n, missed_bp, f_major,n_reason_1, n_reason_2, n_reason_3])
 
 if __name__ == '__main__':
     main()
