@@ -89,7 +89,39 @@ def get_ident(sig):
     ident = ident.split()[0]
     ident = ident.split('.')[0]
     return ident
-    
+
+
+class ContigInfo(object):
+    def __init__(self, name, size, reason_num, lineage_info):
+        pass
+
+
+def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_fp):
+    threshold_bp = contig_mh.scaled*2
+    results = lca_db.gather(sourmash.SourmashSignature(contig_mh))
+
+    if not results:
+        return True
+
+    match = results[0][1]
+
+    # get identitiy
+    match_ident = get_ident(match)
+    # get lineage
+    contig_lineage = lineage_db.ident_to_lineage[match_ident]
+
+    # if it matched outside genus, => dirty.
+    if not utils.is_lineage_match(genome_lineage, contig_lineage, 'genus'):
+        clean=False
+        common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
+
+        print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+        print(f'contig dirty, REASON 3\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
+              file=report_fp)
+        print('', file=report_fp)
+
+    return False
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -181,6 +213,8 @@ def main():
     n_reason_1 = 0
     n_reason_2 = 0
     n_reason_3 = 0
+
+    contig_info_list = []
     
     print(f'pass 2: reading contigs from {args.genome}')
     print(f'**\n** walking through contigs:\n**\n', file=report_fp)
@@ -190,27 +224,11 @@ def main():
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
 
-        if mh:
-            # first, if there is more than one hash, use gather.
-            if len(mh) >= 2:
-                threshold_bp = mh.scaled*2
-                results = lca_db.gather(sourmash.SourmashSignature(mh))
-                if results:
-                    match = results[0][1]
-                    # get identitiy
-                    match_ident = get_ident(match)
-                    # get lineage
-                    lineage = tax_assign[match_ident]
 
-                    # if it matched outside genus, => dirty.
-                    if not utils.is_lineage_match(assign, lineage, 'genus'):
-                        clean=False
-                        n_reason_3 += 1
-                        common_kb = mh.count_common(match.minhash) * scaled / 1000
-                        print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-                        print(f'contig dirty, REASON 3\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(lineage)}',
-                              file=report_fp)
-                        print('', file=report_fp)
+        clean = True
+        if mh and len(mh) >= 2:
+            clean = check_gather(record, mh, assign, lca_db, ldb, report_fp)
+            n_reason_3 += 1
 
         # did we find a dirty contig in step 1? if NOT, go into LCA style
         # approaches.
