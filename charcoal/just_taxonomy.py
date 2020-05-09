@@ -210,15 +210,16 @@ def main():
                 counts[lineage] += 1
 
     # make sure it's strain or species level
-    assign, count = next(iter(counts.most_common()))
+    genome_lineage, count = next(iter(counts.most_common()))
     f_major = count / identified_counts
-    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(assign)}')
-    if assign[-1].rank not in ('species', 'strain', 'genus'):
-        print(f'rank of major assignment is f{assign[-1].rank}; quitting')
+    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}')
+    if genome_lineage[-1].rank not in ('species', 'strain', 'genus'):
+        print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
         sys.exit(-1)
 
+    # report everything...
     report_fp = open(args.report, 'wt')
-    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(assign)}', file=report_fp)
+    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
     print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
@@ -255,7 +256,7 @@ def main():
             missed_bp += len(record.sequence)
 
         if mh and len(mh) >= 2:
-            clean = check_gather(record, mh, assign, lca_db, ldb, report_fp)
+            clean = check_gather(record, mh, genome_lineage, lca_db, ldb, report_fp)
             if not clean:
                 n_reason_3 += 1
 
@@ -279,7 +280,7 @@ def main():
                     print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {ctg_lin[-1].rank}',
                           file=report_fp)
                     print('', file=report_fp)
-                elif not utils.is_lineage_match(assign, ctg_lin, 'genus'):
+                elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
                     clean = False
                     n_reason_2 += 1
                     print('', file=report_fp)
@@ -326,21 +327,36 @@ def main():
     clean_sig = sourmash.SourmashSignature(clean_mh)
 
     # do the gather:
+    first_match = None
     while 1:
         results = lca_db.gather(clean_sig, threshold_bp=0)
         if not results:
             break
 
         (match, match_sig, _) = results[0]
+        if not first_match:
+            first_match = match_sig
+
         print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
         clean_mh.remove_many(match_sig.minhash.get_mins())
         clean_sig = sourmash.SourmashSignature(clean_mh)
 
+    nearest_size = 0
+    if first_match:
+        nearest_size = len(first_match.minhash) * first_match.minhash.scaled
+
     # write out a one line summary?
     if args.summary:
         with open(args.summary, 'wt') as fp:
+            full_lineage = sourmash.lca.display_lineage(genome_lineage)
+            short_lineage = pretty_print_lineage(genome_lineage)
+            nearest_size = 0
             w = csv.writer(fp)
-            w.writerow([args.genome,clean_n, clean_bp, dirty_n, dirty_bp, missed_n, missed_bp, f_major,n_reason_1, n_reason_2, n_reason_3])
+            w.writerow([args.genome, short_lineage, full_lineage,
+                        nearest_size, clean_n, clean_bp, dirty_n, dirty_bp,
+                        missed_n, missed_bp, f_major,
+                        n_reason_1, n_reason_2, n_reason_3])
+
 
 if __name__ == '__main__':
     main()

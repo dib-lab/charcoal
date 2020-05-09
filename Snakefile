@@ -349,7 +349,7 @@ rule combined_summary:
         import csv
         with open(output[0], 'wt') as fp:
             w = csv.writer(fp)
-            header = ["genomefile","clean_n", "clean_bp", "dirty_n", "dirty_bp", "missed_n", "missed_bp", "f_major","n_reason_1", "n_reason_2", "n_reason_3"]
+            header = ["genomefile", "taxbrief", "taxfull", "refsize", "clean_n", "clean_bp", "dirty_n", "dirty_bp", "missed_n", "missed_bp", "f_major","n_reason_1", "n_reason_2", "n_reason_3"]
             w.writerow(header)
 
             for i in input:
@@ -358,6 +358,6 @@ rule combined_summary:
                    rows = list(r)
                    assert len(rows) == 1
                    row = rows[0]
-                   assert len(row) == len(header), (len(row), len(header))
+                   assert len(row) == len(header), (len(row), len(header), i)
 
                    w.writerow(row)
