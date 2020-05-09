@@ -347,6 +347,7 @@ def main():
         nearest_size = len(first_match.minhash) * first_match.minhash.scaled
         ident = get_ident(first_match)
         match_lineage = ldb.ident_to_lineage[ident]
+        ratio = round(clean_bp / nearest_size, 2)
 
     # write out a one line summary?
     if args.summary:
@@ -355,7 +356,8 @@ def main():
             short_lineage = pretty_print_lineage(match_lineage)
             w = csv.writer(fp)
             w.writerow([args.genome, short_lineage, full_lineage,
-                        nearest_size, clean_n, clean_bp, dirty_n, dirty_bp,
+                        nearest_size, ratio, clean_bp,
+                        clean_n, dirty_n, dirty_bp,
                         missed_n, missed_bp, f_major,
                         n_reason_1, n_reason_2, n_reason_3])
 
