@@ -123,6 +123,20 @@ def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_f
     return False
 
 
+def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
+    ctg_counts = Counter()
+    for hashval, lineages in ctg_assign.items():
+        for lineage in lineages:
+            ctg_counts[lineage] += 1
+
+    print(f'\n** hashval lca counts', file=report_fp)
+    for lin, count in ctg_tax_assign.most_common():
+        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+    print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
+    for lin, count in ctg_counts.most_common():
+        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--genome', help='genome file', required=True)
@@ -246,7 +260,6 @@ def main():
                     clean = False
                     n_reason_1 += 1
                     print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-                    print(f'dirty! {record.name} {ctg_lin[-1].rank}')
                     print(f'contig dirty, REASON 1\nlca rank is {ctg_lin[-1].rank}',
                           file=report_fp)
                     print('', file=report_fp)
@@ -262,18 +275,8 @@ def main():
                 # summary reporting
 
                 if not clean:
-                    ctg_counts = Counter()
-                    for hashval, lineages in ctg_assign.items():
-                        for lineage in lineages:
-                            ctg_counts[lineage] += 1
-
-
-                    print(f'\n** hashval lca counts', file=report_fp)
-                    for lin, count in ctg_tax_assign.most_common():
-                        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
-                    print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
-                    for lin, count in ctg_counts.most_common():
-                        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+                    report_lca_summary(report_fp, ctg_tax_assign,
+                                       ctg_assign, scaled)
 
         # write out contigs -> clean or dirty files.
         if clean:
