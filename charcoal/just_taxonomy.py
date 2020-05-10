@@ -170,7 +170,15 @@ def main():
 
     if not siglist:
         print('no matches for this genome, exiting.')
-        sys.exit(-1)
+        comment = "no matches to this genome were found in the database"
+        if args.summary:
+            with open(args.summary, 'wt') as fp:
+                w = csv.writer(fp)
+                w.writerow([args.genome] + [""]*14 + [comment])
+        open(args.report, 'wt').close()
+        open(args.clean, 'wt').close()
+        open(args.dirty, 'wt').close()
+        sys.exit(0)
 
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
@@ -215,7 +223,15 @@ def main():
     print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}')
     if genome_lineage[-1].rank != 'genus':
         print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
-        sys.exit(-1)
+        comment = f'rank of major assignment is f{genome_lineage[-1].rank}; needs to be genus'
+        if args.summary:
+            with open(args.summary, 'wt') as fp:
+                w = csv.writer(fp)
+                w.writerow([args.genome] + [""]*14 + [comment])
+        open(args.report, 'wt').close()
+        open(args.clean, 'wt').close()
+        open(args.dirty, 'wt').close()
+        sys.exit(0)
 
     # report everything...
     report_fp = open(args.report, 'wt')
@@ -349,6 +365,8 @@ def main():
         match_lineage = ldb.ident_to_lineage[ident]
         ratio = round(clean_bp / nearest_size, 2)
 
+    comment = ""
+
     # write out a one line summary?
     if args.summary:
         with open(args.summary, 'wt') as fp:
@@ -359,7 +377,8 @@ def main():
                         nearest_size, ratio, clean_bp,
                         clean_n, dirty_n, dirty_bp,
                         missed_n, missed_bp, f_major,
-                        n_reason_1, n_reason_2, n_reason_3])
+                        n_reason_1, n_reason_2, n_reason_3,
+                        comment])
 
 
 if __name__ == '__main__':

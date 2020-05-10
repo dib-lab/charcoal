@@ -349,7 +349,7 @@ rule combined_summary:
         import csv
         with open(output[0], 'wt') as fp:
             w = csv.writer(fp)
-            header = ["genomefile", "taxbrief", "taxfull", "refsize", "ratio", "clean_bp", "clean_n", "dirty_n", "dirty_bp", "missed_n", "missed_bp", "f_major","n_reason_1", "n_reason_2", "n_reason_3"]
+            header = ["genomefile", "taxbrief", "taxfull", "refsize", "ratio", "clean_bp", "clean_n", "dirty_n", "dirty_bp", "missed_n", "missed_bp", "f_major","n_reason_1", "n_reason_2", "n_reason_3", "comment"]
             w.writerow(header)
 
             for i in input:

@@ -1,3 +1,4 @@
+GCF_000005845-subset.fa.gz
 2.fa.gz
 47.fa.gz
 63.fa.gz
