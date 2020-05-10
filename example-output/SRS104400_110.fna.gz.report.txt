@@ -538,12 +538,12 @@ lca rank is family
    1 kb family f__Lachnospiraceae
 
 ** hashval lineage counts - 1
+   1 kb s__Blautia_A wexlerae
+   1 kb s__CAG-603 sp900066105
+   1 kb s__Roseburia hominis
+   1 kb s__Fusicatenibacter saccharivorans
    1 kb s__Eisenbergiella sp900066775
    1 kb s__Blautia_A massiliensis
-   1 kb s__Fusicatenibacter saccharivorans
-   1 kb s__Roseburia hominis
-   1 kb s__CAG-603 sp900066105
-   1 kb s__Blautia_A wexlerae
 ---- contig SRS104400|110|k99_27844 (9 kb)
 contig dirty, REASON 3 - gather matches to lineage outside of genome's genus
    gather yields match of 5 kb to s__Lawsonibacter sp900066825
@@ -1276,9 +1276,9 @@ lca rank is order
    1 kb order o__Bacteroidales
 
 ** hashval lineage counts - 1
+   1 kb s__Alistipes shahii
    1 kb s__Bacteroides acidifaciens
    1 kb s__Bacteroides caecimuris
-   1 kb s__Alistipes shahii
 ---- contig SRS104400|110|k99_104971 (8 kb)
 contig dirty, REASON 3 - gather matches to lineage outside of genome's genus
    gather yields match of 1 kb to s__Bacteroides uniformis
@@ -1373,8 +1373,8 @@ lca rank is family
    1 kb family f__Bacteroidaceae
 
 ** hashval lineage counts - 1
-   1 kb s__Bacteroides xylanisolvens
    1 kb s__Prevotella lascolaii
+   1 kb s__Bacteroides xylanisolvens
 ---- contig SRS104400|110|k99_121670 (10 kb)
 contig dirty, REASON 3 - gather matches to lineage outside of genome's genus
    gather yields match of 8 kb to s__UBA11524 sp000437595
