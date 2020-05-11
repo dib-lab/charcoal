@@ -335,8 +335,8 @@ rule contigs_clean_just_taxonomy:
             --matches_sig {input.matches} \
             --clean {output.clean} --dirty {output.dirty} \
             --report {output.report} --summary {output.csv}
-
     """
+#            --lineage 'Bacteria;Proteobacteria;Gammaproteobacteria;Alteromonadales;Shewanellaceae;Shewanella'
 
 
 rule combined_summary:

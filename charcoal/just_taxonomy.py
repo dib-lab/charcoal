@@ -15,7 +15,7 @@ import screed
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
-from sourmash.lca import LCA_Database
+from sourmash.lca import LCA_Database, LineagePair
 
 from . import utils
 from . import lineage_db
@@ -159,6 +159,8 @@ def main():
     p.add_argument('--dirty', help='dirty contigs', required=True)
     p.add_argument('--report', help='report output', required=True)
     p.add_argument('--summary', help='CSV one line output')
+
+    p.add_argument('--lineage', help=';-separated lineage down to genus level')
     args = p.parse_args()
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -204,8 +206,9 @@ def main():
     for n, record in enumerate(screed.open(args.genome)):
         entire_mh.add_sequence(record.sequence, force=True)
 
-    # get all of the hash taxonomy assignments for this contig
-    hash_assign = gather_assignments(entire_mh.get_mins(), 'genus', [lca_db], ldb)
+    # get all of the hash taxonomy assignments for this genome
+    hash_assign = gather_assignments(entire_mh.get_mins(), 'genus',
+                                     [lca_db], ldb)
 
     # count them and find major
     counts = Counter()
@@ -221,6 +224,19 @@ def main():
     genome_lineage, count = next(iter(counts.most_common()))
     f_major = count / identified_counts
     print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}')
+
+    if args.lineage:
+        provided_lin = args.lineage.split(';')
+        provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
+        print(f'provided lineage: {sourmash.lca.display_lineage(provided_lin)}')
+
+        if utils.is_lineage_match(provided_lin, genome_lineage, 'genus'):
+            print(f'XXX agree')
+        else:
+            print(f'XXX disagree')
+            print('XXX', sourmash.lca.display_lineage(provided_lin))
+            print('XXX', sourmash.lca.display_lineage(genome_lineage))
+
     if genome_lineage[-1].rank != 'genus':
         print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of major assignment is f{genome_lineage[-1].rank}; needs to be genus'
@@ -243,6 +259,7 @@ def main():
     print(f'\n** hashval lineage counts for genome - {len(hash_assign)} => {len(hash_assign)*scaled/1000:.0f} kb', file=report_fp)
     for lin, count in counts.most_common():
         print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+        print(sourmash.lca.display_lineage(lin))
     print('', file=report_fp)
 
     # the output files are coming!
