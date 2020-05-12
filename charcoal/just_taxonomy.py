@@ -184,6 +184,42 @@ def create_empty_output(genome, comment, summary, report, clean, dirty):
     open(dirty, 'wt').close()
 
 
+def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
+    # get all of the hash taxonomy assignments for this genome
+    hash_assign = gather_assignments(entire_mh.get_mins(), rank,
+                                     [lca_db], lin_db)
+
+    # count them and find major
+    counts = Counter()
+    identified_counts = 0
+    for hashval, lineages in hash_assign.items():
+        if lineages:
+            identified_counts += 1
+            for lineage in lineages:
+                lineage = utils.pop_to_rank(lineage, 'genus')
+                counts[lineage] += 1
+
+    genome_lineage, count = next(iter(counts.most_common()))
+
+    f_major = count / identified_counts
+    total_counts = len(hash_assign)
+
+    # report everything...
+
+    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
+    print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
+    if f_major < 0.8:
+        print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
+
+    print(f'\n** hashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
+    for lin, count in counts.most_common():
+        print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+        print(sourmash.lca.display_lineage(lin))
+    print('', file=report_fp)
+
+    return genome_lineage, f_major
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--genome', help='genome file', required=True)
@@ -211,6 +247,8 @@ def main():
                              args.report, args.clean, args.dirty)
         sys.exit(0)
 
+    report_fp = open(args.report, 'wt')
+
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
     ksize = empty_mh.ksize
@@ -223,7 +261,7 @@ def main():
     # ...with specific matches.
     for ss in siglist:
         ident = get_ident(ss)
-        lineage = tax_assign[ident] # could move functionality to LineageDB
+        lineage = tax_assign[ident]
 
         lca_db.insert(ss, ident=ident)
         ldb.insert(ident, lineage)
@@ -235,24 +273,8 @@ def main():
     for n, record in enumerate(screed.open(args.genome)):
         entire_mh.add_sequence(record.sequence, force=True)
 
-    # get all of the hash taxonomy assignments for this genome
-    hash_assign = gather_assignments(entire_mh.get_mins(), 'genus',
-                                     [lca_db], ldb)
-
-    # count them and find major
-    counts = Counter()
-    identified_counts = 0
-    for hashval, lineages in hash_assign.items():
-        if lineages:
-            identified_counts += 1
-            for lineage in lineages:
-                lineage = utils.pop_to_rank(lineage, 'genus')
-                counts[lineage] += 1
-
-    # make sure it's strain or species level
-    genome_lineage, count = next(iter(counts.most_common()))
-    f_major = count / identified_counts
-    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}')
+    genome_lineage, f_major = \
+         get_majority_lca_at_rank(entire_mh, lca_db, ldb, 'genus', report_fp)
 
     if args.lineage:
         provided_lin = args.lineage.split(';')
@@ -266,6 +288,7 @@ def main():
             print('XXX', sourmash.lca.display_lineage(provided_lin))
             print('XXX', sourmash.lca.display_lineage(genome_lineage))
 
+    # make sure it's strain or species level
     if genome_lineage[-1].rank != 'genus':
         print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of major assignment is f{genome_lineage[-1].rank}; needs to be genus'
@@ -273,18 +296,6 @@ def main():
                              args.report, args.clean, args.dirty)
         sys.exit(0)
 
-    # report everything...
-    report_fp = open(args.report, 'wt')
-    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
-    print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
-    if f_major < 0.8:
-        print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
-
-    print(f'\n** hashval lineage counts for genome - {len(hash_assign)} => {len(hash_assign)*scaled/1000:.0f} kb', file=report_fp)
-    for lin, count in counts.most_common():
-        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
-        print(sourmash.lca.display_lineage(lin))
-    print('', file=report_fp)
 
     # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
