@@ -268,7 +268,8 @@ def main():
     p.add_argument('--report', help='report output', required=True)
     p.add_argument('--summary', help='CSV one line output')
 
-    p.add_argument('--lineage', help=';-separated lineage down to genus level')
+    p.add_argument('--lineage', help=';-separated lineage down to genus level',
+                   default='NA')        # default is str NA
     args = p.parse_args()
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -317,7 +318,7 @@ def main():
                                   report_fp)
 
     # did we get a passed-in lineage assignment?
-    if args.lineage:
+    if args.lineage and args.lineage != 'NA':
         provided_lin = args.lineage.split(';')
         provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
         print(f'provided lineage: {sourmash.lca.display_lineage(provided_lin)}')
@@ -411,7 +412,7 @@ def main():
     print(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, so counted as clean', file=report_fp)
 
     # look at what our database says about remaining contamination,
-    # across all "clean" contigs. (Need to dig into this more to figure
+    # across all "clean" contigs. (CTB: Need to dig into this more to figure
     # out exactly why we still have any :)
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
     # CTB: add breakdown of dirty contigs?

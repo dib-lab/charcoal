@@ -29,3 +29,7 @@ sig_scaled: 1000
 sig_ksize: 31
 lineages_csv: test-data/podar-lineage.csv
 
+provided_lineages: test-data/provided-lineages.csv
+
+strict: 1
+

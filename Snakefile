@@ -1,9 +1,15 @@
 #
 # run with --use-conda for maximal froodiness.
 #
+import csv, sys
 
 # override this with --configfile on command line
 configfile: 'test-data/conf-test.yml'
+
+strict_val = config.get('strict', '1')
+strict_mode = int(strict_val)
+if not strict_mode:
+    print('** WARNING: strict mode is OFF. Config errors will not force exit.')
 
 ### config stuff loaded from config file
 genome_list_file = config['genome_list']
@@ -16,11 +22,39 @@ output_dir = config['output_dir'].rstrip('/')
 metagenome_sig_list = config['metagenome_sig_list']
 metagenome_sig_dir = config['metagenome_sig_dir'].rstrip('/')
 
+# read in provided lineages, if any.
+provided_lineages_file = config.get('provided_lineages', '')
+provided_lineages = {}
+if provided_lineages_file:
+    with open(provided_lineages_file, 'rt') as fp:
+        r = csv.reader(fp)
+        for row in r:
+            genome_filename = row[0]
+            if genome_filename not in genome_list:
+                print(f'** WARNING: lineage was provided for unknown genome {genome_filename}')
+                print(f'** in provided lineages file {provided_lineages_file}')
+                print(f'** ({genome_filename} not in {genome_list_file})')
+                if strict_mode:
+                    sys.exit(-1)
+            provided_lineages[genome_filename] = row[1:]
+
+    print(f'** read {len(provided_lineages)} provided lineages')
+
 lca_db = config['lca_db']
 
 ### utility functions
 def output_files(filename_template, **kw):
     return expand(output_dir + filename_template, **kw)
+
+def get_provided_lineage(w):
+    "retrieve a lineage for this filename from provided_lineages dictionary"
+    filename = w.f
+    if filename in provided_lineages:
+        lineage = provided_lineages[filename]
+        lineage = ";".join(lineage)
+        return lineage
+    else:
+        return "NA"
 
 ### rules!
 
@@ -329,12 +363,15 @@ rule contigs_clean_just_taxonomy:
         report=output_dir + '/{f}.report.txt',
         csv=output_dir + '/{f}.summary.csv'
     conda: 'conf/env-sourmash.yml'
+    params:
+        lineage = get_provided_lineage
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \
             --matches_sig {input.matches} \
             --clean {output.clean} --dirty {output.dirty} \
-            --report {output.report} --summary {output.csv}
+            --report {output.report} --summary {output.csv} \
+            --lineage {params.lineage:q}
     """
 #            --lineage 'Bacteria;Proteobacteria;Gammaproteobacteria;Alteromonadales;Shewanellaceae;Shewanella'
 
