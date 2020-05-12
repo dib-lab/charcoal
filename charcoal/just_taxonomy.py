@@ -151,6 +151,7 @@ class WriteAndTrackFasta(object):
 
 
 def do_gather_breakdown(minhash, lca_db, report_fp):
+    "Report all gather matches to report_fp; return first match sig."
     import copy
     minhash = copy.copy(minhash)
     query_sig = sourmash.SourmashSignature(minhash)
@@ -171,6 +172,16 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
         query_sig = sourmash.SourmashSignature(minhash)
 
     return first_match
+
+
+def create_empty_output(genome, comment, summary, report, clean, dirty):
+    if summary:
+        with open(summary, 'wt') as fp:
+            w = csv.writer(fp)
+            w.writerow([genome] + [""]*14 + [comment])
+    open(report, 'wt').close()
+    open(clean, 'wt').close()
+    open(dirty, 'wt').close()
 
 
 def main():
@@ -196,13 +207,8 @@ def main():
     if not siglist:
         print('no matches for this genome, exiting.')
         comment = "no matches to this genome were found in the database"
-        if args.summary:
-            with open(args.summary, 'wt') as fp:
-                w = csv.writer(fp)
-                w.writerow([args.genome] + [""]*14 + [comment])
-        open(args.report, 'wt').close()
-        open(args.clean, 'wt').close()
-        open(args.dirty, 'wt').close()
+        create_empty_summary(args.genome, comment, args.summary,
+                             args.report, args.clean, args.dirty)
         sys.exit(0)
 
     # construct a template minhash object that we can use to create new 'uns
@@ -263,13 +269,8 @@ def main():
     if genome_lineage[-1].rank != 'genus':
         print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of major assignment is f{genome_lineage[-1].rank}; needs to be genus'
-        if args.summary:
-            with open(args.summary, 'wt') as fp:
-                w = csv.writer(fp)
-                w.writerow([args.genome] + [""]*14 + [comment])
-        open(args.report, 'wt').close()
-        open(args.clean, 'wt').close()
-        open(args.dirty, 'wt').close()
+        create_empty_summary(args.genome, comment, args.summary,
+                             args.report, args.clean, args.dirty)
         sys.exit(0)
 
     # report everything...
