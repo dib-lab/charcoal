@@ -311,29 +311,37 @@ def main():
     for n, record in enumerate(screed.open(args.genome)):
         entire_mh.add_sequence(record.sequence, force=True)
 
-    genome_lineage, f_major = \
-         get_majority_lca_at_rank(entire_mh, lca_db, lin_db, 'genus', report_fp)
+    # calculate lineage from majority vote on LCA
+    lca_genome_lineage, f_major = \
+         get_majority_lca_at_rank(entire_mh, lca_db, lin_db, 'genus',
+                                  report_fp)
 
+    # did we get a passed-in lineage assignment?
     if args.lineage:
         provided_lin = args.lineage.split(';')
         provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
         print(f'provided lineage: {sourmash.lca.display_lineage(provided_lin)}')
 
-        if utils.is_lineage_match(provided_lin, genome_lineage, 'genus'):
+        if utils.is_lineage_match(provided_lin, lca_genome_lineage, 'genus'):
             print(f'XXX agree')
         else:
             print(f'XXX disagree')
             print('XXX', sourmash.lca.display_lineage(provided_lin))
-            print('XXX', sourmash.lca.display_lineage(genome_lineage))
+            print('XXX', sourmash.lca.display_lineage(lca_genome_lineage))
 
-    # make sure it's strain or species level
+        genome_lineage = utils.pop_to_rank(provided_lin, 'genus')
+        print(f'(using provided lineage as genome lineage)')
+    else:
+        genome_lineage = lca_genome_lineage
+        print(f'(using LCA majority lineage as genome lineage)')
+
+    # make sure lineage going forward is genus level.
     if genome_lineage[-1].rank != 'genus':
-        print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
-        comment = f'rank of major assignment is f{genome_lineage[-1].rank}; needs to be genus'
+        print(f'rank of genome assignment is f{genome_lineage[-1].rank}; quitting')
+        comment = f'rank of genome assignment is f{genome_lineage[-1].rank}; needs to be genus'
         create_empty_output(args.genome, comment, args.summary,
                             args.report, args.clean, args.dirty)
         sys.exit(0)
-
 
     # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
@@ -361,8 +369,9 @@ def main():
             missed_n += 1
             missed_bp += len(record.sequence)
 
-        if mh and len(mh) >= 2:
-            clean = check_gather(record, mh, genome_lineage, lca_db, lin_db, report_fp)
+        if mh and len(mh) >= 2:           # CTB: don't hard code.
+            clean = check_gather(record, mh, genome_lineage, lca_db, lin_db,
+                                 report_fp)
             if not clean:
                 n_reason_3 += 1
 
