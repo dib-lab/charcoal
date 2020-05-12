@@ -256,7 +256,7 @@ def main():
 
     # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled)
-    ldb = LineageDB()
+    lin_db = LineageDB()
 
     # ...with specific matches.
     for ss in siglist:
@@ -264,7 +264,7 @@ def main():
         lineage = tax_assign[ident]
 
         lca_db.insert(ss, ident=ident)
-        ldb.insert(ident, lineage)
+        lin_db.insert(ident, lineage)
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
@@ -274,7 +274,7 @@ def main():
         entire_mh.add_sequence(record.sequence, force=True)
 
     genome_lineage, f_major = \
-         get_majority_lca_at_rank(entire_mh, lca_db, ldb, 'genus', report_fp)
+         get_majority_lca_at_rank(entire_mh, lca_db, lin_db, 'genus', report_fp)
 
     if args.lineage:
         provided_lin = args.lineage.split(';')
@@ -324,7 +324,7 @@ def main():
             missed_bp += len(record.sequence)
 
         if mh and len(mh) >= 2:
-            clean = check_gather(record, mh, genome_lineage, lca_db, ldb, report_fp)
+            clean = check_gather(record, mh, genome_lineage, lca_db, lin_db, report_fp)
             if not clean:
                 n_reason_3 += 1
 
@@ -333,7 +333,7 @@ def main():
         if mh and clean:
             
             # get _all_ of the hash taxonomy assignments for this contig
-            ctg_assign = gather_assignments(mh.get_mins(), None, [lca_db], ldb)
+            ctg_assign = gather_assignments(mh.get_mins(), None, [lca_db], lin_db)
 
             ctg_tax_assign = count_lca_for_assignments(ctg_assign)
             if ctg_tax_assign:
@@ -400,7 +400,7 @@ def main():
     if first_match:
         nearest_size = len(first_match.minhash) * first_match.minhash.scaled
         ident = get_ident(first_match)
-        match_lineage = ldb.ident_to_lineage[ident]
+        match_lineage = lin_db.ident_to_lineage[ident]
         ratio = round(clean_bp / nearest_size, 2)
 
     # write out a one line summary?
