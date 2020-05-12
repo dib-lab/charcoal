@@ -71,14 +71,14 @@ def count_lca_for_assignments(assignments):
 
 def pretty_print_lineage(lin):
     "Nice output names for lineages."
-    if lin[-1].rank == 'strain':
+    if not lin:
+        return f'** no assignment **'
+    elif lin[-1].rank == 'strain':
         strain = lin[-1].name
         return f'{strain}'
     elif lin[-1].rank == 'species':
         species = lin[-1].name
         return f'{species}'
-    elif not lin:
-        return f'** no assignment **'
     else:
         return f'{lin[-1].rank} {lin[-1].name}'
 
@@ -331,10 +331,11 @@ def main():
             print('XXX', sourmash.lca.display_lineage(lca_genome_lineage))
 
         genome_lineage = utils.pop_to_rank(provided_lin, 'genus')
-        print(f'(using provided lineage as genome lineage)')
+        print(f'Using provided lineage as genome lineage.')
+        print(f'Using provided lineage as genome lineage.', file=report_fp)
     else:
         genome_lineage = lca_genome_lineage
-        print(f'(using LCA majority lineage as genome lineage)')
+        print(f'Using LCA majority lineage as genome lineage.', file=report_fp)
 
     # make sure lineage going forward is genus level.
     if genome_lineage[-1].rank != 'genus':
@@ -343,6 +344,11 @@ def main():
         create_empty_output(args.genome, comment, args.summary,
                             args.report, args.clean, args.dirty)
         sys.exit(0)
+
+    print(f'Full lineage being used for contamination analysis:', file=report_fp)
+    print(f'   {sourmash.lca.display_lineage(genome_lineage)}', file=report_fp)
+    print(f'Full lineage being used for contamination analysis:')
+    print(f'   {sourmash.lca.display_lineage(genome_lineage)}')
 
     # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
@@ -424,6 +430,7 @@ def main():
     # get genome size and match lineage of primary match
     nearest_size = 0
     match_lineage = ""
+    ratio = 0.0
     if first_match:
         nearest_size = len(first_match.minhash) * first_match.minhash.scaled
         ident = get_ident(first_match)
