@@ -119,6 +119,44 @@ def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_f
     return clean
 
 
+def check_lca(record, contig_mh, genome_lineage, lca_db, lin_db, report_fp):
+    clean = True
+    reason = 0
+
+    # get _all_ of the hash taxonomy assignments for this contig
+    ctg_assign = gather_assignments(contig_mh.get_mins(), None, [lca_db], lin_db)
+
+    ctg_tax_assign = count_lca_for_assignments(ctg_assign)
+    if not ctg_tax_assign:
+        return clean, reason
+
+    # get top assignment for contig.
+    ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
+
+    # assignment outside of genus? dirty!
+    if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
+        clean = False
+        reason = 1
+        print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+        print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {ctg_lin[-1].rank}',
+              file=report_fp)
+        print('', file=report_fp)
+    elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
+        clean = False
+        reason = 2
+        print('', file=report_fp)
+        print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+        print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s genus\nlineage is {pretty_print_lineage(ctg_lin)}',
+              file=report_fp)
+
+    # summary reporting --
+    if not clean:
+        report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
+                           contig_mh.scaled)
+
+    return clean, reason
+
+
 def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
     ctg_counts = Counter()
     for hashval, lineages in ctg_assign.items():
@@ -243,8 +281,8 @@ def main():
     if not siglist:
         print('no matches for this genome, exiting.')
         comment = "no matches to this genome were found in the database"
-        create_empty_summary(args.genome, comment, args.summary,
-                             args.report, args.clean, args.dirty)
+        create_empty_output(args.genome, comment, args.summary,
+                            args.report, args.clean, args.dirty)
         sys.exit(0)
 
     report_fp = open(args.report, 'wt')
@@ -292,8 +330,8 @@ def main():
     if genome_lineage[-1].rank != 'genus':
         print(f'rank of major assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of major assignment is f{genome_lineage[-1].rank}; needs to be genus'
-        create_empty_summary(args.genome, comment, args.summary,
-                             args.report, args.clean, args.dirty)
+        create_empty_output(args.genome, comment, args.summary,
+                            args.report, args.clean, args.dirty)
         sys.exit(0)
 
 
@@ -331,35 +369,14 @@ def main():
         # did we find a dirty contig in step 1? if NOT, go into LCA style
         # approaches.
         if mh and clean:
-            
-            # get _all_ of the hash taxonomy assignments for this contig
-            ctg_assign = gather_assignments(mh.get_mins(), None, [lca_db], lin_db)
-
-            ctg_tax_assign = count_lca_for_assignments(ctg_assign)
-            if ctg_tax_assign:
-                # get top assignment for contig.
-                ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
-
-                # assignment outside of genus? dirty!
-                if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
-                    clean = False
+            clean, reason = check_lca(record, mh, genome_lineage, lca_db, lin_db, report_fp)
+            if not clean:
+                if reason == 1:
                     n_reason_1 += 1
-                    print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-                    print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {ctg_lin[-1].rank}',
-                          file=report_fp)
-                    print('', file=report_fp)
-                elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
-                    clean = False
+                elif reason == 2:
                     n_reason_2 += 1
-                    print('', file=report_fp)
-                    print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-                    print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s genus\nlineage is {pretty_print_lineage(ctg_lin)}',
-                          file=report_fp)
-
-                # summary reporting --
-                if not clean:
-                    report_lca_summary(report_fp, ctg_tax_assign,
-                                       ctg_assign, scaled)
+                else:
+                    assert 0, "unknown dirty reason code"
 
         # write out contigs -> clean or dirty files.
         if clean:
