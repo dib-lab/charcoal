@@ -150,6 +150,29 @@ class WriteAndTrackFasta(object):
         self.outfp.close()
 
 
+def do_gather_breakdown(minhash, lca_db, report_fp):
+    import copy
+    minhash = copy.copy(minhash)
+    query_sig = sourmash.SourmashSignature(minhash)
+
+    # do the gather:
+    first_match = None
+    while 1:
+        results = lca_db.gather(query_sig, threshold_bp=0)
+        if not results:
+            break
+
+        (match, match_sig, _) = results[0]
+        if not first_match:
+            first_match = match_sig
+
+        print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
+        minhash.remove_many(match_sig.minhash.get_mins())
+        query_sig = sourmash.SourmashSignature(minhash)
+
+    return first_match
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--genome', help='genome file', required=True)
@@ -355,25 +378,11 @@ def main():
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
     # CTB: add breakdown of dirty contigs?
 
-    # build signature from hashes in clean mh
+    # report gather breakdown of clean signature
     clean_mh = clean_out.minhash
-    clean_sig = sourmash.SourmashSignature(clean_mh)
+    first_match = do_gather_breakdown(clean_mh, lca_db, report_fp)
 
-    # do the gather:
-    first_match = None
-    while 1:
-        results = lca_db.gather(clean_sig, threshold_bp=0)
-        if not results:
-            break
-
-        (match, match_sig, _) = results[0]
-        if not first_match:
-            first_match = match_sig
-
-        print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
-        clean_mh.remove_many(match_sig.minhash.get_mins())
-        clean_sig = sourmash.SourmashSignature(clean_mh)
-
+    # get genome size and match lineage of primary match
     nearest_size = 0
     match_lineage = ""
     if first_match:
@@ -382,10 +391,10 @@ def main():
         match_lineage = ldb.ident_to_lineage[ident]
         ratio = round(clean_bp / nearest_size, 2)
 
-    comment = ""
-
     # write out a one line summary?
     if args.summary:
+        comment = ""
+
         with open(args.summary, 'wt') as fp:
             full_lineage = sourmash.lca.display_lineage(match_lineage)
             short_lineage = pretty_print_lineage(match_lineage)
