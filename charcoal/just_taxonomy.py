@@ -220,7 +220,8 @@ def create_empty_output(genome, comment, summary, report, clean, dirty):
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
             w.writerow([genome] + [""]*14 + [comment])
-    open(report, 'wt').close()
+    if report:
+        open(report, 'wt').close()
     open(clean, 'wt').close()
     open(dirty, 'wt').close()
 
@@ -342,12 +343,16 @@ def main():
         if f_major < 0.2:
             print(f'** ERROR: fraction of identified hashes f_major < 20%.')
             print(f'** Please provide a lineage for this genome.')
+            print(f'** ERROR: fraction of identified hashes f_major < 20%.',
+                  file=report_fp)
+            print(f'** Please provide a lineage for this genome.',
+                  file=report_fp)
             comment = "too few identifiable hashes; < 20%. provide a lineage for this genome."
             if args.force:
                 print('--force requested, so continuing despite this.')
             else:
                 create_empty_output(args.genome, comment, args.summary,
-                                    args.report, args.clean, args.dirty)
+                                    None, args.clean, args.dirty)
                 sys.exit(0)
 
         genome_lineage = lca_genome_lineage
