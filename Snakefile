@@ -92,6 +92,9 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
+print('** config file checks PASSED!')
+print('** from here on out, it\'s all snakemake...')
+
 ### utility functions
 def output_files(filename_template, **kw):
     return expand(output_dir + filename_template, **kw)
