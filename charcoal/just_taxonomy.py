@@ -270,6 +270,8 @@ def main():
     p.add_argument('--dirty', help='dirty contigs', required=True)
     p.add_argument('--report', help='report output', required=True)
     p.add_argument('--summary', help='CSV one line output')
+    p.add_argument('--force', help='continue past survivable errors',
+                   action='store_true')
 
     p.add_argument('--lineage', help=';-separated lineage down to genus level',
                    default='NA')        # default is str NA
@@ -337,6 +339,17 @@ def main():
         print(f'Using provided lineage as genome lineage.')
         print(f'Using provided lineage as genome lineage.', file=report_fp)
     else:
+        if f_major < 0.2:
+            print(f'** ERROR: fraction of identified hashes f_major < 20%.')
+            print(f'** Please provide a lineage for this genome.')
+            comment = "too few identifiable hashes; < 20%. provide a lineage for this genome."
+            if args.force:
+                print('--force requested, so continuing despite this.')
+            else:
+                create_empty_output(args.genome, comment, args.summary,
+                                    args.report, args.clean, args.dirty)
+                sys.exit(0)
+
         genome_lineage = lca_genome_lineage
         print(f'Using LCA majority lineage as genome lineage.', file=report_fp)
 

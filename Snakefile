@@ -11,6 +11,12 @@ strict_mode = int(strict_val)
 if not strict_mode:
     print('** WARNING: strict mode is OFF. Config errors will not force exit.')
 
+force = config.get('force', '0')
+force = int(force)
+force_param = ''
+if force:
+    force_param = '--force'
+
 ### config stuff loaded from config file
 genome_list_file = config['genome_list']
 genome_list = [ line.strip() for line in open(genome_list_file, 'rt') ]
@@ -103,14 +109,15 @@ rule contigs_clean_just_taxonomy:
         csv=output_dir + '/{f}.summary.csv'
     conda: 'conf/env-sourmash.yml'
     params:
-        lineage = get_provided_lineage
+        lineage = get_provided_lineage,
+        force = force_param
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \
             --matches_sig {input.matches} \
             --clean {output.clean} --dirty {output.dirty} \
             --report {output.report} --summary {output.csv} \
-            --lineage {params.lineage:q}
+            --lineage {params.lineage:q} {params.force}
     """
 #            --lineage 'Bacteria;Proteobacteria;Gammaproteobacteria;Alteromonadales;Shewanellaceae;Shewanella'
 
