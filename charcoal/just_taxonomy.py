@@ -134,11 +134,14 @@ def check_lca(record, contig_mh, genome_lineage, lca_db, lin_db, report_fp):
     ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
 
     # assignment outside of genus? dirty!
-    if ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
+    if not ctg_lin or ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
+        bad_rank = "(root)"
+        if ctg_lin:
+            bad_rank = ctg_lin[-1].rank
         clean = False
         reason = 1
         print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {ctg_lin[-1].rank}',
+        print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {bad_rank}',
               file=report_fp)
         print('', file=report_fp)
     elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
