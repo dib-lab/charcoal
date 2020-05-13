@@ -4,7 +4,7 @@
 import csv, sys
 
 # override this with --configfile on command line
-configfile: 'test-data/conf-test.yml'
+configfile: 'test-data/00-test.conf'
 
 strict_val = config.get('strict', '1')
 strict_mode = int(strict_val)
@@ -37,8 +37,6 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
-lca_db = config['lca_db']
-
 ### utility functions
 def output_files(filename_template, **kw):
     return expand(output_dir + filename_template, **kw)
@@ -70,8 +68,8 @@ rule contigs_sig:
         output_dir + '/{filename}.sig'
     conda: 'conf/env-sourmash.yml'
     params:
-        scaled = config['sig_scaled'],
-        ksize = config['sig_ksize']
+        scaled = config['scaled'],
+        ksize = config['ksize']
     shell: """
         sourmash compute -k {params.ksize} --scaled {params.scaled} \
             {input} -o {output}
