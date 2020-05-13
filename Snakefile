@@ -121,7 +121,7 @@ rule combined_summary:
     input:
         expand(output_dir + '/{g}.summary.csv', g=genome_list),
     output:
-        output_dir + '/just_taxonomy.combined_summary.csv',
+        output_dir + '/combined_summary.csv',
     run:
         # combine all of the summary CSV files
         import csv
