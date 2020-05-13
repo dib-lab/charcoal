@@ -61,7 +61,7 @@ wildcard_constraints:
 rule all:
     input:
         expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
-        output_dir + '/just_taxonomy.combined_summary.csv',
+        output_dir + '/combined_summary.csv',
 
 rule contigs_sig:
     input:
