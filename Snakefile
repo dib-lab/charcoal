@@ -25,7 +25,56 @@ genome_list = [ line for line in genome_list if line ]   # remove empty lines
 genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
 
-# read in provided lineages, if any.
+### verification / strict mode
+
+scaled = config['scaled']
+try:
+    scaled = int(scaled)
+    if scaled < 1 or scaled > 100000:
+        raise ValueError
+except ValueError:
+    print('** ERROR: scaled should be a number between 1 and 100000')
+    print('** (it must also match the query database scaled value)')
+    if strict_mode:
+        sys.exit(-1)
+
+ksize = config['ksize']
+try:
+    ksize = int(ksize)
+    if ksize < 15 or ksize > 101:
+        raise ValueError
+except ValueError:
+    print('** ERROR: ksize should be a nubmer between 15 and 101.')
+    print('** (it must also match the query database ksize value)')
+    if strict_mode:
+        sys.exit(-1)
+
+# verify that all genome files exist -
+for filename in genome_list:
+    fullpath = os.path.join(genome_dir, filename)
+    if not os.path.exists(fullpath):
+        print(f'** ERROR: genome file {filename} does not exist in {genome_dir}')
+        if strict_mode:
+            print('** exiting.')
+            sys.exit(-1)
+
+# verify that all query databases exist --
+for filename in config['gather_db']:
+    if not os.path.exists(filename):
+        print(f'** ERROR: database {filename} does not exist.')
+        if strict_mode:
+            print('** exiting.')
+            sys.exit(-1)
+
+# does lineage csv exist?
+filename = config['lineages_csv']
+if not os.path.exists(filename):
+    print(f'** ERROR: lineage CSV {filename} does not exist.')
+    if strict_mode:
+        print('** exiting.')
+        sys.exit(-1)
+
+# read in provided lineages, if any, and verify file.
 provided_lineages_file = config.get('provided_lineages', '')
 provided_lineages = {}
 if provided_lineages_file:
@@ -57,7 +106,9 @@ def get_provided_lineage(w):
     else:
         return "NA"
 
+###
 ### rules!
+###
 
 wildcard_constraints:
     size="\d+"
@@ -119,8 +170,6 @@ rule contigs_clean_just_taxonomy:
             --report {output.report} --summary {output.csv} \
             --lineage {params.lineage:q} {params.force}
     """
-#            --lineage 'Bacteria;Proteobacteria;Gammaproteobacteria;Alteromonadales;Shewanellaceae;Shewanella'
-
 
 rule combined_summary:
     input:
