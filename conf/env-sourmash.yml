@@ -1,3 +1,4 @@
+# conda environment configuration for snakemake --use-conda
 channels:
     - conda-forge
     - bioconda

@@ -4,7 +4,7 @@
 import csv, sys
 
 # override this with --configfile on command line
-configfile: 'test-data/conf-test.yml'
+configfile: 'test-data/00-test.conf'
 
 strict_val = config.get('strict', '1')
 strict_mode = int(strict_val)

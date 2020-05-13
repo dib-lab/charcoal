@@ -28,13 +28,11 @@ conda activate charcoal
 To run, execute (in the top-level directory):
 
 ```
-snakemake --use-conda -j 8 --configfile test-data/conf-test.yml
+snakemake --use-conda -j 8 --configfile test-data/00-test.conf
 ```
 
 Once that works, you can configure it yourself by copying
-`test-data/conf-test.yml` to a new file and editing it.
-
-A few important notes --
+`test-data/00-test.conf` to a new file and editing it.
 
 ## Explanation of output files.
 
