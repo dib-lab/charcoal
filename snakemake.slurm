@@ -5,7 +5,7 @@
 #SBATCH -n 1                   # one task for this node
 #SBATCH -c 16                  # cores per task
 #SBATCH -t 1-0                 # ask for a full day
-#SBATCH --mem=300000             # memory (300,000 mb = 300gb)
+#SBATCH --mem=30000             # memory (30,000 mb = 30gb)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=titus@idyll.org
 
@@ -13,7 +13,7 @@
 . ~/miniconda3/etc/profile.d/conda.sh
 
 # activate your desired conda environment
-conda activate sgc
+conda activate charcoal
 
 # fail on weird errors
 set -o nounset
@@ -25,7 +25,8 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-snakemake -p -j 1 --use-conda --configfile=conf/ibd.conf --resources mem=${SLURM_MEM_PER_NODE:-150000} -- all reports
+snakemake -p -j 16 --configfile=conf/ibd2.conf --resources mem=${SLURM_MEM_PER_NODE:-150000} --
+#all reports all_make_tree_viz
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables

@@ -1,3 +1,7 @@
-2.fa
-47.fa
-63.fa
+GCF_000005845-subset.fa.gz
+2.fa.gz
+47.fa.gz
+63.fa.gz
+chimeric.fa.gz
+LoombaR_2017__SID1050_bax__bin.11.fa.gz
+TOBG_NAT-167.fna.gz
