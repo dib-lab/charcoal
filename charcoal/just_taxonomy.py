@@ -240,11 +240,11 @@ def create_empty_output(genome, comment, summary, report, clean, dirty,
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
             if lca_lineage:
-                lca_lineage = sourmash.lca.display_lineage(full_lineage)
+                lca_lineage = sourmash.lca.display_lineage(lca_lineage)
             if provided_lin:
                 provided_lin = sourmash.lca.display_lineage(provided_lin)
 
-            row = [genome] + [f_major, f_ident] + [""]*13 + \
+            row = [genome] + ["", f_major, f_ident] + [""]*12 + \
                [lca_lineage, provided_lin, comment]
             w.writerow(row)
     if report:
@@ -401,7 +401,7 @@ def main():
                 create_empty_output(genomebase, comment, args.summary,
                                     None, args.clean, args.dirty,
                                     provided_lin=provided_lin,
-                                    lca_lineage=genome_lineage,
+                                    lca_lineage=lca_genome_lineage,
                                     f_ident=f_ident, f_major=f_major)
                 
                 sys.exit(0)
