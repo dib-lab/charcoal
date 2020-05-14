@@ -95,7 +95,9 @@ def get_ident(sig):
     return ident
 
 
-def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_fp):
+def check_gather(record, contig_mh, genome_lineage, match_rank,
+                 lca_db, lineage_db, report_fp):
+    "Does this contig have a gather match that is outside the given rank?"
     threshold_bp = contig_mh.scaled*GATHER_MIN_MATCHES
     results = lca_db.gather(sourmash.SourmashSignature(contig_mh),
                             threshold_bp=threshold_bp)
@@ -110,50 +112,63 @@ def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_f
     # get lineage
     contig_lineage = lineage_db.ident_to_lineage[match_ident]
 
-    # if it matched outside genus, => dirty.
+    # if it matched outside rank, => dirty.
     clean = True
-    if not utils.is_lineage_match(genome_lineage, contig_lineage, 'genus'):
+    if not utils.is_lineage_match(genome_lineage, contig_lineage,
+                                  match_rank):
         clean=False
         common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
 
         print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s genus\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
+        print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s {match_rank}\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
               file=report_fp)
         print('', file=report_fp)
 
     return clean
 
 
-def check_lca(record, contig_mh, genome_lineage, lca_db, lin_db, report_fp):
+def check_lca(record, contig_mh, genome_lineage, match_rank,
+              lca_db, lin_db, report_fp):
+    "Does this contig have any hashes with LCA outside the given rank?"
     clean = True
     reason = 0
 
     # get _all_ of the hash taxonomy assignments for this contig
-    ctg_assign = gather_assignments(contig_mh.get_mins(), None, [lca_db], lin_db)
+    ctg_assign = gather_assignments(contig_mh.get_mins(), None,
+                                    [lca_db], lin_db)
 
     ctg_tax_assign = count_lca_for_assignments(ctg_assign)
     if not ctg_tax_assign:
-        return clean, reason
+        return True, ""
 
     # get top assignment for contig.
     ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
 
-    # assignment outside of genus? dirty!
-    if not ctg_lin or ctg_lin[-1].rank not in ('species', 'strain', 'genus'):
+    # assignment outside of genus? dirty! @CTB
+    ok_ranks = set()
+    passed_rank = False
+    for rank in sourmash.lca.taxlist():
+        if rank == match_rank:
+            passed_rank = True
+
+        if passed_rank:
+            ok_ranks.add(rank)
+
+    if (not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks):
         bad_rank = "(root)"
         if ctg_lin:
             bad_rank = ctg_lin[-1].rank
         clean = False
         reason = 1
         print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {bad_rank}',
+        print(f'contig dirty, REASON 1 - contig LCA is above {match_rank}\nlca rank is {bad_rank}',
               file=report_fp)
-    elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
+    elif not utils.is_lineage_match(genome_lineage, ctg_lin, match_rank):
         clean = False
         reason = 2
         print('', file=report_fp)
         print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s genus\nlineage is {pretty_print_lineage(ctg_lin)}',
+        print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {match_rank}\nlineage is {pretty_print_lineage(ctg_lin)}',
               file=report_fp)
 
     # summary reporting --
@@ -305,6 +320,7 @@ def main():
 
     p.add_argument('--lineage', help=';-separated lineage down to genus level',
                    default='NA')        # default is str NA
+    p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
     args = p.parse_args()
 
     genomebase = os.path.basename(args.genome)
@@ -367,9 +383,9 @@ def main():
         report(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
         if utils.is_lineage_match(provided_lin, lca_genome_lineage, 'genus'):
-            report(f'(provided lineage agrees with k-mer classification)')
+            report(f'(provided lineage agrees with k-mer classification at genus level)')
         else:
-            report(f'(provided lineage disagrees with k-mer classification)')
+            report(f'(provided lineage disagrees with k-mer classification at or above genus level)')
 
         genome_lineage = utils.pop_to_rank(provided_lin, 'genus')
         report(f'\nUsing provided lineage as genome lineage.')
@@ -409,16 +425,8 @@ def main():
         genome_lineage = lca_genome_lineage
         report(f'Using LCA majority lineage as genome lineage.')
 
-    # make sure lineage going forward is genus level.
-    if genome_lineage[-1].rank != 'genus':
-        report(f'rank of genome assignment is f{genome_lineage[-1].rank}; quitting')
-        comment = f'rank of genome assignment is f{genome_lineage[-1].rank}; needs to be genus'
-        create_empty_output(genomebase, comment, args.summary,
-                            args.report, args.clean, args.dirty,
-                            provided_lin=provided_lin,
-                            lca_lineage=genome_lineage,
-                            f_ident=f_ident, f_major=f_major)
-        sys.exit(0)
+    # @CTB what happens when match_rank is lower than genome_lineage?
+    # raise it, right?
 
     report(f'\nFull lineage being used for contamination analysis:')
     report(f'   {sourmash.lca.display_lineage(genome_lineage)}')
@@ -451,15 +459,18 @@ def main():
             missed_bp += len(record.sequence)
 
         if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
-            clean = check_gather(record, mh, genome_lineage, lca_db, lin_db,
-                                 report_fp)
+            clean = check_gather(record, mh, genome_lineage,
+                                 args.match_rank,
+                                 lca_db, lin_db, report_fp)
             if not clean:
                 n_reason_3 += 1
 
         # did we find a dirty contig in step 1? if NOT, go into LCA style
         # approaches.
         if mh and clean:
-            clean, reason = check_lca(record, mh, genome_lineage, lca_db, lin_db, report_fp)
+            clean, reason = check_lca(record, mh, genome_lineage,
+                                      args.match_rank,
+                                      lca_db, lin_db, report_fp)
             if not clean:
                 if reason == 1:
                     n_reason_1 += 1
