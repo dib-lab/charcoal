@@ -22,6 +22,9 @@ from . import lineage_db
 from .lineage_db import LineageDB
 
 
+GATHER_MIN_MATCHES=3
+
+
 def get_idents_for_hashval(lca_db, hashval):
     "Get the identifiers associated with this hashval."
     idx_list = lca_db.hashval_to_idx.get(hashval, [])
@@ -32,7 +35,7 @@ def get_idents_for_hashval(lca_db, hashval):
 
 def gather_assignments(hashvals, rank, dblist, ldb):
     """
-    Gather lineage assignments from across all the databases for all the
+    Collect lineage assignments from across all the databases for all the
     hashvals.
     """
     assignments = defaultdict(set)
@@ -92,15 +95,16 @@ def get_ident(sig):
 
 
 def check_gather(record, contig_mh, genome_lineage, lca_db, lineage_db, report_fp):
-    threshold_bp = contig_mh.scaled*2
-    results = lca_db.gather(sourmash.SourmashSignature(contig_mh))
+    threshold_bp = contig_mh.scaled*GATHER_MIN_MATCHES
+    results = lca_db.gather(sourmash.SourmashSignature(contig_mh),
+                            threshold_bp=threshold_bp)
 
     if not results:
         return True
 
     match = results[0][1]
 
-    # get identitiy
+    # get identity
     match_ident = get_ident(match)
     # get lineage
     contig_lineage = lineage_db.ident_to_lineage[match_ident]
@@ -197,16 +201,23 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
     minhash = copy.copy(minhash)
     query_sig = sourmash.SourmashSignature(minhash)
 
+    threshold_percent = GATHER_MIN_MATCHES  / len(minhash)
+
     # do the gather:
     first_match = None
+    first_match_under_fp = False
     while 1:
         results = lca_db.gather(query_sig, threshold_bp=0)
         if not results:
             break
 
         (match, match_sig, _) = results[0]
-        if not first_match:
+        if not first_match:               # set first_match once
             first_match = match_sig
+
+        if match <= threshold_percent and not first_match_under_fp:
+            first_match_under_fp = True
+            print('  --------- (likely false positives below this line) ---------', file=report_fp)
 
         print(f'  {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
         minhash.remove_many(match_sig.minhash.get_mins())
@@ -214,6 +225,9 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
 
     if not first_match:
         print(' ** no matches **', file=report_fp)
+
+    if first_match_under_fp:
+        print(f'** note: matches under {threshold_percent*100:.3f}% may be false positives', file=report_fp)
 
     return first_match
 
@@ -252,7 +266,7 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
 
     # report everything...
 
-    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
+    print(f'{f_major*100:.1f}% of known hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
     print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
@@ -401,7 +415,7 @@ def main():
             missed_n += 1
             missed_bp += len(record.sequence)
 
-        if mh and len(mh) >= 2:           # CTB: don't hard code.
+        if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
             clean = check_gather(record, mh, genome_lineage, lca_db, lin_db,
                                  report_fp)
             if not clean:
