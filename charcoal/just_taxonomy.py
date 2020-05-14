@@ -143,7 +143,6 @@ def check_lca(record, contig_mh, genome_lineage, lca_db, lin_db, report_fp):
         print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
         print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {bad_rank}',
               file=report_fp)
-        print('', file=report_fp)
     elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
         clean = False
         reason = 2
@@ -172,6 +171,7 @@ def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
     print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
     for lin, count in ctg_counts.most_common():
         print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+    print('', file=report_fp)
 
 
 class WriteAndTrackFasta(object):
@@ -208,9 +208,12 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
         if not first_match:
             first_match = match_sig
 
-        print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
+        print(f'  {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
+
+    if not first_match:
+        print(' ** no matches **', file=report_fp)
 
     return first_match
 
@@ -221,7 +224,8 @@ def create_empty_output(genome, comment, summary, report, clean, dirty):
             w = csv.writer(fp)
             w.writerow([genome] + [""]*14 + [comment])
     if report:
-        open(report, 'wt').close()
+        with open(report, 'wt') as fp:
+            fp.write(comment)
     open(clean, 'wt').close()
     open(dirty, 'wt').close()
 
@@ -256,7 +260,6 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     print(f'\n** hashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
     for lin, count in counts.most_common():
         print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
-        print(sourmash.lca.display_lineage(lin))
     print('', file=report_fp)
 
     return genome_lineage, f_major
@@ -287,7 +290,7 @@ def main():
 
     if not siglist:
         print('no matches for this genome, exiting.')
-        comment = "no matches to this genome were found in the database"
+        comment = "no matches to this genome were found in the database; nothing to do"
         create_empty_output(args.genome, comment, args.summary,
                             args.report, args.clean, args.dirty)
         sys.exit(0)
