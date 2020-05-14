@@ -205,14 +205,19 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
 
     # do the gather:
     first_match = None
+    first_match_under_fp = False
     while 1:
         results = lca_db.gather(query_sig, threshold_bp=0)
         if not results:
             break
 
         (match, match_sig, _) = results[0]
-        if not first_match:
+        if not first_match:               # set first_match once
             first_match = match_sig
+
+        if match <= threshold_percent and first_match_under_fp:
+            first_match_under_fp = True
+            print('  --------- (likely false positives below this line) ---------', file=report_fp)
 
         print(f'  {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
         minhash.remove_many(match_sig.minhash.get_mins())
@@ -220,7 +225,8 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
 
     if not first_match:
         print(' ** no matches **', file=report_fp)
-    elif match <= threshold_percent:
+
+    if first_match_under_fp:
         print(f'** note: matches under {threshold_percent*100:.3f}% may be false positives', file=report_fp)
 
     return first_match
