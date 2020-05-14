@@ -10,6 +10,7 @@ import argparse
 import gzip
 from collections import Counter, defaultdict
 import csv
+import os.path
 
 import screed
 
@@ -232,11 +233,20 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
     return first_match
 
 
-def create_empty_output(genome, comment, summary, report, clean, dirty):
+def create_empty_output(genome, comment, summary, report, clean, dirty,
+                        f_major="", f_ident="",
+                        provided_lin="", lca_lineage=""):
     if summary:
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
-            w.writerow([genome] + [""]*14 + [comment])
+            if lca_lineage:
+                lca_lineage = sourmash.lca.display_lineage(lca_lineage)
+            if provided_lin:
+                provided_lin = sourmash.lca.display_lineage(provided_lin)
+
+            row = [genome] + ["", f_major, f_ident] + [""]*12 + \
+               [lca_lineage, provided_lin, comment]
+            w.writerow(row)
     if report:
         with open(report, 'wt') as fp:
             fp.write(comment)
@@ -261,12 +271,14 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
 
     genome_lineage, count = next(iter(counts.most_common()))
 
+    f_ident = identified_counts / len(entire_mh)
     f_major = count / identified_counts
     total_counts = len(hash_assign)
 
     # report everything...
 
-    print(f'{f_major*100:.1f}% of known hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
+    print(f'{f_ident*100:.1f}% of total hashes identified.', file=report_fp)
+    print(f'{f_major*100:.1f}% of identified hashes match to {pretty_print_lineage(genome_lineage)}', file=report_fp)
     print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
@@ -276,7 +288,7 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
         print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
     print('', file=report_fp)
 
-    return genome_lineage, f_major
+    return genome_lineage, f_major, f_ident
 
 
 def main():
@@ -295,6 +307,8 @@ def main():
                    default='NA')        # default is str NA
     args = p.parse_args()
 
+    genomebase = os.path.basename(args.genome)
+
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
                                               start_column=3)
     print(f'loaded {len(tax_assign)} tax assignments.')
@@ -305,7 +319,7 @@ def main():
     if not siglist:
         print('no matches for this genome, exiting.')
         comment = "no matches to this genome were found in the database; nothing to do"
-        create_empty_output(args.genome, comment, args.summary,
+        create_empty_output(genomebase, comment, args.summary,
                             args.report, args.clean, args.dirty)
         sys.exit(0)
 
@@ -333,19 +347,20 @@ def main():
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
-    print(f'pass 1: reading contigs from {args.genome}')
+    print(f'pass 1: reading contigs from {genomebase}')
     entire_mh = empty_mh.copy_and_clear()
     for n, record in enumerate(screed.open(args.genome)):
         entire_mh.add_sequence(record.sequence, force=True)
 
     # calculate lineage from majority vote on LCA
-    lca_genome_lineage, f_major = \
+    lca_genome_lineage, f_major, f_ident = \
          get_majority_lca_at_rank(entire_mh, lca_db, lin_db, 'genus',
                                   report_fp)
 
     report(f'K-mer classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
 
     # did we get a passed-in lineage assignment?
+    provided_lin = ""
     if args.lineage and args.lineage != 'NA':
         provided_lin = args.lineage.split(';')
         provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
@@ -359,19 +374,36 @@ def main():
         genome_lineage = utils.pop_to_rank(provided_lin, 'genus')
         report(f'\nUsing provided lineage as genome lineage.')
     else:
-        if f_major < 0.2:
-            print(f'** ERROR: fraction of identified hashes f_major < 20%.')
+        fail = False
+        if f_ident < 0.1:
+            print(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
             print(f'** Please provide a lineage for this genome.')
             print(f'** ERROR: fraction of identified hashes f_major < 20%.',
                   file=report_fp)
             print(f'** Please provide a lineage for this genome.',
                   file=report_fp)
-            comment = "too few identifiable hashes; < 20%. provide a lineage for this genome."
+            comment = "too few identifiable hashes; < 10%. provide a lineage for this genome."
+            fail = True
+        elif f_major < 0.2:
+            print(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
+            print(f'** Please provide a lineage for this genome.')
+            print(f'** ERROR: fraction of identified hashes f_major < 20%.',
+                  file=report_fp)
+            print(f'** Please provide a lineage for this genome.',
+                  file=report_fp)
+            comment = "too few hashes in major lineage; < 20%. provide a lineage for this genome."
+            fail = True
+
+        if fail:
             if args.force:
                 print('--force requested, so continuing despite this.')
             else:
-                create_empty_output(args.genome, comment, args.summary,
-                                    None, args.clean, args.dirty)
+                create_empty_output(genomebase, comment, args.summary,
+                                    None, args.clean, args.dirty,
+                                    provided_lin=provided_lin,
+                                    lca_lineage=lca_genome_lineage,
+                                    f_ident=f_ident, f_major=f_major)
+                
                 sys.exit(0)
 
         genome_lineage = lca_genome_lineage
@@ -381,8 +413,11 @@ def main():
     if genome_lineage[-1].rank != 'genus':
         report(f'rank of genome assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of genome assignment is f{genome_lineage[-1].rank}; needs to be genus'
-        create_empty_output(args.genome, comment, args.summary,
-                            args.report, args.clean, args.dirty)
+        create_empty_output(genomebase, comment, args.summary,
+                            args.report, args.clean, args.dirty,
+                            provided_lin=provided_lin,
+                            lca_lineage=genome_lineage,
+                            f_ident=f_ident, f_major=f_major)
         sys.exit(0)
 
     report(f'\nFull lineage being used for contamination analysis:')
@@ -403,7 +438,7 @@ def main():
     n_reason_3 = 0
 
     print('')
-    print(f'pass 2: reading contigs from {args.genome}')
+    print(f'pass 2: reading contigs from {genomebase}')
     print(f'\n**\n** walking through contigs:\n**\n', file=report_fp)
     for n, record in enumerate(screed.open(args.genome)):
         # make a new minhash and start examining it.
@@ -480,13 +515,17 @@ def main():
 
         with open(args.summary, 'wt') as fp:
             full_lineage = sourmash.lca.display_lineage(match_lineage)
-            short_lineage = pretty_print_lineage(match_lineage)
+            short_lineage = pretty_print_lineage(genome_lineage)
+            f_removed = dirty_bp / (dirty_bp + clean_bp)
             w = csv.writer(fp)
-            w.writerow([args.genome, short_lineage, full_lineage,
+            w.writerow([genomebase, short_lineage,
+                        f_major, f_ident, f_removed,
+                        n_reason_1, n_reason_2, n_reason_3,
                         nearest_size, ratio, clean_bp,
                         clean_n, dirty_n, dirty_bp,
-                        missed_n, missed_bp, f_major,
-                        n_reason_1, n_reason_2, n_reason_3,
+                        missed_n, missed_bp,
+                        full_lineage,
+                        sourmash.lca.display_lineage(provided_lin),
                         comment])
 
 
