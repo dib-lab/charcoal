@@ -143,7 +143,6 @@ def check_lca(record, contig_mh, genome_lineage, lca_db, lin_db, report_fp):
         print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
         print(f'contig dirty, REASON 1 - contig LCA is above genus\nlca rank is {bad_rank}',
               file=report_fp)
-        print('', file=report_fp)
     elif not utils.is_lineage_match(genome_lineage, ctg_lin, 'genus'):
         clean = False
         reason = 2
@@ -172,6 +171,7 @@ def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
     print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
     for lin, count in ctg_counts.most_common():
         print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+    print('', file=report_fp)
 
 
 class WriteAndTrackFasta(object):
@@ -208,9 +208,12 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
         if not first_match:
             first_match = match_sig
 
-        print(f'  {match*100:.3f}% - to {match_sig.name()}', file=report_fp)
+        print(f'  {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
+
+    if not first_match:
+        print(' ** no matches **', file=report_fp)
 
     return first_match
 
@@ -221,7 +224,8 @@ def create_empty_output(genome, comment, summary, report, clean, dirty):
             w = csv.writer(fp)
             w.writerow([genome] + [""]*14 + [comment])
     if report:
-        open(report, 'wt').close()
+        with open(report, 'wt') as fp:
+            fp.write(comment)
     open(clean, 'wt').close()
     open(dirty, 'wt').close()
 
@@ -256,7 +260,6 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     print(f'\n** hashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
     for lin, count in counts.most_common():
         print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
-        print(sourmash.lca.display_lineage(lin))
     print('', file=report_fp)
 
     return genome_lineage, f_major
@@ -287,12 +290,15 @@ def main():
 
     if not siglist:
         print('no matches for this genome, exiting.')
-        comment = "no matches to this genome were found in the database"
+        comment = "no matches to this genome were found in the database; nothing to do"
         create_empty_output(args.genome, comment, args.summary,
                             args.report, args.clean, args.dirty)
         sys.exit(0)
 
     report_fp = open(args.report, 'wt')
+    def report(*args):
+        print(*args)
+        print(*args, file=report_fp)
 
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
@@ -323,22 +329,21 @@ def main():
          get_majority_lca_at_rank(entire_mh, lca_db, lin_db, 'genus',
                                   report_fp)
 
+    report(f'K-mer classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
+
     # did we get a passed-in lineage assignment?
     if args.lineage and args.lineage != 'NA':
         provided_lin = args.lineage.split(';')
         provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
-        print(f'provided lineage: {sourmash.lca.display_lineage(provided_lin)}')
+        report(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
         if utils.is_lineage_match(provided_lin, lca_genome_lineage, 'genus'):
-            print(f'XXX agree')
+            report(f'(provided lineage agrees with k-mer classification)')
         else:
-            print(f'XXX disagree')
-            print('XXX', sourmash.lca.display_lineage(provided_lin))
-            print('XXX', sourmash.lca.display_lineage(lca_genome_lineage))
+            report(f'(provided lineage disagrees with k-mer classification)')
 
         genome_lineage = utils.pop_to_rank(provided_lin, 'genus')
-        print(f'Using provided lineage as genome lineage.')
-        print(f'Using provided lineage as genome lineage.', file=report_fp)
+        report(f'\nUsing provided lineage as genome lineage.')
     else:
         if f_major < 0.2:
             print(f'** ERROR: fraction of identified hashes f_major < 20%.')
@@ -356,20 +361,18 @@ def main():
                 sys.exit(0)
 
         genome_lineage = lca_genome_lineage
-        print(f'Using LCA majority lineage as genome lineage.', file=report_fp)
+        report(f'Using LCA majority lineage as genome lineage.')
 
     # make sure lineage going forward is genus level.
     if genome_lineage[-1].rank != 'genus':
-        print(f'rank of genome assignment is f{genome_lineage[-1].rank}; quitting')
+        report(f'rank of genome assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of genome assignment is f{genome_lineage[-1].rank}; needs to be genus'
         create_empty_output(args.genome, comment, args.summary,
                             args.report, args.clean, args.dirty)
         sys.exit(0)
 
-    print(f'Full lineage being used for contamination analysis:', file=report_fp)
-    print(f'   {sourmash.lca.display_lineage(genome_lineage)}', file=report_fp)
-    print(f'Full lineage being used for contamination analysis:')
-    print(f'   {sourmash.lca.display_lineage(genome_lineage)}')
+    report(f'\nFull lineage being used for contamination analysis:')
+    report(f'   {sourmash.lca.display_lineage(genome_lineage)}')
 
     # the output files are coming!
     clean_fp = gzip.open(args.clean, 'wt')
@@ -385,8 +388,9 @@ def main():
     n_reason_2 = 0
     n_reason_3 = 0
 
+    print('')
     print(f'pass 2: reading contigs from {args.genome}')
-    print(f'**\n** walking through contigs:\n**\n', file=report_fp)
+    print(f'\n**\n** walking through contigs:\n**\n', file=report_fp)
     for n, record in enumerate(screed.open(args.genome)):
         # make a new minhash and start examining it.
         mh = empty_mh.copy_and_clear()
@@ -432,11 +436,9 @@ def main():
 
     # do some reporting.
     print('--------------', file=report_fp)
-    print(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.',
-          file=report_fp)
-    print(f'removed {dirty_n} contigs containing {int(dirty_bp/1000)} kb.',
-          file=report_fp)
-    print(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, so counted as clean', file=report_fp)
+    report(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.')
+    report(f'removed {dirty_n} contigs containing {int(dirty_bp/1000)} kb.')
+    report(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, so counted as clean')
 
     # look at what our database says about remaining contamination,
     # across all "clean" contigs. (CTB: Need to dig into this more to figure
