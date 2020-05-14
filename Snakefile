@@ -88,6 +88,10 @@ if provided_lineages_file:
                 print(f'** ({genome_filename} not in {genome_list_file})')
                 if strict_mode:
                     sys.exit(-1)
+            if len(row[1:]) <= 1:
+                print(f'** cannot parse provided lineage for {genome_filename}')
+                print(f'** ; is it comma separated?')
+                sys.exit(-1)
             provided_lineages[genome_filename] = row[1:]
 
     print(f'** read {len(provided_lineages)} provided lineages')
