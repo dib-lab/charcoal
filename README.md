@@ -17,7 +17,7 @@ for explicit instructions.
 Clone the repository, change into it, create the environment, and activate it:
 
 ```
-git clone https://github.com/ctb/charcoal
+git clone https://github.com/dib-lab/charcoal
 cd ./charcoal/
 conda env create -f environment.yml -n charcoal
 conda activate charcoal
