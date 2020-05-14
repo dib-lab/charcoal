@@ -215,7 +215,7 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
         if not first_match:               # set first_match once
             first_match = match_sig
 
-        if match <= threshold_percent and first_match_under_fp:
+        if match <= threshold_percent and not first_match_under_fp:
             first_match_under_fp = True
             print('  --------- (likely false positives below this line) ---------', file=report_fp)
 
