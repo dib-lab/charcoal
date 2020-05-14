@@ -233,11 +233,20 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
     return first_match
 
 
-def create_empty_output(genome, comment, summary, report, clean, dirty):
+def create_empty_output(genome, comment, summary, report, clean, dirty,
+                        f_major="", f_ident="",
+                        provided_lin="", lca_lineage=""):
     if summary:
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
-            w.writerow([genome] + [""]*17 + [comment])
+            if lca_lineage:
+                lca_lineage = sourmash.lca.display_lineage(full_lineage)
+            if provided_lin:
+                provided_lin = sourmash.lca.display_lineage(provided_lin)
+
+            row = [genome] + [f_major, f_ident] + [""]*13 + \
+               [lca_lineage, provided_lin, comment]
+            w.writerow(row)
     if report:
         with open(report, 'wt') as fp:
             fp.write(comment)
@@ -390,7 +399,11 @@ def main():
                 print('--force requested, so continuing despite this.')
             else:
                 create_empty_output(genomebase, comment, args.summary,
-                                    None, args.clean, args.dirty)
+                                    None, args.clean, args.dirty,
+                                    provided_lin=provided_lin,
+                                    lca_lineage=genome_lineage,
+                                    f_ident=f_ident, f_major=f_major)
+                
                 sys.exit(0)
 
         genome_lineage = lca_genome_lineage
@@ -401,7 +414,10 @@ def main():
         report(f'rank of genome assignment is f{genome_lineage[-1].rank}; quitting')
         comment = f'rank of genome assignment is f{genome_lineage[-1].rank}; needs to be genus'
         create_empty_output(genomebase, comment, args.summary,
-                            args.report, args.clean, args.dirty)
+                            args.report, args.clean, args.dirty,
+                            provided_lin=provided_lin,
+                            lca_lineage=genome_lineage,
+                            f_ident=f_ident, f_major=f_major)
         sys.exit(0)
 
     report(f'\nFull lineage being used for contamination analysis:')
