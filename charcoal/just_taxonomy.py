@@ -201,6 +201,8 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
     minhash = copy.copy(minhash)
     query_sig = sourmash.SourmashSignature(minhash)
 
+    threshold_percent = GATHER_MIN_MATCHES  / len(minhash)
+
     # do the gather:
     first_match = None
     while 1:
@@ -218,6 +220,8 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
 
     if not first_match:
         print(' ** no matches **', file=report_fp)
+    elif match <= threshold_percent:
+        print(f'** note: matches under {threshold_percent*100:.3f}% may be false positives', file=report_fp)
 
     return first_match
 
@@ -256,7 +260,7 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
 
     # report everything...
 
-    print(f'{f_major*100:.1f}% of hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
+    print(f'{f_major*100:.1f}% of known hashes identify as {pretty_print_lineage(genome_lineage)}', file=report_fp)
     print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
