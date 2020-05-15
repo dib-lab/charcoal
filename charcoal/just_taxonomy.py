@@ -359,6 +359,32 @@ class ContigsDecontaminator(object):
         return clean
 
 
+def choose_genome_lineage(lca_genome_lineage, provided_lineage,
+                          f_ident, f_major, report):
+
+    comment = ""
+    if provided_lineage:
+        if utils.is_lineage_match(provided_lineage, lca_genome_lineage, 'genus'):
+            report(f'(provided lineage agrees with k-mer classification at genus level)')
+        else:
+            report(f'(provided lineage disagrees with k-mer classification at or above genus level)')
+
+        genome_lineage = utils.pop_to_rank(provided_lineage, 'genus')
+        report(f'\nUsing provided lineage as genome lineage.')
+    else:
+        if f_ident < 0.1:
+            report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
+            comment = "too few identifiable hashes; < 10%. provide a lineage for this genome."
+        elif f_major < 0.2:
+            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
+            report(f'** Please provide a lineage for this genome.')
+            comment = "too few hashes in major lineage; < 20%. provide a lineage for this genome."
+
+        genome_lineage = lca_genome_lineage
+        report(f'Using LCA majority lineage as genome lineage.')
+
+    return genome_lineage, comment
+
 
 def main(args):
     genomebase = os.path.basename(args.genome)
@@ -420,40 +446,26 @@ def main(args):
         provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
         report(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
-        if utils.is_lineage_match(provided_lin, lca_genome_lineage, 'genus'):
-            report(f'(provided lineage agrees with k-mer classification at genus level)')
+    # choose between the lineages
+    genome_lineage, comment = choose_genome_lineage(lca_genome_lineage,
+                                                    provided_lin,
+                                                    f_ident, f_major,
+                                                    report)
+
+    if comment: # failure to get a good lineage assignment? exit early.
+        report(f'** Please provide a lineage for this genome.')
+        report(comment)
+
+        # ...unless we force.
+        if args.force:
+            print('--force requested, so continuing despite this.')
         else:
-            report(f'(provided lineage disagrees with k-mer classification at or above genus level)')
-
-        genome_lineage = utils.pop_to_rank(provided_lin, 'genus')
-        report(f'\nUsing provided lineage as genome lineage.')
-    else:
-        fail = False
-        if f_ident < 0.1:
-            report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            report(f'** Please provide a lineage for this genome.')
-            comment = "too few identifiable hashes; < 10%. provide a lineage for this genome."
-            fail = True
-        elif f_major < 0.2:
-            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
-            report(f'** Please provide a lineage for this genome.')
-            comment = "too few hashes in major lineage; < 20%. provide a lineage for this genome."
-            fail = True
-
-        if fail:
-            if args.force:
-                print('--force requested, so continuing despite this.')
-            else:
-                create_empty_output(genomebase, comment, args.summary,
-                                    None, args.clean, args.dirty,
-                                    provided_lin=provided_lin,
-                                    lca_lineage=lca_genome_lineage,
-                                    f_ident=f_ident, f_major=f_major)
-                
-                return 0
-
-        genome_lineage = lca_genome_lineage
-        report(f'Using LCA majority lineage as genome lineage.')
+            create_empty_output(genomebase, comment, args.summary,
+                                None, args.clean, args.dirty,
+                                provided_lin=provided_lin,
+                                lca_lineage=lca_genome_lineage,
+                                f_ident=f_ident, f_major=f_major)
+            return 0
 
 
     # is match_rank lower than genome lineage? if so, raise it.
