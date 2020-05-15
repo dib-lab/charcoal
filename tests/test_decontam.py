@@ -46,11 +46,14 @@ class FakeFastaWriter(object):
         self.bp += len(record.sequence)
         self.n += 1
 
-def make_lca_and_lineages(signatures_file, lineages_csv, scaled, ksize, start_column=3):
+def make_lca_and_lineages(match_files, lineages_csv, scaled, ksize, start_column=3):
     lca_db = LCA_Database(ksize=ksize, scaled=scaled)
     lin_db = LineageDB()
 
-    siglist = list(sourmash.load_signatures(signatures_file))
+    siglist = []
+    for filename in match_files:
+        siglist += list(sourmash.load_signatures(filename))
+
     tax_assign, _ = load_taxonomy_assignments(lineages_csv,
                                               start_column=start_column)
 
@@ -62,7 +65,6 @@ def make_lca_and_lineages(signatures_file, lineages_csv, scaled, ksize, start_co
         lca_db.insert(ss, ident=ident)
         lin_db.insert(ident, lineage)
 
-
     return lca_db, lin_db
 
 
@@ -70,7 +72,7 @@ def load_first_chunk(filename, chunksize=50000):
     # load a chunk from a contiguous genome. eventually, need to fix to
     # pay attention to contigs...
     with gzip.open(filename, 'rb') as fp:
-        seqname = fp.readline().strip()
+        seqname = fp.readline().strip()[1:]
         seqdata = fp.read(chunksize).decode('utf-8')
         seqdata = seqdata.split()
         seqdata = "".join(seqdata)
@@ -204,9 +206,9 @@ def test_cleaner_class_1():
     match_rank = 'genus'
     empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
 
-    matches_file = 'tests/test-data/63.fa.gz.gather-matches.sig'
+    matches_file = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
     lineages_csv = 'test-data/test-match-lineages.csv'
-    lca_db, lin_db = make_lca_and_lineages(matches_file, lineages_csv,
+    lca_db, lin_db = make_lca_and_lineages([matches_file], lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
 
     cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
@@ -221,9 +223,10 @@ def test_cleaner_class_1():
     report_fp = StringIO()
     cleaner.clean_contigs(inp_iter, report_fp)
 
+    assert cleaner.dirty_out.n == 0
     assert cleaner.clean_out.n == 1
     assert cleaner.clean_out.bp == 49383
-    assert cleaner.clean_out.names == [b'>NC_011663.1 Shewanella baltica OS223, complete genome']
+    assert cleaner.clean_out.names == [b'NC_011663.1 Shewanella baltica OS223, complete genome']
 
 
 def test_cleaner_class_2():
@@ -234,9 +237,9 @@ def test_cleaner_class_2():
     match_rank = 'genus'
     empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
 
-    matches_file = 'tests/test-data/63.fa.gz.gather-matches.sig'
+    matches_file = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
     lineages_csv = 'test-data/test-match-lineages.csv'
-    lca_db, lin_db = make_lca_and_lineages(matches_file, lineages_csv,
+    lca_db, lin_db = make_lca_and_lineages([matches_file], lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
 
     cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
@@ -251,6 +254,52 @@ def test_cleaner_class_2():
     report_fp = StringIO()
     cleaner.clean_contigs(inp_iter, report_fp)
 
+    assert cleaner.clean_out.n == 0
     assert cleaner.dirty_out.n == 1
     assert cleaner.dirty_out.bp == 49383
-    assert cleaner.dirty_out.names == [b'>NC_011663.1 Shewanella baltica OS223, complete genome']
+    assert cleaner.dirty_out.names == [b'NC_011663.1 Shewanella baltica OS223, complete genome']
+
+
+def test_cleaner_class_3():
+    # specify two contigs, with mixed lineage - one clean one dirty
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
+    matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
+    lineages_csv = 'test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
+                                           lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    cleaner.clean_out = FakeFastaWriter()
+    cleaner.dirty_out = FakeFastaWriter()
+
+    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    inp_iter = chunk1 + chunk2
+
+    report_fp = StringIO()
+    cleaner.clean_contigs(inp_iter, report_fp)
+
+    assert cleaner.dirty_out.n == 1
+    assert cleaner.dirty_out.bp == 49383
+    assert cleaner.dirty_out.names == [b'NC_011663.1 Shewanella baltica OS223, complete genome']
+
+    assert cleaner.clean_out.n == 1
+    assert cleaner.clean_out.bp == 49296
+    assert cleaner.clean_out.names == [b'CP001071.1 Akkermansia muciniphila ATCC BAA-835, complete genome']
+
+    # double-check lineage juuuuust to confirm
+    clean_name = cleaner.clean_out.names[0]
+    clean_name = clean_name.decode('utf-8')
+    ident = clean_name.split('.')[0]
+    clean_lineage = lin_db.ident_to_lineage[ident]
+    assert utils.is_lineage_match(clean_lineage, genome_lineage, 'genus')
