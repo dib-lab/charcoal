@@ -425,8 +425,13 @@ def main():
         genome_lineage = lca_genome_lineage
         report(f'Using LCA majority lineage as genome lineage.')
 
-    # @CTB what happens when match_rank is lower than genome_lineage?
-    # raise it, right?
+
+    # is match_rank lower than genome lineage? if so, raise it.
+    match_rank = args.match_rank
+    lineage_ranks = [ x.rank for x in genome_lineage ]
+    if match_rank not in lineage_ranks:
+        report(f'** NOTE: lineage rank is {lineage_ranks[-1]}; pulling match rank back to that.')
+        match_rank = lineage_ranks[-1]
 
     report(f'\nFull lineage being used for contamination analysis:')
     report(f'   {sourmash.lca.display_lineage(genome_lineage)}')
@@ -459,8 +464,7 @@ def main():
             missed_bp += len(record.sequence)
 
         if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
-            clean = check_gather(record, mh, genome_lineage,
-                                 args.match_rank,
+            clean = check_gather(record, mh, genome_lineage, match_rank,
                                  lca_db, lin_db, report_fp)
             if not clean:
                 n_reason_3 += 1
@@ -468,8 +472,7 @@ def main():
         # did we find a dirty contig in step 1? if NOT, go into LCA style
         # approaches.
         if mh and clean:
-            clean, reason = check_lca(record, mh, genome_lineage,
-                                      args.match_rank,
+            clean, reason = check_lca(record, mh, genome_lineage, match_rank,
                                       lca_db, lin_db, report_fp)
             if not clean:
                 if reason == 1:
