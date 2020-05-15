@@ -96,6 +96,14 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
+match_rank = config['match_rank']
+allowed_match_ranks = ['superkingdom', 'phylum', 'class', 'order', 'family',
+                      'genus']
+if match_rank not in allowed_match_ranks:
+    print(f'** ERROR: unknown match_rank {match_rank}.')
+    print(f'** allowed values are {",".join(allowed_match_ranks)}')
+    sys.exit(-1)
+
 print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
 
