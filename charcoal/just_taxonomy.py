@@ -363,6 +363,8 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage,
                           f_ident, f_major, report):
 
     comment = ""
+    genome_lineage = None
+
     if provided_lineage:
         if utils.is_lineage_match(provided_lineage, lca_genome_lineage, 'genus'):
             report(f'(provided lineage agrees with k-mer classification at genus level)')
@@ -374,13 +376,14 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage,
     else:
         if f_ident < 0.1:
             report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            comment = "too few identifiable hashes; < 10%. provide a lineage for this genome."
+            report(f'** Please provide a lineage for this genome.')
+            comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome."
         elif f_major < 0.2:
             report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
             report(f'** Please provide a lineage for this genome.')
-            comment = "too few hashes in major lineage; < 20%. provide a lineage for this genome."
-
-        genome_lineage = lca_genome_lineage
+            comment = "too few hashes in major lineage; f_major < 20%. provide a lineage for this genome."
+        else:
+            genome_lineage = utils.pop_to_rank(lca_genome_lineage, 'genus')
         report(f'Using LCA majority lineage as genome lineage.')
 
     return genome_lineage, comment
