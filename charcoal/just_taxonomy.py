@@ -112,13 +112,13 @@ class WriteAndTrackFasta(object):
         self.outfp.close()
 
 
-def do_gather_breakdown(minhash, lca_db, report_fp):
+def do_gather_breakdown(minhash, lca_db, min_matches, report_fp):
     "Report all gather matches to report_fp; return first match sig."
     import copy
     minhash = copy.copy(minhash)
     query_sig = sourmash.SourmashSignature(minhash)
 
-    threshold_percent = GATHER_MIN_MATCHES  / len(minhash)
+    threshold_percent = min_matches / len(minhash)
 
     # do the gather:
     first_match = None
@@ -205,6 +205,8 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
 
 
 class ContigsDecontaminator(object):
+    GATHER_THRESHOLD = GATHER_MIN_MATCHES
+
     def __init__(self, genome_lineage, match_rank, empty_mh, lca_db, lin_db):
         self.genome_lineage = genome_lineage
         self.empty_mh = empty_mh
@@ -240,7 +242,7 @@ class ContigsDecontaminator(object):
                 self.missed_n += 1
                 self.missed_bp += len(record.sequence)
 
-            if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
+            if mh and len(mh) >= self.GATHER_THRESHOLD:
                 clean = self.check_gather(record, mh, report_fp)
 
             # did we find a dirty contig in step 1? if NOT, go into LCA style
@@ -260,7 +262,7 @@ class ContigsDecontaminator(object):
 
     def check_gather(self, record, contig_mh, report_fp):
         "Does this contig have a gather match that is outside the given rank?"
-        threshold_bp = contig_mh.scaled*GATHER_MIN_MATCHES
+        threshold_bp = contig_mh.scaled * self.GATHER_THRESHOLD
         results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
                                      threshold_bp=threshold_bp)
 
@@ -509,7 +511,9 @@ def main(args):
     clean_mh = cleaner.clean_out.minhash
     first_match = None
     if clean_mh:
-        first_match = do_gather_breakdown(clean_mh, lca_db, report_fp)
+        first_match = do_gather_breakdown(clean_mh, lca_db,
+                                          GATHER_MIN_MATCHES,
+                                          report_fp)
 
     if not first_match:
         print(' ** no matches **', file=report_fp)
