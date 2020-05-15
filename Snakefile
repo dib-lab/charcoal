@@ -169,7 +169,7 @@ rule contigs_clean_just_taxonomy:
     params:
         lineage = get_provided_lineage,
         force = force_param,
-        match_rank = 'order'
+        match_rank = 'genus'
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \

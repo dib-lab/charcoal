@@ -239,9 +239,6 @@ def do_gather_breakdown(minhash, lca_db, report_fp):
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
 
-    if not first_match:
-        print(' ** no matches **', file=report_fp)
-
     if first_match_under_fp:
         print(f'** note: matches under {threshold_percent*100:.3f}% may be false positives', file=report_fp)
 
@@ -501,17 +498,23 @@ def main():
     print('--------------', file=report_fp)
     report(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.')
     report(f'removed {dirty_n} contigs containing {int(dirty_bp/1000)} kb.')
-    report(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, so counted as clean')
+    report(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, and counted as clean')
 
     # look at what our database says about remaining contamination,
     # across all "clean" contigs. (CTB: Need to dig into this more to figure
     # out exactly why we still have any :)
-    print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
     # CTB: add breakdown of dirty contigs?
 
     # report gather breakdown of clean signature
+    print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
+
     clean_mh = clean_out.minhash
-    first_match = do_gather_breakdown(clean_mh, lca_db, report_fp)
+    first_match = None
+    if clean_mh:
+        first_match = do_gather_breakdown(clean_mh, lca_db, report_fp)
+
+    if not first_match:
+        print(' ** no matches **', file=report_fp)
 
     # get genome size and match lineage of primary match
     nearest_size = 0
