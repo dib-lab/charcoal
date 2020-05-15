@@ -144,7 +144,7 @@ def check_lca(record, contig_mh, genome_lineage, match_rank,
     # get top assignment for contig.
     ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
 
-    # assignment outside of genus? dirty! @CTB
+    # assignment outside of genus? dirty!
     ok_ranks = set()
     passed_rank = False
     for rank in sourmash.lca.taxlist():
