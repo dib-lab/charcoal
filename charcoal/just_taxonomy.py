@@ -304,22 +304,6 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
 
 
 def main(args):
-    p = argparse.ArgumentParser(args)
-    p.add_argument('--genome', help='genome file', required=True)
-    p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
-    p.add_argument('--matches_sig', help='all relevant matches', required=True)
-    p.add_argument('--clean', help='cleaned contigs', required=True)
-    p.add_argument('--dirty', help='dirty contigs', required=True)
-    p.add_argument('--report', help='report output', required=True)
-    p.add_argument('--summary', help='CSV one line output')
-    p.add_argument('--force', help='continue past survivable errors',
-                   action='store_true')
-
-    p.add_argument('--lineage', help=';-separated lineage down to genus level',
-                   default='NA')        # default is str NA
-    p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
-    args = p.parse_args()
-
     genomebase = os.path.basename(args.genome)
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -548,6 +532,28 @@ def main(args):
     return 0
 
 
+def cmdline(sys_args):
+    "Command line entry point."
+    p = argparse.ArgumentParser(sys_args)
+    p.add_argument('--genome', help='genome file', required=True)
+    p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
+    p.add_argument('--matches_sig', help='all relevant matches', required=True)
+    p.add_argument('--clean', help='cleaned contigs', required=True)
+    p.add_argument('--dirty', help='dirty contigs', required=True)
+    p.add_argument('--report', help='report output', required=True)
+    p.add_argument('--summary', help='CSV one line output')
+    p.add_argument('--force', help='continue past survivable errors',
+                   action='store_true')
+
+    p.add_argument('--lineage', help=';-separated lineage down to genus level',
+                   default='NA')        # default is str NA
+    p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
+    args = p.parse_args()
+
+    main(args)
+
+
 if __name__ == '__main__':
-    returncode = main(sys.argv[1:])
+    "Script entry point."
+    returncode = cmdline(sys.argv[1:])
     sys.exit(0)
