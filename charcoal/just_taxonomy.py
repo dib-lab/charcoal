@@ -127,58 +127,6 @@ def check_gather(record, contig_mh, genome_lineage, match_rank,
     return clean
 
 
-def check_lca(record, contig_mh, genome_lineage, match_rank,
-              lca_db, lin_db, report_fp):
-    "Does this contig have any hashes with LCA outside the given rank?"
-    clean = True
-    reason = 0
-
-    # get _all_ of the hash taxonomy assignments for this contig
-    ctg_assign = gather_assignments(contig_mh.get_mins(), None,
-                                    [lca_db], lin_db)
-
-    ctg_tax_assign = count_lca_for_assignments(ctg_assign)
-    if not ctg_tax_assign:
-        return True, ""
-
-    # get top assignment for contig.
-    ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
-
-    # assignment outside of genus? dirty!
-    ok_ranks = set()
-    passed_rank = False
-    for rank in sourmash.lca.taxlist():
-        if rank == match_rank:
-            passed_rank = True
-
-        if passed_rank:
-            ok_ranks.add(rank)
-
-    if (not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks):
-        bad_rank = "(root)"
-        if ctg_lin:
-            bad_rank = ctg_lin[-1].rank
-        clean = False
-        reason = 1
-        print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 1 - contig LCA is above {match_rank}\nlca rank is {bad_rank}',
-              file=report_fp)
-    elif not utils.is_lineage_match(genome_lineage, ctg_lin, match_rank):
-        clean = False
-        reason = 2
-        print('', file=report_fp)
-        print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {match_rank}\nlineage is {pretty_print_lineage(ctg_lin)}',
-              file=report_fp)
-
-    # summary reporting --
-    if not clean:
-        report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
-                           contig_mh.scaled)
-
-    return clean, reason
-
-
 def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
     ctg_counts = Counter()
     for hashval, lineages in ctg_assign.items():
@@ -350,11 +298,9 @@ class ContigsDecontaminator(object):
             # did we find a dirty contig in step 1? if NOT, go into LCA style
             # approaches.
             if mh and clean:
-                clean, reason = check_lca(record, mh,
-                                          self.genome_lineage,
-                                          self.match_rank,
-                                          self.lca_db, self.lin_db, report_fp)
+                clean, reason = self.check_lca(record, mh, report_fp)
                 if not clean:
+                    # CTB: move back into check_lca?
                     if reason == 1:
                         self.n_reason_1 += 1
                     elif reason == 2:
@@ -371,6 +317,59 @@ class ContigsDecontaminator(object):
                     self.dirty_out.write(record)
 
         # END contig loop
+
+    def check_lca(self, record, contig_mh, report_fp):
+        "Does this contig have any hashes with LCA outside the given rank?"
+        clean = True
+        reason = 0
+
+        # get _all_ of the hash taxonomy assignments for this contig
+        ctg_assign = gather_assignments(contig_mh.get_mins(), None,
+                                        [self.lca_db], self.lin_db)
+
+        ctg_tax_assign = count_lca_for_assignments(ctg_assign)
+        if not ctg_tax_assign:
+            return True, ""
+
+        # get top assignment for contig.
+        ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
+
+        # assignment outside of genus? dirty!
+        ok_ranks = set()
+        passed_rank = False
+        for rank in sourmash.lca.taxlist():   # CTB: save on class.
+            if rank == self.match_rank:
+                passed_rank = True
+
+            if passed_rank:
+                ok_ranks.add(rank)
+
+        if (not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks):
+            bad_rank = "(root)"
+            if ctg_lin:
+                bad_rank = ctg_lin[-1].rank
+            clean = False
+            reason = 1
+            print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+            print(f'contig dirty, REASON 1 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
+                  file=report_fp)
+        elif not utils.is_lineage_match(self.genome_lineage, ctg_lin,
+                                        self.match_rank):
+            clean = False
+            reason = 2
+            print('', file=report_fp)
+            print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+            print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {self.match_rank}\nlineage is {pretty_print_lineage(ctg_lin)}',
+                  file=report_fp)
+
+        # summary reporting --
+        if not clean:
+            # CTB: move into class
+            report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
+                               contig_mh.scaled)
+
+        return clean, reason
+
 
 
 def main(args):
