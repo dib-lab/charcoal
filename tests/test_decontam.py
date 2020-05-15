@@ -303,3 +303,96 @@ def test_cleaner_class_3():
     ident = clean_name.split('.')[0]
     clean_lineage = lin_db.ident_to_lineage[ident]
     assert utils.is_lineage_match(clean_lineage, genome_lineage, 'genus')
+
+
+def test_cleaner_class_4():
+    # specify two bacterial contigs, and ask for superkingdom level cleaning.
+    # (should be nothing dirty)
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'superkingdom'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
+    matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
+    lineages_csv = 'test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
+                                           lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    cleaner.clean_out = FakeFastaWriter()
+    cleaner.dirty_out = FakeFastaWriter()
+
+    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    inp_iter = chunk1 + chunk2
+
+    report_fp = StringIO()
+    cleaner.clean_contigs(inp_iter, report_fp)
+
+    assert cleaner.dirty_out.n == 0
+    assert cleaner.dirty_out.bp == 0
+    assert cleaner.dirty_out.names == []
+
+    assert cleaner.clean_out.n == 2
+    assert cleaner.clean_out.bp == 49296 + 49383
+    assert cleaner.clean_out.names == [b'NC_011663.1 Shewanella baltica OS223, complete genome', b'CP001071.1 Akkermansia muciniphila ATCC BAA-835, complete genome']
+
+    # double-check lineage juuuuust to confirm
+    for clean_name in cleaner.clean_out.names:
+        clean_name = clean_name.decode('utf-8')
+        ident = clean_name.split('.')[0]
+        clean_lineage = lin_db.ident_to_lineage[ident]
+        assert utils.is_lineage_match(clean_lineage, genome_lineage,
+                                      match_rank)
+
+
+def test_cleaner_class_5():
+    # specify two bacterial contigs, and ask for phylum level cleaning.
+    # => one clean one dirty
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
+    matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
+    lineages_csv = 'test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
+                                           lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    cleaner.clean_out = FakeFastaWriter()
+    cleaner.dirty_out = FakeFastaWriter()
+
+    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    inp_iter = chunk1 + chunk2
+
+    report_fp = StringIO()
+    cleaner.clean_contigs(inp_iter, report_fp)
+
+    assert cleaner.dirty_out.n == 1
+    assert cleaner.dirty_out.bp == 49383
+    assert cleaner.dirty_out.names == [b'NC_011663.1 Shewanella baltica OS223, complete genome']
+
+    assert cleaner.clean_out.n == 1
+    assert cleaner.clean_out.bp == 49296
+    assert cleaner.clean_out.names == [b'CP001071.1 Akkermansia muciniphila ATCC BAA-835, complete genome']
+
+    # double-check lineage juuuuust to confirm
+    clean_name = cleaner.clean_out.names[0]
+    clean_name = clean_name.decode('utf-8')
+    ident = clean_name.split('.')[0]
+    clean_lineage = lin_db.ident_to_lineage[ident]
+    assert utils.is_lineage_match(clean_lineage, genome_lineage, 'genus')
