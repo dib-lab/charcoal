@@ -303,8 +303,8 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     return genome_lineage, f_major, f_ident
 
 
-def main():
-    p = argparse.ArgumentParser()
+def main(args):
+    p = argparse.ArgumentParser(args)
     p.add_argument('--genome', help='genome file', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
     p.add_argument('--matches_sig', help='all relevant matches', required=True)
@@ -334,7 +334,7 @@ def main():
         comment = "no matches to this genome were found in the database; nothing to do"
         create_empty_output(genomebase, comment, args.summary,
                             args.report, args.clean, args.dirty)
-        sys.exit(0)
+        return 0
 
     report_fp = open(args.report, 'wt')
     def report(*args):
@@ -417,7 +417,7 @@ def main():
                                     lca_lineage=lca_genome_lineage,
                                     f_ident=f_ident, f_major=f_major)
                 
-                sys.exit(0)
+                return 0
 
         genome_lineage = lca_genome_lineage
         report(f'Using LCA majority lineage as genome lineage.')
@@ -545,6 +545,9 @@ def main():
                         sourmash.lca.display_lineage(provided_lin),
                         comment])
 
+    return 0
+
 
 if __name__ == '__main__':
-    main()
+    returncode = main(sys.argv[1:])
+    sys.exit(0)
