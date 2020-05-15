@@ -95,53 +95,6 @@ def get_ident(sig):
     return ident
 
 
-def check_gather(record, contig_mh, genome_lineage, match_rank,
-                 lca_db, lineage_db, report_fp):
-    "Does this contig have a gather match that is outside the given rank?"
-    threshold_bp = contig_mh.scaled*GATHER_MIN_MATCHES
-    results = lca_db.gather(sourmash.SourmashSignature(contig_mh),
-                            threshold_bp=threshold_bp)
-
-    if not results:
-        return True
-
-    match = results[0][1]
-
-    # get identity
-    match_ident = get_ident(match)
-    # get lineage
-    contig_lineage = lineage_db.ident_to_lineage[match_ident]
-
-    # if it matched outside rank, => dirty.
-    clean = True
-    if not utils.is_lineage_match(genome_lineage, contig_lineage,
-                                  match_rank):
-        clean=False
-        common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
-
-        print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-        print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s {match_rank}\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
-              file=report_fp)
-        print('', file=report_fp)
-
-    return clean
-
-
-def report_lca_summary(report_fp, ctg_tax_assign, ctg_assign, scaled):
-    ctg_counts = Counter()
-    for hashval, lineages in ctg_assign.items():
-        for lineage in lineages:
-            ctg_counts[lineage] += 1
-
-    print(f'\n** hashval lca counts', file=report_fp)
-    for lin, count in ctg_tax_assign.most_common():
-        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
-    print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
-    for lin, count in ctg_counts.most_common():
-        print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
-    print('', file=report_fp)
-
-
 class WriteAndTrackFasta(object):
     def __init__(self, outfp, mh_ex):
         self.minhash = mh_ex.copy_and_clear()
@@ -288,12 +241,7 @@ class ContigsDecontaminator(object):
                 self.missed_bp += len(record.sequence)
 
             if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
-                clean = check_gather(record, mh,
-                                     self.genome_lineage, self.match_rank,
-                                     self.lca_db, self.lin_db,
-                                     report_fp)
-                if not clean:
-                    self.n_reason_3 += 1
+                clean = self.check_gather(record, mh, report_fp)
 
             # did we find a dirty contig in step 1? if NOT, go into LCA style
             # approaches.
@@ -309,6 +257,54 @@ class ContigsDecontaminator(object):
                     self.dirty_out.write(record)
 
         # END contig loop
+
+    def check_gather(self, record, contig_mh, report_fp):
+        "Does this contig have a gather match that is outside the given rank?"
+        threshold_bp = contig_mh.scaled*GATHER_MIN_MATCHES
+        results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
+                                     threshold_bp=threshold_bp)
+
+        if not results:
+            return True
+
+        match = results[0][1]
+
+        # get identity
+        match_ident = get_ident(match)
+        # get lineage
+        contig_lineage = self.lin_db.ident_to_lineage[match_ident]
+
+        # if it matched outside rank, => dirty.
+        clean = True
+        if not utils.is_lineage_match(self.genome_lineage, contig_lineage,
+                                      self.match_rank):
+            clean=False
+            self.n_reason_3 += 1
+            common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
+
+            print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+            print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s {self.match_rank}\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
+                  file=report_fp)
+            print('', file=report_fp)
+
+        return clean
+
+    def _report_lca_summary(self, report_fp, ctg_tax_assign, ctg_assign):
+        scaled = self.empty_mh.scaled
+
+        ctg_counts = Counter()
+        for hashval, lineages in ctg_assign.items():
+            for lineage in lineages:
+                ctg_counts[lineage] += 1
+
+        print(f'\n** hashval lca counts', file=report_fp)
+        for lin, count in ctg_tax_assign.most_common():
+            print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+        print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
+        for lin, count in ctg_counts.most_common():
+            print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+        print('', file=report_fp)
+
 
     def check_lca(self, record, contig_mh, report_fp):
         "Does this contig have any hashes with LCA outside the given rank?"
@@ -356,9 +352,7 @@ class ContigsDecontaminator(object):
 
         # summary reporting --
         if not clean:
-            # CTB: move into class
-            report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
-                               contig_mh.scaled)
+            self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign)
 
         return clean
 
