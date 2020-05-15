@@ -298,15 +298,7 @@ class ContigsDecontaminator(object):
             # did we find a dirty contig in step 1? if NOT, go into LCA style
             # approaches.
             if mh and clean:
-                clean, reason = self.check_lca(record, mh, report_fp)
-                if not clean:
-                    # CTB: move back into check_lca?
-                    if reason == 1:
-                        self.n_reason_1 += 1
-                    elif reason == 2:
-                        self.n_reason_2 += 1
-                    else:
-                        assert 0, "unknown dirty reason code"
+                clean = self.check_lca(record, mh, report_fp)
 
             # write out contigs -> clean or dirty files.
             if clean:
@@ -329,7 +321,7 @@ class ContigsDecontaminator(object):
 
         ctg_tax_assign = count_lca_for_assignments(ctg_assign)
         if not ctg_tax_assign:
-            return True, ""
+            return True
 
         # get top assignment for contig.
         ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
@@ -349,14 +341,14 @@ class ContigsDecontaminator(object):
             if ctg_lin:
                 bad_rank = ctg_lin[-1].rank
             clean = False
-            reason = 1
+            self.n_reason_1 += 1
             print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
             print(f'contig dirty, REASON 1 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
                   file=report_fp)
         elif not utils.is_lineage_match(self.genome_lineage, ctg_lin,
                                         self.match_rank):
             clean = False
-            reason = 2
+            self.n_reason_2 += 1
             print('', file=report_fp)
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
             print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {self.match_rank}\nlineage is {pretty_print_lineage(ctg_lin)}',
@@ -368,7 +360,7 @@ class ContigsDecontaminator(object):
             report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
                                contig_mh.scaled)
 
-        return clean, reason
+        return clean
 
 
 
