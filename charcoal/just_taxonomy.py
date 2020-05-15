@@ -303,6 +303,76 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     return genome_lineage, f_major, f_ident
 
 
+class ContigsDecontaminator(object):
+    def __init__(self, genome_lineage, match_rank, empty_mh, lca_db, lin_db):
+        self.genome_lineage = genome_lineage
+        self.empty_mh = empty_mh
+        self.match_rank = match_rank
+        self.lca_db = lca_db
+        self.lin_db = lin_db
+
+        self.n_reason_1 = 0
+        self.n_reason_2 = 0
+        self.n_reason_3 = 0
+        self.missed_n = 0
+        self.missed_bp = 0
+
+        self.clean_out = None
+        self.dirty_out = None
+
+    def set_clean_filename(self, filename):
+        clean_fp = gzip.open(filename, 'wt')
+        self.clean_out = WriteAndTrackFasta(clean_fp, self.empty_mh)
+
+    def set_dirty_filename(self, filename):
+        dirty_fp = gzip.open(filename, 'wt')
+        self.dirty_out = WriteAndTrackFasta(dirty_fp, self.empty_mh)
+
+    def clean_contigs(self, screed_iter, report_fp):
+        for n, record in enumerate(screed_iter):
+            # make a new minhash and start examining it.
+            mh = self.empty_mh.copy_and_clear()
+            mh.add_sequence(record.sequence, force=True)
+
+            clean = True               # default to clean
+            if not mh:                 # no hashes?
+                self.missed_n += 1
+                self.missed_bp += len(record.sequence)
+
+            if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
+                clean = check_gather(record, mh,
+                                     self.genome_lineage, self.match_rank,
+                                     self.lca_db, self.lin_db,
+                                     report_fp)
+                if not clean:
+                    self.n_reason_3 += 1
+
+            # did we find a dirty contig in step 1? if NOT, go into LCA style
+            # approaches.
+            if mh and clean:
+                clean, reason = check_lca(record, mh,
+                                          self.genome_lineage,
+                                          self.match_rank,
+                                          self.lca_db, self.lin_db, report_fp)
+                if not clean:
+                    if reason == 1:
+                        self.n_reason_1 += 1
+                    elif reason == 2:
+                        self.n_reason_2 += 1
+                    else:
+                        assert 0, "unknown dirty reason code"
+
+            # write out contigs -> clean or dirty files.
+            if clean:
+                if self.clean_out:
+                    self.clean_out.write(record)
+            else:
+                if self.dirty_out:
+                    self.dirty_out.write(record)
+
+        # END contig loop
+
+
 def main(args):
     genomebase = os.path.basename(args.genome)
 
@@ -373,21 +443,13 @@ def main(args):
     else:
         fail = False
         if f_ident < 0.1:
-            print(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            print(f'** Please provide a lineage for this genome.')
-            print(f'** ERROR: fraction of identified hashes f_major < 20%.',
-                  file=report_fp)
-            print(f'** Please provide a lineage for this genome.',
-                  file=report_fp)
+            report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
+            report(f'** Please provide a lineage for this genome.')
             comment = "too few identifiable hashes; < 10%. provide a lineage for this genome."
             fail = True
         elif f_major < 0.2:
-            print(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
-            print(f'** Please provide a lineage for this genome.')
-            print(f'** ERROR: fraction of identified hashes f_major < 20%.',
-                  file=report_fp)
-            print(f'** Please provide a lineage for this genome.',
-                  file=report_fp)
+            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
+            report(f'** Please provide a lineage for this genome.')
             comment = "too few hashes in major lineage; < 20%. provide a lineage for this genome."
             fail = True
 
@@ -417,64 +479,31 @@ def main(args):
     report(f'\nFull lineage being used for contamination analysis:')
     report(f'   {sourmash.lca.display_lineage(genome_lineage)}')
 
-    # the output files are coming!
-    clean_fp = gzip.open(args.clean, 'wt')
-    clean_out = WriteAndTrackFasta(clean_fp, empty_mh)
-    dirty_fp = gzip.open(args.dirty, 'wt')
-    dirty_out = WriteAndTrackFasta(dirty_fp, empty_mh)
+    cleaner = ContigsDecontaminator(genome_lineage, match_rank,
+                                    empty_mh, lca_db, lin_db)
 
-    missed_n = 0
-    missed_bp = 0
-
-    # now, find bad contigs.
-    n_reason_1 = 0
-    n_reason_2 = 0
-    n_reason_3 = 0
+    cleaner.set_clean_filename(args.clean)
+    cleaner.set_dirty_filename(args.dirty)
 
     print('')
     print(f'pass 2: reading contigs from {genomebase}')
     print(f'\n**\n** walking through contigs:\n**\n', file=report_fp)
-    for n, record in enumerate(screed.open(args.genome)):
-        # make a new minhash and start examining it.
-        mh = empty_mh.copy_and_clear()
-        mh.add_sequence(record.sequence, force=True)
 
-        clean = True               # default to clean
-        if not mh:                 # no hashes?
-            missed_n += 1
-            missed_bp += len(record.sequence)
+    # do the cleaning
+    screed_iter = screed.open(args.genome)
+    cleaner.clean_contigs(screed_iter, report_fp)
 
-        if mh and len(mh) >= GATHER_MIN_MATCHES: # CTB: don't hard code.
-            clean = check_gather(record, mh, genome_lineage, match_rank,
-                                 lca_db, lin_db, report_fp)
-            if not clean:
-                n_reason_3 += 1
+    # recover information from cleaner object
+    clean_n = cleaner.clean_out.n
+    clean_bp = cleaner.clean_out.bp
+    dirty_n = cleaner.dirty_out.n
+    dirty_bp = cleaner.dirty_out.bp
+    missed_n = cleaner.missed_n
+    missed_bp = cleaner.missed_bp
 
-        # did we find a dirty contig in step 1? if NOT, go into LCA style
-        # approaches.
-        if mh and clean:
-            clean, reason = check_lca(record, mh, genome_lineage, match_rank,
-                                      lca_db, lin_db, report_fp)
-            if not clean:
-                if reason == 1:
-                    n_reason_1 += 1
-                elif reason == 2:
-                    n_reason_2 += 1
-                else:
-                    assert 0, "unknown dirty reason code"
-
-        # write out contigs -> clean or dirty files.
-        if clean:
-            clean_out.write(record)
-        else:
-            dirty_out.write(record)
-
-    # END contig loop
-
-    clean_n = clean_out.n
-    clean_bp = clean_out.bp
-    dirty_n = dirty_out.n
-    dirty_bp = dirty_out.bp
+    n_reason_1 = cleaner.n_reason_1
+    n_reason_2 = cleaner.n_reason_2
+    n_reason_3 = cleaner.n_reason_3
 
     assert n_reason_1 + n_reason_2 + n_reason_3 == dirty_n
 
@@ -492,7 +521,7 @@ def main(args):
     # report gather breakdown of clean signature
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
 
-    clean_mh = clean_out.minhash
+    clean_mh = cleaner.clean_out.minhash
     first_match = None
     if clean_mh:
         first_match = do_gather_breakdown(clean_mh, lca_db, report_fp)
