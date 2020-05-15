@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 """
 Remove bad contigs based solely on taxonomy.
-
-CTB TODO:
-* optionally eliminate contigs with no taxonomy
 """
 import sys
 import argparse
@@ -390,6 +387,7 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage,
 
 
 def main(args):
+    "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -566,7 +564,7 @@ def main(args):
 
 
 def cmdline(sys_args):
-    "Command line entry point."
+    "Command line entry point w/argparse action."
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--genome', help='genome file', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
@@ -586,7 +584,7 @@ def cmdline(sys_args):
     main(args)
 
 
+# execute this, when run with `python -m`.
 if __name__ == '__main__':
-    "Script entry point."
     returncode = cmdline(sys.argv[1:])
     sys.exit(0)
