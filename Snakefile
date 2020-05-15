@@ -168,14 +168,16 @@ rule contigs_clean_just_taxonomy:
     conda: 'conf/env-sourmash.yml'
     params:
         lineage = get_provided_lineage,
-        force = force_param
+        force = force_param,
+        match_rank = 'genus'
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \
             --matches_sig {input.matches} \
             --clean {output.clean} --dirty {output.dirty} \
             --report {output.report} --summary {output.csv} \
-            --lineage {params.lineage:q} {params.force}
+            --lineage {params.lineage:q} {params.force} \
+            --match-rank {params.match_rank}
     """
 
 rule combined_summary:
