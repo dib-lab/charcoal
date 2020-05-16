@@ -13,6 +13,26 @@ TODO: installable via pip or conda
 
 ## Configuring charcoal
 
+@CTB: add gather-db and lineages configuration command.
+
+You can generate a configuration file using `charcoal init <project>`:
+
+```
+charcoal init new-project
+```
+This will create a file `new-project.conf` with reasonable defaults.
+You will need to fill in `genome_list` and `genome_dir` yourself.
+
+If you have a directory with your genome bins in it already, you can
+provide that to init with `--genome-dir`:
+```
+charcoal init new-project --genome-dir path/to/genomes/
+```
+
+You can check your configuration with `charcoal check <project>.conf`,
+and show the aggregated configuration (defaults + system + project-specific
+configuration) with `charcoal showconf <project>.conf`.
+
 ## Running charcoal
 
 Run charcoal like so:
