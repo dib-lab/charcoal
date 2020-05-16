@@ -28,7 +28,8 @@ conda activate charcoal
 To run, execute (in the top-level directory):
 
 ```
-snakemake --use-conda -j 8 --configfile test-data/00-test.conf
+pip install -e .
+charcoal run test-data/00-test.conf -j 8
 ```
 
 Once that works, you can configure it yourself by copying
