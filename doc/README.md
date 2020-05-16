@@ -2,6 +2,11 @@
 
 ## Introduction
 
+## Getting help
+
+Please file issues on
+[the charcoal issue tracker](https://github.com/dib-lab/charcoal/issues).
+
 ## Installing charcoal
 
 TODO: installable via pip or conda
@@ -43,3 +48,10 @@ a cluster; instead, run it with multiple processes using `-j` (see above).
 However, if you want to run it across a cluster, you can do so!
 charcoal uses snakemake underneath, so you can follow the
 [snakemake cluster and cloud configuration instructions](https://snakemake.readthedocs.io/en/stable/executing/cluster-cloud.html).
+
+## Developer info
+
+### Running charcoal from the development repo
+
+You will need to run `pip install -e .` in the charcoal devleopment
+repo in order to use the `charcoal` command from the development version.
