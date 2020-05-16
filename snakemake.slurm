@@ -25,7 +25,7 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-snakemake -p -j 16 --configfile=conf/ibd2.conf --resources mem=${SLURM_MEM_PER_NODE:-150000} -k --
+snakemake -p -j 16 --configfile=conf/tara-delmont.conf --resources mem=${SLURM_MEM_PER_NODE:-150000} -k --
 #all reports all_make_tree_viz
 
 # print out various information about the job
