@@ -1,10 +1,9 @@
 #
 # run with --use-conda for maximal froodiness.
 #
+# --configfile must be specified on command line.
+#
 import csv, sys
-
-# override this with --configfile on command line
-configfile: 'test-data/00-test.conf'
 
 strict_val = config.get('strict', '1')
 strict_mode = int(strict_val)
@@ -96,6 +95,14 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
+match_rank = config['match_rank']
+allowed_match_ranks = ['superkingdom', 'phylum', 'class', 'order', 'family',
+                      'genus']
+if match_rank not in allowed_match_ranks:
+    print(f'** ERROR: unknown match_rank {match_rank}.')
+    print(f'** allowed values are {",".join(allowed_match_ranks)}')
+    sys.exit(-1)
+
 print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
 
@@ -169,7 +176,7 @@ rule contigs_clean_just_taxonomy:
     params:
         lineage = get_provided_lineage,
         force = force_param,
-        match_rank = 'genus'
+        match_rank = match_rank
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \
