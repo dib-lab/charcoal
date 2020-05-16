@@ -43,7 +43,7 @@ try:
     if ksize < 15 or ksize > 101:
         raise ValueError
 except ValueError:
-    print('** ERROR: ksize should be a nubmer between 15 and 101.')
+    print('** ERROR: ksize should be a number between 15 and 101.')
     print('** (it must also match the query database ksize value)')
     if strict_mode:
         sys.exit(-1)
@@ -58,6 +58,10 @@ for filename in genome_list:
             sys.exit(-1)
 
 # verify that all query databases exist --
+if not config['gather_db']:
+    print('** ERROR: must define gather_db')
+    sys.exit(-1)
+
 for filename in config['gather_db']:
     if not os.path.exists(filename):
         print(f'** ERROR: database {filename} does not exist.')
@@ -131,6 +135,21 @@ rule all:
     input:
         expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
         output_dir + '/combined_summary.csv',
+
+rule check:
+    input:
+        genome_list_file                  # do nothing - this file should exist
+
+rule showconf:
+    input:
+        genome_list_file
+    run:
+        import yaml
+        print('# full aggregated configuration:')
+        print(yaml.dump(config).strip())
+        print('# END')
+
+###
 
 rule contigs_sig:
     input:
