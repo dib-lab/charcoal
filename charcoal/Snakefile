@@ -132,6 +132,13 @@ rule all:
         expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
         output_dir + '/combined_summary.csv',
 
+rule check:
+    input:
+        genome_list_file                  # do nothing - this file should exist
+
+
+###
+
 rule contigs_sig:
     input:
         genome_dir + '/{filename}'
