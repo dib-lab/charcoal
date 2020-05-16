@@ -29,6 +29,9 @@ def run(configfile, snakemake_args):
     cmd = ["snakemake", "-s", snakefile]
     # add explicit configfile
     cmd += ["--configfile", configfile]
+    # snakemake sometimes seems to want a default -j; set it to 1 for now.
+    # can overridden later on command line.
+    cmd += ["-j", "1"]
 
     # add rest of snakemake arguments
     cmd += list(snakemake_args)
