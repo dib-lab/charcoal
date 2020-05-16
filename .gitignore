@@ -2,6 +2,9 @@
 .snakemake
 output.test
 __pycache__
+charcoal/version.py
+.eggs
+charcoal_bio.egg-info/
 
 #
 ibd-genomes

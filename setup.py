@@ -31,5 +31,5 @@ setup(
     setup_requires = [ "setuptools>=38.6.0",
                        'setuptools_scm', 'setuptools_scm_git_archive' ],
     use_scm_version = {"write_to": "charcoal/version.py"},
-    install_requires = ['snakemake']
+    install_requires = ['snakemake>=5.10', 'click>=7']
 )
