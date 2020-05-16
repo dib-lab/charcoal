@@ -396,3 +396,118 @@ def test_cleaner_class_5():
     ident = clean_name.split('.')[0]
     clean_lineage = lin_db.ident_to_lineage[ident]
     assert utils.is_lineage_match(clean_lineage, genome_lineage, 'genus')
+
+
+def test_cleaner_gather_method_1():
+    # specify two bacterial contigs, and ask for phylum level cleaning.
+    # => one clean one dirty
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
+    matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
+    lineages_csv = 'test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
+                                           lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk1[0].sequence, force=True)
+    is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert not is_clean
+
+    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk2[0].sequence, force=True)
+    is_clean = cleaner.check_gather(chunk2[0], mh, report_fp)
+    assert is_clean
+
+
+def test_cleaner_gather_method_1():
+    # specify two bacterial contigs, and ask for phylum level cleaning.
+    # => one clean one dirty
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
+    matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
+    lineages_csv = 'test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
+                                           lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk1[0].sequence, force=True)
+    is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert not is_clean
+    assert cleaner.n_reason_3 == 1
+
+    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk2[0].sequence, force=True)
+    is_clean = cleaner.check_gather(chunk2[0], mh, report_fp)
+    assert is_clean
+    assert cleaner.n_reason_3 == 1        # should not be incremented
+
+
+def test_cleaner_lca_method_1():
+    # specify two bacterial contigs, and ask for phylum level cleaning.
+    # => one clean one dirty
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
+    matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
+    lineages_csv = 'test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
+                                           lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk1[0].sequence, force=True)
+    is_clean = cleaner.check_lca(chunk1[0], mh, report_fp)
+    assert not is_clean
+    assert cleaner.n_reason_2 == 1
+
+    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk2[0].sequence, force=True)
+    is_clean = cleaner.check_lca(chunk2[0], mh, report_fp)
+    assert is_clean
+    assert cleaner.n_reason_2 == 1        # should not be incremented
