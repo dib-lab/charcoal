@@ -13,7 +13,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name = 'charcoal',
+    name = 'charcoal-bio',
     version = "0.1",
     description="a tool for decontaminating genomes",
     url="https://github.com/dib-lab/charcoal",
