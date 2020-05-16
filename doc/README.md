@@ -15,7 +15,15 @@ TODO: installable via pip or conda
 
 ## Running charcoal
 
-TODO: add charcoal run.
+Run charcoal like so:
+
+```
+charcoal run <config file>
+```
+
+A demo config file can be found @likeso.
+
+An empty config file for a new project can be generated @likeso.
 
 Underneath, charcoal uses
 [snakemake](https://snakemake.readthedocs.io/en/stable/) to run its
