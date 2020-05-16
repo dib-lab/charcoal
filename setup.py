@@ -1,0 +1,35 @@
+from setuptools import setup, find_packages
+
+CLASSIFIERS = [
+    "Environment :: Console",
+    "Environment :: MacOS X",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3.6",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+setup(
+    name = 'charcoal',
+    version = "0.1",
+    description="a tool for decontaminating genomes",
+    url="https://github.com/dib-lab/charcoal",
+    author="C. Titus Brown and Taylor Reiter",
+    author_email="titus@idyll.org,tereiter@ucdavis.edu",
+    license="BSD 3-clause",
+    packages = find_packages(),
+    classifiers = CLASSIFIERS,
+    entry_points = {'console_scripts': [
+        'charcoal  = charcoal.__main__:main'
+        ]
+    },
+    include_package_data=True,
+    package_data = { "charcoal": ["Snakefile", "*.yml"] },
+    setup_requires = [ "setuptools>=38.6.0",
+                       'setuptools_scm', 'setuptools_scm_git_archive' ],
+    use_scm_version = {"write_to": "charcoal/version.py"},
+    install_requires = ['snakemake']
+)
