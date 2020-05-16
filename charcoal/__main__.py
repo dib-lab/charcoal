@@ -20,13 +20,15 @@ def cli():
 @click.argument('snakemake_args', nargs=-1)
 def run(configfile, snakemake_args):
     "execute charcoal workflow (using snakemake underneath)"
-    print('run', configfile, snakemake_args)
+    #print('run', configfile, snakemake_args)
 
     # find the Snakefile relative to package path
     snakefile = get_snakefile_path()
 
     # basic command
     cmd = ["snakemake", "-s", snakefile]
+    # add --use-conda
+    cmd += ["--use-conda"]
     # add explicit configfile
     cmd += ["--configfile", configfile]
     # snakemake sometimes seems to want a default -j; set it to 1 for now.
