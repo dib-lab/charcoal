@@ -8,7 +8,7 @@ you can see the summary spreadsheet at
 [../example-output/demo.combined_summary.csv](../example-output/demo.combined_summary.csv) and see two genome reports, one for [a LoombaR bin](../example-output/LoombaR_2017__SID1050_bax__bin.11.fa.gz.report.txt) and one for a [TARA bin from Delmont et al., 2019](../example-output/TARA_ANE_MAG_00014.fa.gz.report.txt).
 
 To run the demo yourself, execute `charcoal run demo/demo.conf` from
-the top-level directory.
+the top-level directory, and then look at the output in `output.demo/`.
 
 Briefly,
 
