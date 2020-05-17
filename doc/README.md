@@ -82,7 +82,24 @@ configuration) with `charcoal showconf <project>.conf`.
 
 ### Per-project configuration
 
+The project-specific settings are as follows:
 
+* `output_dir`: the directory in which all of the output files will be placed. This will be created and populated by charcoal. This parameter is required.
+* `genome_dir`: the directory in which all of the input genomes lie. Note, soft linked (`ln -s`) genome files are permitted. This parameter is required.
+* `genome_list`: the basenames (e.g. `ls -1`) of the genome files to run decontamination on. They must all be located in `genome_dir`. FASTA, gzipped FASTA, or bzip2'ed FASTA are all supported, with no particular naming format required. This parameter is required.
+* `provided_lineages`: an optional spreadsheet of `genome_filename,superkingdom,phylum,...` lines used to provide lineages for the input genomes. Here `genome_filename` must exactly match a filename in `genome_list`.  The provided lineage overrides the automatic lineage detection done by charcoal, and can be used to label genomes as lineages that do not belong to the sourmash databases specified in `gather_db`. For example, if you specify `genome.fa.gz,d__Eukaryota,` for a genome in this file while using the GTDB database for gather, then charcoal will remove bacterial and archaeal contaminants but not Eukaryotal.
+* `match_rank`: rank at or below which a contigs are **not** removed as contaminants. For example, if `match_rank` is genus, then contigs in a genome file belonging to different families than the genome will be removed as contaminants. Defaults to order.
+
+Database parameters (for intermediate users):
+
+* `gather_db`: a list of sourmash databases (SBT, LCA, or collections of signatures) against which to "collect" relevant genomic matches to the query genome. See [the sourmash documentation](http://sourmash.rtfd.io/) for more information. By default, we suggest using the GTDB .sbt.zip database here, as it is low memory and quick to search. Custom databases are completely supported as long as you supply an accompanying set of lineages.
+* `lineages_csv`: a lineage spreadsheet (see `sourmash lca index` documentation in [the sourmash docs](http://sourmash.rtfd.io/)) specifying a mapping from identifieres to a fully resolved lineage. Any taxonomy can be used for this lineage, including NCBI or GTDB taxonomies; you probably shouldn't mix them though.
+* `scaled`: the scaled resolution at which you want to detect contamination. This must be no smaller than the scaled parameter of the sourmash database(s) listed in `gather_db`.
+* `ksize`: the k-mer size at which you want to detect contamination. This must be matched by the k-mer size of the sourmash database(s) listed in `gather_db`.
+
+Other settings:
+* `strict` (0 or 1, default 1) -- check and validate config settings & filenames strictly.
+* `force` (0 or 1, default 0) -- continue past survivable errors in decontamination.
 
 ### Installation-wide ccnfiguration
 
