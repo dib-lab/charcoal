@@ -37,6 +37,42 @@ We generally recommend running charcoal on a single computer using
 multiple processes.  You can do this with `charcoal run <config file>
 -j NUM`, where NUM is the number of processes to run.
 
+### Output files
+
+All output files will be placed in the output directory specified in
+the config file.
+
+A summary across all genomes will be in `combined_summary.csv`.
+The columns are explained below.
+
+
+For each genome, there are three key output files:
+* `<filename>.report.txt` - a detailed report of the decontamination process.
+* `<filename>.clean.fa.gz` - all of the kept ("clean") contigs.
+* `<filename>.dirty.fa.gz` - all of the removed ("dirty") contigs.
+
+The columns in the combined summary are:
+
+1. `genomefile` - the genome file name
+2. `brieftax` - a brief form of the lineage used (provided lineage if given; or guessed taxonomy, if not)
+3. `f_major` - the fraction of k-mers belonging to the majority lineage in the genome
+4. `f_ident` - the fraction of k-mers for which a match in the database was found
+5. `f_removed` - the fraction of total base pairs removed as contaminated (in contigs) and put in the `.dirty.fa.gz` file
+6. `n_reason_1` - see report.txt
+7. `n_reason_2` - see report.txt
+8. `n_reason_3` - see report.txt
+9. `refsize` - the approximate size of the nearest match genome in the database, if any
+10. `ratio` - the ratio between the size of this genome and the refsize
+11. `clean_bp` - total bp in "clean" contigs in the `.clean.fa.gz` file
+12. `clean_n` - total number of "clean" contigs
+13. `dirty_n` - total number of "dirty" contigs
+14. `dirty_bp` - total bp in "dirty" contigs in the `.clean.fa.gz` file
+15. `missed_n` - total number of contigs for which no hash values were found (these are ignored by charcoal, and placed in the clean contigs file)
+16. `missed_bp` - total number of bp in contigs for which no hash values were found
+17. `taxguessed` - the lineage guessed by charcoal based on majority taxonomy (see `f_ident` and `f_match`)
+18. `taxprovided` - the lineage given in the provided-lineages file, if any.
+19. `comment` - a comment explaining why this genome was not processed.
+
 ### Needed resources
 
 In general, each charcoal job needs less than 5 GB of memory, and
@@ -101,7 +137,13 @@ Other settings:
 * `strict` (0 or 1, default 1) -- check and validate config settings & filenames strictly.
 * `force` (0 or 1, default 0) -- continue past survivable errors in decontamination.
 
-### Installation-wide ccnfiguration
+### Rerunning charcoal with different parameters
+
+Unless you change the database and lineage spreadsheet, the ksize, or the
+scaled, you can rerun the filtering with different match ranks and provided
+lineages.  To do this, remove `*.clean.fa.gz` in the output directory.
+
+### Installation-wide configuration
 
 Each installation of charcoal (system-wide or in a conda
 environment) has a configuration file that can provide

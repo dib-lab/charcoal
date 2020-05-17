@@ -131,15 +131,18 @@ def get_provided_lineage(w):
 wildcard_constraints:
     size="\d+"
 
+# default rule - produce *.clean.fa.gz, and the summary
 rule all:
     input:
         expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
         output_dir + '/combined_summary.csv',
 
+# check config files only
 rule check:
     input:
         genome_list_file                  # do nothing - this file should exist
 
+# print out the configuration
 rule showconf:
     input:
         genome_list_file
@@ -151,6 +154,7 @@ rule showconf:
 
 ###
 
+# generate a signature
 rule contigs_sig:
     input:
         genome_dir + '/{filename}'
@@ -165,6 +169,8 @@ rule contigs_sig:
             {input} -o {output}
     """
 
+# run a gather against the database.
+# this should be the most time-consuming and memory-intensive step.
 rule gather_all:
     input:
         query = output_dir + '/{filename}.sig',
@@ -181,6 +187,7 @@ rule gather_all:
         touch {output.csv} {output.matches}
     """
 
+# actually do cleaning
 rule contigs_clean_just_taxonomy:
     input:
         genome = genome_dir + '/{f}',
@@ -206,6 +213,7 @@ rule contigs_clean_just_taxonomy:
             --match-rank {params.match_rank}
     """
 
+# build the combined summary
 rule combined_summary:
     input:
         expand(output_dir + '/{g}.summary.csv', g=genome_list),
