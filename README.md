@@ -48,7 +48,7 @@ A summary across all genomes will be placed in
 `combined_summary.csv`.
 
 For each genome, there are three key output files:
-* `<filename>.report.txt` - a detailed report.
+* `<filename>.report.txt` - a detailed report of the decontamination process.
 * `<filename>.clean.fa.gz` - all of the kept ("clean") contigs.
 * `<filename>.dirty.fa.gz` - all of the removed ("dirty") contigs.
 
