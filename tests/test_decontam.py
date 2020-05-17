@@ -548,6 +548,7 @@ def test_cleaner_lca_method1_1():
     for ss in matches_2:
         lca_db.insert(ss, 'NC_011663')
 
+    # ok! now, go for cleaning...
     cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
                                                   match_rank,
                                                   empty_mh,
