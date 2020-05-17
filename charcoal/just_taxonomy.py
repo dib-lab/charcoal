@@ -258,7 +258,12 @@ class ContigsDecontaminator(object):
         # END contig loop
 
     def check_gather(self, record, contig_mh, report_fp):
-        "Does this contig have a gather match that is outside the given rank?"
+        """
+        Does this contig have a gather match that is outside the given rank?
+
+        This method discovers chunks of sequence that belong to other
+        lineages.
+        """
         threshold_bp = contig_mh.scaled * self.GATHER_THRESHOLD
         results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
                                      threshold_bp=threshold_bp)
@@ -305,8 +310,19 @@ class ContigsDecontaminator(object):
         print('', file=report_fp)
 
 
-    def check_lca(self, record, contig_mh, report_fp):
-        "Does this contig have any hashes with LCA outside the given rank?"
+    def check_lca(self, record, contig_mh, report_fp, force_report=False):
+        """Does this contig have any hashes with LCA outside the given rank?
+
+        The first check in this method looks specifically at hashes that
+        belong to multiple or other lineages, i.e. identical sequence
+        that has "blurred" taxonomy.  These could be due to lateral gene
+        transfer, or mistakes in the taxonomy, or highly conserved
+        sequence, or something else. The 'taxonomic signature' of these
+        hashes is that the LCA of the hash is outside the match rank.
+
+        The second check in this method looks for contigs that have majority
+        LCA assignment outside of the allowed match rank.
+        """
         clean = True
         reason = 0
 
@@ -331,6 +347,8 @@ class ContigsDecontaminator(object):
             if passed_rank:
                 ok_ranks.add(rank)
 
+        # first check - is the majority LCA of hashes in this contig
+        # outside the match rank?
         if (not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks):
             bad_rank = "(root)"
             if ctg_lin:
@@ -340,6 +358,8 @@ class ContigsDecontaminator(object):
             print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
             print(f'contig dirty, REASON 1 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
                   file=report_fp)
+        # second check - is the majority lineage of hashes in this contig
+        # outside the match rank?
         elif not utils.is_lineage_match(self.genome_lineage, ctg_lin,
                                         self.match_rank):
             clean = False
@@ -350,7 +370,7 @@ class ContigsDecontaminator(object):
                   file=report_fp)
 
         # summary reporting --
-        if not clean:
+        if not clean or force_report:
             self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign)
 
         return clean
