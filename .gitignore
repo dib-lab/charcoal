@@ -1,6 +1,7 @@
 *~
 .snakemake
 output.test
+output.demo
 __pycache__
 charcoal/version.py
 .eggs

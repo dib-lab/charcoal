@@ -1,0 +1,5 @@
+GCF_000005845-subset.fa.gz
+LoombaR_2017__SID1050_bax__bin.11.fa.gz
+TOBG_NAT-167.fna.gz
+TARA_ANE_MAG_00014.fa.gz
+TARA_PON_MAG_00084.fa.gz

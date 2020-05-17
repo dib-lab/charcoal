@@ -23,17 +23,21 @@ conda env create -f environment.yml -n charcoal
 conda activate charcoal
 ```
 
-## Running!
+### Running the demo!
 
 To run, execute (in the top-level directory):
 
 ```
 pip install -e .
-charcoal run test-data/00-test.conf -j 8
+charcoal run demo/demo.conf -j 8
 ```
 
-Once that works, you can configure it yourself by copying
-`test-data/00-test.conf` to a new file and editing it.
+You will end up with clean genomes in `output.demo/*.clean.fa.gz`, and
+a summary of the demo genomes in `output.demo/combined_summary.csv`.
+
+Once that succeeds, you can configure it yourself by copying
+`demo/demo.conf` to a new file and editing it, or creating a new
+configuration file with `charcoal init <project name>`.
 
 ## Explanation of output files.
 
