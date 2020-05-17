@@ -129,13 +129,13 @@ The project-specific settings are as follows:
 Database parameters (for intermediate users):
 
 * `gather_db`: a list of sourmash databases (SBT, LCA, or collections of signatures) against which to "collect" relevant genomic matches to the query genome. See [the sourmash documentation](http://sourmash.rtfd.io/) for more information. By default, we suggest using the GTDB .sbt.zip database here, as it is low memory and quick to search. Custom databases are completely supported as long as you supply an accompanying set of lineages.
-* `lineages_csv`: a lineage spreadsheet (see `sourmash lca index` documentation in [the sourmash docs](http://sourmash.rtfd.io/)) specifying a mapping from identifieres to a fully resolved lineage. Any taxonomy can be used for this lineage, including NCBI or GTDB taxonomies; you probably shouldn't mix them though.
+* `lineages_csv`: a lineage spreadsheet (see `sourmash lca index` documentation in [the sourmash docs](http://sourmash.rtfd.io/)) specifying a mapping from identifiers to a fully resolved lineage. Any taxonomy can be used for this lineage, including NCBI or GTDB taxonomies; you probably shouldn't mix them though.
 * `scaled`: the scaled resolution at which you want to detect contamination. This must be no smaller than the scaled parameter of the sourmash database(s) listed in `gather_db`.
 * `ksize`: the k-mer size at which you want to detect contamination. This must be matched by the k-mer size of the sourmash database(s) listed in `gather_db`.
 
 Other settings:
 * `strict` (0 or 1, default 1) -- check and validate config settings & filenames strictly.
-* `force` (0 or 1, default 0) -- continue past survivable errors in decontamination.
+* `force` (0 or 1, default 0) -- continue past survive-able errors in decontamination.
 
 ### Rerunning charcoal with different parameters
 
@@ -161,5 +161,5 @@ taken from the installation-wide configuration.
 
 ### Running charcoal from the development repo
 
-You will need to run `pip install -e .` in the charcoal devleopment
+You will need to run `pip install -e .` in the charcoal development
 repo in order to use the `charcoal` command from the development version.
