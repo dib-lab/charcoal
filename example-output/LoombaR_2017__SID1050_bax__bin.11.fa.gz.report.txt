@@ -1,0 +1,139 @@
+76.9% of total hashes identified.
+95.3% of identified hashes match to genus g__Anaeromassilibacillus
+(2094 identified hashes, 1995 in most common)
+
+** hashval lineage counts for genome - 2094 => 2094 kb
+   1995 kb genus g__Anaeromassilibacillus
+   30 kb genus g__Gemmiger_A
+   26 kb genus g__Angelakisella
+   22 kb genus g__Flavonifractor
+   16 kb genus g__An200
+   16 kb genus g__OEMR01
+   13 kb genus g__Merdibacter
+   12 kb genus g__Fournierella
+   12 kb genus g__Anaerotignum
+   10 kb genus g__Blautia_A
+   9 kb genus g__GCA-900066575
+   8 kb genus g__Lawsonibacter
+   3 kb genus g__Pseudoflavonifractor
+   2 kb genus g__Traorella
+   2 kb genus g__Phil1
+   2 kb genus g__Faecalibacterium
+   1 kb genus g__Paenibacillus
+   1 kb genus g__Lachnoclostridium_A
+   1 kb genus g__Dickeya
+   1 kb genus g__F23-B02
+   1 kb genus g__Ruminiclostridium_C
+   1 kb genus g__D5
+   1 kb genus g__Provencibacterium
+
+K-mer classification on this genome yields: genus g__Anaeromassilibacillus
+Using LCA majority lineage as genome lineage.
+
+Full lineage being used for contamination analysis:
+   d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Acutalibacteraceae;g__Anaeromassilibacillus
+
+**
+** walking through contigs:
+**
+
+
+---- contig NODE_591_length_28067_cov_31.8086 (28 kb)
+contig dirty, REASON 1 - contig LCA is above order
+lca rank is superkingdom
+
+** hashval lca counts
+   5 kb superkingdom d__Bacteria
+   4 kb s__An200 sp002160025
+   3 kb s__Anaeromassilibacillus sp002159845
+   1 kb s__Fournierella massiliensis
+   1 kb s__Blautia_A sp900066505
+   1 kb s__Merdibacter massiliensis
+   1 kb family f__Acutalibacteraceae
+
+** hashval lineage counts - 16
+   9 kb s__An200 sp002160025
+   6 kb s__Merdibacter massiliensis
+   4 kb s__Fournierella massiliensis
+   4 kb s__Blautia_A sp900066505
+   4 kb s__Anaeromassilibacillus sp002159845
+   1 kb s__OEMR01 sp900199515
+
+---- contig NODE_936_length_17260_cov_35.7004 (17 kb)
+contig dirty, REASON 3 - gather matches to lineage outside of genome's order
+   gather yields match of 7 kb to s__OEMR01 sp900199515
+
+
+---- contig NODE_1233_length_12008_cov_29.8585 (12 kb)
+contig dirty, REASON 2 - contig lineage is not a match to genome's order
+lineage is s__Traorella massiliensis
+
+** hashval lca counts
+   2 kb s__Traorella massiliensis
+   2 kb s__Phil1 sp001940855
+   2 kb s__Anaerotignum lactatifermentans
+   1 kb s__Angelakisella massiliensis
+   1 kb s__F23-B02 sp002472405
+   1 kb s__Faecalibacterium prausnitzii_J
+
+** hashval lineage counts - 9
+   2 kb s__Traorella massiliensis
+   2 kb s__Phil1 sp001940855
+   2 kb s__Anaerotignum lactatifermentans
+   1 kb s__Angelakisella massiliensis
+   1 kb s__F23-B02 sp002472405
+   1 kb s__Faecalibacterium prausnitzii_J
+
+
+---- contig NODE_1580_length_8688_cov_27.4248 (9 kb)
+contig dirty, REASON 2 - contig lineage is not a match to genome's order
+lineage is s__GCA-900066575 sp002160825
+
+** hashval lca counts
+   2 kb s__GCA-900066575 sp002160825
+   1 kb s__Fournierella sp002161595
+
+** hashval lineage counts - 3
+   2 kb s__GCA-900066575 sp002160825
+   1 kb s__Fournierella sp002161595
+
+---- contig NODE_1836_length_7286_cov_49.5554 (7 kb)
+contig dirty, REASON 3 - gather matches to lineage outside of genome's order
+   gather yields match of 7 kb to s__Anaerotignum lactatifermentans
+
+
+---- contig NODE_4234_length_3103_cov_34.7277 (3 kb)
+contig dirty, REASON 2 - contig lineage is not a match to genome's order
+lineage is s__Anaerotignum lactatifermentans
+
+** hashval lca counts
+   1 kb s__Anaerotignum lactatifermentans
+
+** hashval lineage counts - 1
+   1 kb s__Anaerotignum lactatifermentans
+
+--------------
+kept 54 contigs containing 2663 kb.
+removed 6 contigs containing 76 kb.
+0 contigs (0 kb total) had no hashes, and counted as clean
+
+breakdown of clean contigs w/gather:
+  74.91% - to GCF_002159845 s__Anaeromassilibacillus sp002159845
+  2.56% - to GCF_900104675 s__Angelakisella massiliensis
+  1.54% - to GCF_002160955 s__Gemmiger_A sp002160955
+  1.25% - to GCF_002159455 s__Flavonifractor sp002159455
+  1.27% - to GCA_900066645 s__Lawsonibacter sp900066645
+  0.48% - to GCF_900199515 s__OEMR01 sp900199515
+  0.32% - to GCF_001261775 s__Anaeromassilibacillus senegalensis
+  0.32% - to GCF_002160025 s__An200 sp002160025
+  0.33% - to GCF_000239295 s__Flavonifractor plautii
+  0.33% - to GCF_900199495 s__Flavonifractor sp900199495
+  0.16% - to GCF_000169255 s__Pseudoflavonifractor capillosus
+  0.16% - to GCA_000435295 s__Ruminiclostridium_C sp000435295
+  0.16% - to GCF_001305115 s__Anaeromassilibacillus sp001305115
+  0.16% - to GCF_000406165 s__Dickeya zeae
+  0.16% - to GCA_002313795 s__Faecalibacterium prausnitzii_L
+  0.17% - to GCF_900240245 s__Lachnoclostridium_A edouardi
+  0.17% - to GCF_900169495 s__Provencibacterium massiliense
+  0.17% - to GCF_900113995 s__D5 sp900113995
+  0.17% - to GCF_000723885 s__Paenibacillus camerounensis

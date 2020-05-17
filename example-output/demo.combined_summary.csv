@@ -1,0 +1,6 @@
+genomefile,brieftax,f_major,f_ident,f_removed,n_reason_1,n_reason_2,n_reason_3,refsize,ratio,clean_bp,clean_n,dirty_n,dirty_bp,missed_n,missed_bp,taxguessed,taxprovided,comment
+GCF_000005845-subset.fa.gz,,,,,,,,,,,,,,,,,,no matches to this genome were found in the database; nothing to do
+LoombaR_2017__SID1050_bax__bin.11.fa.gz,genus g__Anaeromassilibacillus,0.9527220630372493,0.7690047741461623,0.02788476205698838,1,3,2,3491000,0.76,2663866,54,6,76412,0,0,d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Acutalibacteraceae;g__Anaeromassilibacillus;s__Anaeromassilibacillus sp002159845,,
+TOBG_NAT-167.fna.gz,genus g__Salipiger,1.0,0.0001817520901490367,0.026343294866924112,0,1,0,0,0.0,5704789,66,1,154349,0,0,,d__Bacteria;p__Proteobacteria;c__Alphaproteobacteria;o__Rhodobacterales;f__Rhodobacteraceae;g__Salipiger;s__Salipiger thiooxidans,
+TARA_ANE_MAG_00014.fa.gz,,0.9523809523809523,0.06862745098039216,,,,,,,,,,,,,d__Bacteria;p__Dadabacteria;c__UBA1144;o__UBA1144;f__UBA1144;g__TMED126,,too few identifiable hashes; f_ident < 10%. provide a lineage for this genome.
+TARA_PON_MAG_00084.fa.gz,,0.19207920792079208,0.1519253910950662,,,,,,,,,,,,,d__Bacteria;p__Latescibacterota;c__UBA2968;o__UBA8231;f__UBA8231;g__UBA8231,,too few hashes in major lineage; f_major < 20%. provide a lineage for this genome.

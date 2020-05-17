@@ -11,6 +11,89 @@ Please file issues on
 
 TODO: installable via pip or conda
 
+## Running charcoal
+
+Run charcoal like so:
+
+```
+charcoal run <config file>
+```
+
+A demo config file can be found in `demo/demo.conf`. Note that this uses
+precomputed matches; see the Quickstart (@ctb doesn't exist yet!) for
+downloading a complete bacterial/archaeal database.
+
+An empty config file for a new project can be generated using
+`charcoal init`.
+
+Underneath, charcoal uses
+[snakemake](https://snakemake.readthedocs.io/en/stable/) to run its
+jobs, and `charcoal run` will pass on any parameters given after the
+required config file.
+
+### Running with multiple processes
+
+We generally recommend running charcoal on a single computer using
+multiple processes.  You can do this with `charcoal run <config file>
+-j NUM`, where NUM is the number of processes to run.
+
+### Output files
+
+All output files will be placed in the output directory specified in
+the config file.
+
+A summary across all genomes will be in `combined_summary.csv`.
+The columns are explained below.
+
+
+For each genome, there are three key output files:
+* `<filename>.report.txt` - a detailed report of the decontamination process.
+* `<filename>.clean.fa.gz` - all of the kept ("clean") contigs.
+* `<filename>.dirty.fa.gz` - all of the removed ("dirty") contigs.
+
+The columns in the combined summary are:
+
+1. `genomefile` - the genome file name
+2. `brieftax` - a brief form of the lineage used (provided lineage if given; or guessed taxonomy, if not)
+3. `f_major` - the fraction of k-mers belonging to the majority lineage in the genome
+4. `f_ident` - the fraction of k-mers for which a match in the database was found
+5. `f_removed` - the fraction of total base pairs removed as contaminated (in contigs) and put in the `.dirty.fa.gz` file
+6. `n_reason_1` - see report.txt
+7. `n_reason_2` - see report.txt
+8. `n_reason_3` - see report.txt
+9. `refsize` - the approximate size of the nearest match genome in the database, if any
+10. `ratio` - the ratio between the size of this genome and the refsize
+11. `clean_bp` - total bp in "clean" contigs in the `.clean.fa.gz` file
+12. `clean_n` - total number of "clean" contigs
+13. `dirty_n` - total number of "dirty" contigs
+14. `dirty_bp` - total bp in "dirty" contigs in the `.clean.fa.gz` file
+15. `missed_n` - total number of contigs for which no hash values were found (these are ignored by charcoal, and placed in the clean contigs file)
+16. `missed_bp` - total number of bp in contigs for which no hash values were found
+17. `taxguessed` - the lineage guessed by charcoal based on majority taxonomy (see `f_ident` and `f_match`)
+18. `taxprovided` - the lineage given in the provided-lineages file, if any.
+19. `comment` - a comment explaining why this genome was not processed.
+
+### Needed resources
+
+In general, each charcoal job needs less than 5 GB of memory, and
+should take far less than 5 minutes per genome.  If you run with
+multiple processes using `-j` (see above), the necessary memory
+requirements will just multiply; e.g. request 80 GB of RAM if you are
+running with `-j 16`.
+
+charcoal's output files will use approximately the same amount of disk
+space as the set of input genomes. charcoal compresses genomic output
+(both cleaned and dirty) automatically using gzip.
+
+### Cluster and cloud configuration
+
+charcoal is lightweight lightweight and generally we do recommend running it on
+a cluster; instead, run it with multiple processes using `-j` (see above).
+
+However, if you want to run it across a cluster, you can do so!
+charcoal uses snakemake underneath, so you can follow the
+[snakemake cluster and cloud configuration instructions](https://snakemake.readthedocs.io/en/stable/executing/cluster-cloud.html).
+
 ## Configuring charcoal
 
 @CTB: add gather-db and lineages configuration command.
@@ -33,49 +116,46 @@ You can check your configuration with `charcoal check <project>.conf`,
 and show the aggregated configuration (defaults + system + project-specific
 configuration) with `charcoal showconf <project>.conf`.
 
-## Running charcoal
+### Per-project configuration
 
-Run charcoal like so:
+The project-specific settings are as follows:
 
-```
-charcoal run <config file>
-```
+* `output_dir`: the directory in which all of the output files will be placed. This will be created and populated by charcoal. This parameter is required.
+* `genome_dir`: the directory in which all of the input genomes lie. Note, soft linked (`ln -s`) genome files are permitted. This parameter is required.
+* `genome_list`: the basenames (e.g. `ls -1`) of the genome files to run decontamination on. They must all be located in `genome_dir`. FASTA, gzipped FASTA, or bzip2'ed FASTA are all supported, with no particular naming format required. This parameter is required.
+* `provided_lineages`: an optional spreadsheet of `genome_filename,superkingdom,phylum,...` lines used to provide lineages for the input genomes. Here `genome_filename` must exactly match a filename in `genome_list`.  The provided lineage overrides the automatic lineage detection done by charcoal, and can be used to label genomes as lineages that do not belong to the sourmash databases specified in `gather_db`. For example, if you specify `genome.fa.gz,d__Eukaryota,` for a genome in this file while using the GTDB database for gather, then charcoal will remove bacterial and archaeal contaminants but not Eukaryotal.
+* `match_rank`: rank at or below which a contigs are **not** removed as contaminants. For example, if `match_rank` is genus, then contigs in a genome file belonging to different families than the genome will be removed as contaminants. Defaults to order.
 
-A demo config file can be found @likeso.
+Database parameters (for intermediate users):
 
-An empty config file for a new project can be generated @likeso.
+* `gather_db`: a list of sourmash databases (SBT, LCA, or collections of signatures) against which to "collect" relevant genomic matches to the query genome. See [the sourmash documentation](http://sourmash.rtfd.io/) for more information. By default, we suggest using the GTDB .sbt.zip database here, as it is low memory and quick to search. Custom databases are completely supported as long as you supply an accompanying set of lineages.
+* `lineages_csv`: a lineage spreadsheet (see `sourmash lca index` documentation in [the sourmash docs](http://sourmash.rtfd.io/)) specifying a mapping from identifieres to a fully resolved lineage. Any taxonomy can be used for this lineage, including NCBI or GTDB taxonomies; you probably shouldn't mix them though.
+* `scaled`: the scaled resolution at which you want to detect contamination. This must be no smaller than the scaled parameter of the sourmash database(s) listed in `gather_db`.
+* `ksize`: the k-mer size at which you want to detect contamination. This must be matched by the k-mer size of the sourmash database(s) listed in `gather_db`.
 
-Underneath, charcoal uses
-[snakemake](https://snakemake.readthedocs.io/en/stable/) to run its
-jobs, and `charcoal run` will pass on any parameters given after the
-required config file.
+Other settings:
+* `strict` (0 or 1, default 1) -- check and validate config settings & filenames strictly.
+* `force` (0 or 1, default 0) -- continue past survivable errors in decontamination.
 
-### Running with multiple processes
+### Rerunning charcoal with different parameters
 
-We generally recommend running charcoal on a single computer using
-multiple processes.  You can do this with `charcoal run <config file>
--j NUM`, where NUM is the number of processes to run.
+Unless you change the database and lineage spreadsheet, the ksize, or the
+scaled, you can rerun the filtering with different match ranks and provided
+lineages.  To do this, remove `*.clean.fa.gz` in the output directory.
 
-### Needed resources
+### Installation-wide configuration
 
-In general, each charcoal job needs less than 5 GB of memory, and
-should take far less than 5 minutes per genome.  If you run with
-multiple processes using `-j` (see above), the necessary memory
-requirements will just multiply; e.g. request 80 GB of RAM if you are
-running with `-j 16`.
+Each installation of charcoal (system-wide or in a conda
+environment) has a configuration file that can provide
+default settings for that installation. This is a good place to configure
+the search database information.
 
-charcoal's output files will use approximately the same amount of disk
-space as the set of input genomes. charcoal compresses genomic output
-(both cleaned and dirty) automatically using gzip.
+Note that the installation-wide configuration is overridden by values
+in the project configuration, so you can change any setting in the
+project configuration. Any value not in the project config file will be
+taken from the installation-wide configuration.
 
-### Cluster and cloud configuration
-
-charcoal is lightweight lightweight and generally we do recommend running it on
-a cluster; instead, run it with multiple processes using `-j` (see above).
-
-However, if you want to run it across a cluster, you can do so!
-charcoal uses snakemake underneath, so you can follow the
-[snakemake cluster and cloud configuration instructions](https://snakemake.readthedocs.io/en/stable/executing/cluster-cloud.html).
+@ctb more - how to find it.
 
 ## Developer info
 
