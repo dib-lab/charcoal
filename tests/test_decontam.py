@@ -216,7 +216,7 @@ def test_cleaner_class_1():
     empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
 
     matches_file = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file], lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
 
@@ -227,7 +227,7 @@ def test_cleaner_class_1():
     cleaner.clean_out = FakeFastaWriter()
     cleaner.dirty_out = FakeFastaWriter()
 
-    inp_iter = load_first_chunk('test-data/genomes/63.fa.gz')
+    inp_iter = load_first_chunk('tests/test-data/genomes/63.fa.gz')
 
     report_fp = StringIO()
     cleaner.clean_contigs(inp_iter, report_fp)
@@ -247,7 +247,7 @@ def test_cleaner_class_2():
     empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
 
     matches_file = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file], lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
 
@@ -258,7 +258,7 @@ def test_cleaner_class_2():
     cleaner.clean_out = FakeFastaWriter()
     cleaner.dirty_out = FakeFastaWriter()
 
-    inp_iter = load_first_chunk('test-data/genomes/63.fa.gz')
+    inp_iter = load_first_chunk('tests/test-data/genomes/63.fa.gz')
 
     report_fp = StringIO()
     cleaner.clean_contigs(inp_iter, report_fp)
@@ -279,7 +279,7 @@ def test_cleaner_class_3():
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
     matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -291,8 +291,8 @@ def test_cleaner_class_3():
     cleaner.clean_out = FakeFastaWriter()
     cleaner.dirty_out = FakeFastaWriter()
 
-    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
-    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/63.fa.gz')
+    chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
     inp_iter = chunk1 + chunk2
 
     report_fp = StringIO()
@@ -325,7 +325,7 @@ def test_cleaner_class_4():
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
     matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -337,8 +337,8 @@ def test_cleaner_class_4():
     cleaner.clean_out = FakeFastaWriter()
     cleaner.dirty_out = FakeFastaWriter()
 
-    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
-    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/63.fa.gz')
+    chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
     inp_iter = chunk1 + chunk2
 
     report_fp = StringIO()
@@ -372,7 +372,7 @@ def test_cleaner_class_5():
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
     matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -384,8 +384,8 @@ def test_cleaner_class_5():
     cleaner.clean_out = FakeFastaWriter()
     cleaner.dirty_out = FakeFastaWriter()
 
-    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
-    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/63.fa.gz')
+    chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
     inp_iter = chunk1 + chunk2
 
     report_fp = StringIO()
@@ -418,7 +418,7 @@ def test_cleaner_gather_method_1():
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
     matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -429,14 +429,14 @@ def test_cleaner_gather_method_1():
                                                   lca_db, lin_db)
     report_fp = StringIO()
 
-    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/63.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
     is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
     assert not is_clean
 
-    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
@@ -455,7 +455,7 @@ def test_cleaner_gather_method_1():
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
     matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -466,7 +466,7 @@ def test_cleaner_gather_method_1():
                                                   lca_db, lin_db)
     report_fp = StringIO()
 
-    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/63.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
@@ -474,7 +474,7 @@ def test_cleaner_gather_method_1():
     assert not is_clean
     assert cleaner.n_reason_3 == 1
 
-    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
@@ -494,7 +494,7 @@ def test_cleaner_lca_method2_1():
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
     matches_file2 = 'tests/test-data/63.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1, matches_file2],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -505,7 +505,7 @@ def test_cleaner_lca_method2_1():
                                                   lca_db, lin_db)
     report_fp = StringIO()
 
-    chunk1 = load_first_chunk('test-data/genomes/63.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/63.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
@@ -513,7 +513,7 @@ def test_cleaner_lca_method2_1():
     assert not is_clean
     assert cleaner.n_reason_2 == 1
 
-    chunk2 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
@@ -532,7 +532,7 @@ def test_cleaner_lca_method1_1():
     empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
 
     matches_file1 = 'tests/test-data/2.fa.gz.gather-matches.sig.gz'
-    lineages_csv = 'test-data/test-match-lineages.csv'
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
     lca_db, lin_db = make_lca_and_lineages([matches_file1],
                                            lineages_csv,
                                            empty_mh.scaled, empty_mh.ksize)
@@ -555,7 +555,7 @@ def test_cleaner_lca_method1_1():
                                                   lca_db, lin_db)
     report_fp = StringIO()
 
-    chunk1 = load_first_chunk('test-data/genomes/2.fa.gz')
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
