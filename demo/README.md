@@ -15,12 +15,16 @@ Briefly,
 * the `LoombaR_2017__SID1050_bax__bin.11.fa.gz` could be identified
   against GTDB release 89 based on k-mers (76% were identifiable
   (`f_ident`), and of those, 95% (`f_major`) belonged to
-  *s__Anaeromassilibacillus sp002159845*).
+  *s__Anaeromassilibacillus sp002159845*).  Approximately 2.8% of the
+  contigs were identified as contaminants based on mismatch at the
+  order level or above, and were removed (column `f_removed`).
 * for `TARA_ANE_MAG_00014.fa.gz`, we provided a lineage (*s__Salipiger
   thiooxidans*) in `provided-lineages.csv`, and contaminants were
-  removed based on that lineage.
+  removed based on that lineage. Approximately 2.6% of the bases in
+  the original genome were removed based on mismatch at order level or
+  above.
 * no matches at all were found for `GCF_000005845-subset.fa.gz` in the
-  GTDB database, so nothing is reported.
+  GTDB database, so nothing was done.
 * too few of the k-mers in `TARA_ANE_MAG_00014.fa.gz` could be
   identified in the GTDB database (`f_ident < 0.10`), so nothing was
   done.
