@@ -1,0 +1,16 @@
+6.9% of total hashes identified.
+95.2% of identified hashes match to genus g__TMED126
+(63 identified hashes, 60 in most common)
+
+** hashval lineage counts for genome - 63 => 63 kb
+   60 kb genus g__TMED126
+   1 kb genus g__Pseudopedobacter
+   1 kb genus g__Parabacteroides
+   1 kb genus g__Ignavibacterium
+
+K-mer classification on this genome yields: genus g__TMED126
+** ERROR: fraction of total identified hashes (f_ident) < 10%.
+** Please provide a lineage for this genome.
+Using LCA majority lineage as genome lineage.
+** Please provide a lineage for this genome.
+too few identifiable hashes; f_ident < 10%. provide a lineage for this genome.
