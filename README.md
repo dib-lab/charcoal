@@ -54,6 +54,8 @@ For each genome, there are three key output files:
 
 ## Need help?
 
+There's [more documentation](doc/README.md) under the `doc/` directory.
+
 Ask questions and file issues on [the GitHub issue tracker](https://github.com/dib-lab/charcoal/issues).
 
 [@ctb](https://github.com/ctb/) [@taylorreiter](https://github.com/taylorreiter)

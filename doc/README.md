@@ -2,9 +2,46 @@
 
 ## Introduction
 
+charcoal is a pipeline that removes contaminant contigs from genome
+assemblies.
+
+charcoal is designed for de-contaminating metagenome-assembled genomes (MAGs).
+It is focused on removing bacterial and archaeal contaminants for now.
+
+charcoal uses k-mer-based methods to identify potential
+contaminants. It identifies contigs that are taxonomically
+inconsistent with the rest of the genome, and then removes them. It
+relies on reference databases of genomes with a high quality taxonomy.
+We currently recommend using the GTDB taxonomy, and we provide
+databases for that.
+
+charcoal uses relatively little memory (~2 GB per genome), takes less than
+5 minutes per genome, and is fully parallelizable per genome. We've analyzed
+1,000 genomes in well under an hour.
+
+We are working on validating charcoal now (May 2020).
+
+charcoal is open source under the BSD 3-clause license, and is free for
+use, reuse, modification, and remixing. Please enjoy responsibly!
+
+## Authorship and Acknowledgements
+
+charcoal development is led by Titus Brown and Taylor Reiter, and is
+based on the [sourmash](http://sourmash.rtfd.io/) software. We would
+especially like to thank Luiz Irber and Tessa Pierce for their
+intellectual contributions to charcoal development!
+
+charcoal development is funded by the Moore Foundation through grant
+GBMF4551 to C. Titus Brown. The current codebase is Copyright 2020,
+Regents of the University of California.
+
+This initial version of charcoal is a product of the [Lab for Data-
+Intensive Biology](http://ivory.idyll.org/lab/).
+
 ## Getting help
 
-Please file issues on
+We're happy to help you with any problems or questions you have!
+Please file them as issues on
 [the charcoal issue tracker](https://github.com/dib-lab/charcoal/issues).
 
 ## Installing charcoal
@@ -155,9 +192,19 @@ in the project configuration, so you can change any setting in the
 project configuration. Any value not in the project config file will be
 taken from the installation-wide configuration.
 
-@ctb more - how to find it.
+You can find the install-wide config file location by running `charcoal info`.
 
 ## Developer info
+
+charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
+
+### Contributions and authorship
+
+We welcome contributions - please feel free to open a Pull Request!
+
+Both scientific and engineering contributions shall be considered for
+authorship on software publications. This can include feature ideas,
+debugging, validation approaches, and documentation updates.
 
 ### Running charcoal from the development repo
 

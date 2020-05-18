@@ -53,6 +53,9 @@ def run_snakemake(configfile, no_use_conda=False, verbose=False,
         print(f'Error in snakemake invocation: {e}', file=sys.stderr)
         return e.returncode
 
+#
+# actual command line functions
+#
 
 @click.group()
 def cli():
@@ -69,19 +72,34 @@ def run(configfile, snakemake_args, no_use_conda, verbose):
     "execute charcoal workflow (using snakemake underneath)"
     run_snakemake(configfile, no_use_conda, verbose, snakemake_args)
 
+# 'check' command
 @click.command()
 @click.argument('configfile')
 def check(configfile):
     "check configuration"
     run_snakemake(configfile, extra_args=['check'])
 
+# 'showconf' command
 @click.command()
 @click.argument('configfile')
 def showconf(configfile):
     "show full configuration across default, system and project config files"
     run_snakemake(configfile, extra_args=['showconf'])
 
+# 'info' command
+@click.command()
+def info():
+    "provide basic install/config file info"
+    from .version import version
+    print(f"""
+This is charcoal version v{version}
 
+Package install path: {os.path.dirname(__file__)}
+Install-wide config file: {get_package_configfile('system.conf')}
+snakemake Snakefile: {get_snakefile_path()}
+""")
+
+# 'init' command
 @click.command()
 @click.argument('configfile')
 @click.option('--genome-dir', nargs=1)
@@ -141,6 +159,7 @@ match_rank: order
 cli.add_command(run)
 cli.add_command(check)
 cli.add_command(showconf)
+cli.add_command(info)
 cli.add_command(init)
 
 def main():
