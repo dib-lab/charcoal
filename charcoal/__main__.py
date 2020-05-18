@@ -6,9 +6,9 @@ import glob
 
 import click
 
-def get_snakefile_path():
+def get_snakefile_path(name):
     thisdir = os.path.dirname(__file__)
-    snakefile = os.path.join(thisdir, 'Snakefile')
+    snakefile = os.path.join(thisdir, name)
     return snakefile
 
 
@@ -19,9 +19,9 @@ def get_package_configfile(filename):
 
 
 def run_snakemake(configfile, no_use_conda=False, verbose=False,
-                  extra_args=[]):
+                  snakefile_name='Snakefile', extra_args=[]):
     # find the Snakefile relative to package path
-    snakefile = get_snakefile_path()
+    snakefile = get_snakefile_path(snakefile_name)
 
     # basic command
     cmd = ["snakemake", "-s", snakefile]
@@ -37,11 +37,12 @@ def run_snakemake(configfile, no_use_conda=False, verbose=False,
     # add rest of snakemake arguments
     cmd += list(extra_args)
 
-    # add defaults and system config files, in that order
-    configfiles = [get_package_configfile("defaults.conf"),
-                   get_package_configfile("system.conf"),
-                   configfile]
-    cmd += ["--configfile"] + configfiles
+    if configfile:
+        # add defaults and system config files, in that order
+        configfiles = [get_package_configfile("defaults.conf"),
+                       get_package_configfile("system.conf"),
+                       configfile]
+        cmd += ["--configfile"] + configfiles
 
     if verbose:
         print('final command:', cmd)
@@ -72,6 +73,13 @@ def run(configfile, snakemake_args, no_use_conda, verbose):
     "execute charcoal workflow (using snakemake underneath)"
     run_snakemake(configfile, no_use_conda, verbose, snakemake_args)
 
+# download databases using a special Snakefile
+@click.command()
+def download_db():
+    "download the necessary databases"
+    run_snakemake(None, snakefile_name='Snakefile.download_db',
+                  no_use_conda=True)
+
 # 'check' command
 @click.command()
 @click.argument('configfile')
@@ -96,7 +104,7 @@ This is charcoal version v{version}
 
 Package install path: {os.path.dirname(__file__)}
 Install-wide config file: {get_package_configfile('system.conf')}
-snakemake Snakefile: {get_snakefile_path()}
+snakemake Snakefile: {get_snakefile_path('Snakefile')}
 """)
 
 # 'init' command
@@ -161,6 +169,7 @@ cli.add_command(check)
 cli.add_command(showconf)
 cli.add_command(info)
 cli.add_command(init)
+cli.add_command(download_db)
 
 def main():
     cli()
