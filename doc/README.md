@@ -2,9 +2,35 @@
 
 ## Introduction
 
+charcoal is a pipeline that cleans genome assemblies of contaminated contigs.
+
+charcoal is designed for decontaminating metagenome-assembled genomes (MAGs).
+
+charcoal uses k-mer-based methods to identify potential contaminants. It
+identifies contigs that are taxonomically inconsistent with the rest of the
+genome, and removes them. It relies on reference databases of genomes with
+a high quality taxonomy.  We currently recommend using the GTDB taxonomy,
+and we provide databases for that.
+
+charcoal uses relatively little memory (~2 GB per genome), takes less than
+5 minutes per genome, and is fully parallelizable.
+
+We are working on validating charcoal now.
+
+charcoal is open source under the BSD 3-clause license, and is free for
+use, reuse, modification, and remixing. Please enjoy responsibly!
+
+## Authorship and Acknowledgements
+
+charcoal development is led by Titus Brown and Taylor Reiter, and is
+based on the [sourmash](http://sourmash.rtfd.io/) software. We would
+like to especially thank Luiz Irber and Tessa Pierce for their
+intellectual contributions to charcoal development.
+
 ## Getting help
 
-Please file issues on
+We're happy to help you with any problems or questions you have!
+Please file them as issues on
 [the charcoal issue tracker](https://github.com/dib-lab/charcoal/issues).
 
 ## Installing charcoal
@@ -155,9 +181,19 @@ in the project configuration, so you can change any setting in the
 project configuration. Any value not in the project config file will be
 taken from the installation-wide configuration.
 
-@ctb more - how to find it.
+You can find the install-wide config file location by running `charcoal info`.
 
 ## Developer info
+
+charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
+
+### Contributions and authorship
+
+We welcome contributions - please feel free to open a Pull Request!
+
+Both scientific and engineering contributions shall be considered for
+authorship on software publications. This can include feature ideas,
+debugging, validation approaches, and documentation updates.
 
 ### Running charcoal from the development repo
 
