@@ -13,7 +13,8 @@ a high quality taxonomy.  We currently recommend using the GTDB taxonomy,
 and we provide databases for that.
 
 charcoal uses relatively little memory (~2 GB per genome), takes less than
-5 minutes per genome, and is fully parallelizable.
+5 minutes per genome, and is fully parallelizable per genome. We've analyzed
+1,000 genomes in well under an hour.
 
 We are working on validating charcoal now.
 
@@ -24,7 +25,7 @@ use, reuse, modification, and remixing. Please enjoy responsibly!
 
 charcoal development is led by Titus Brown and Taylor Reiter, and is
 based on the [sourmash](http://sourmash.rtfd.io/) software. We would
-like to especially thank Luiz Irber and Tessa Pierce for their
+especially like to thank Luiz Irber and Tessa Pierce for their
 intellectual contributions to charcoal development.
 
 ## Getting help
