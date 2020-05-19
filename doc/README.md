@@ -9,10 +9,12 @@ charcoal is designed for de-contaminating metagenome-assembled genomes (MAGs).
 It is focused on removing bacterial and archaeal contaminants for now.
 
 charcoal uses k-mer-based methods to identify potential
-contaminants. It identifies contigs that are taxonomically
-inconsistent with the rest of the genome, and then removes them. It
-relies on reference databases of genomes with a high quality taxonomy.
-We currently recommend using the GTDB taxonomy, and we provide
+contaminants. Contigs that are taxonomically inconsistent with the
+rest of the genome are identified and then remove.
+
+charcoal relies on reference databases of genomes with a high quality
+taxonomy.  We recommend using the
+[GTDB taxonomy](https://gtdb.ecogenomic.org/), and we provide
 databases for that.
 
 charcoal uses relatively little memory (~2 GB per genome), takes less than
@@ -55,9 +57,12 @@ not be able to detect those contaminants.
 ## Authorship and Acknowledgements
 
 charcoal development is led by Titus Brown and Taylor Reiter, and is
-based on the [sourmash](http://sourmash.rtfd.io/) software. We would
-especially like to thank Luiz Irber and Tessa Pierce for their
+heavily based on the [sourmash](http://sourmash.rtfd.io/) software. We
+would especially like to thank Luiz Irber and Tessa Pierce for their
 intellectual contributions to charcoal development!
+
+We would also like to thank the
+[GTDB project](https://gtdb.ecogenomic.org/) for all their hard work!
 
 charcoal development is funded by the Moore Foundation through grant
 GBMF4551 to C. Titus Brown. The current codebase is Copyright 2020,
