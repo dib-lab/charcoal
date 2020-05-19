@@ -6,9 +6,9 @@ import glob
 
 import click
 
-def get_snakefile_path():
+def get_snakefile_path(name):
     thisdir = os.path.dirname(__file__)
-    snakefile = os.path.join(thisdir, 'Snakefile')
+    snakefile = os.path.join(thisdir, name)
     return snakefile
 
 
@@ -19,9 +19,9 @@ def get_package_configfile(filename):
 
 
 def run_snakemake(configfile, no_use_conda=False, verbose=False,
-                  extra_args=[]):
+                  snakefile_name='Snakefile', extra_args=[]):
     # find the Snakefile relative to package path
-    snakefile = get_snakefile_path()
+    snakefile = get_snakefile_path(snakefile_name)
 
     # basic command
     cmd = ["snakemake", "-s", snakefile]
@@ -37,11 +37,12 @@ def run_snakemake(configfile, no_use_conda=False, verbose=False,
     # add rest of snakemake arguments
     cmd += list(extra_args)
 
-    # add defaults and system config files, in that order
-    configfiles = [get_package_configfile("defaults.conf"),
-                   get_package_configfile("system.conf"),
-                   configfile]
-    cmd += ["--configfile"] + configfiles
+    if configfile:
+        # add defaults and system config files, in that order
+        configfiles = [get_package_configfile("defaults.conf"),
+                       get_package_configfile("system.conf"),
+                       configfile]
+        cmd += ["--configfile"] + configfiles
 
     if verbose:
         print('final command:', cmd)
@@ -70,7 +71,16 @@ def cli():
 @click.argument('snakemake_args', nargs=-1)
 def run(configfile, snakemake_args, no_use_conda, verbose):
     "execute charcoal workflow (using snakemake underneath)"
-    run_snakemake(configfile, no_use_conda, verbose, snakemake_args)
+    run_snakemake(configfile, snakefile_name='Snakefile',
+                  no_use_conda=no_use_conda, verbose=verbose,
+                  extra_args=snakemake_args)
+
+# download databases using a special Snakefile
+@click.command()
+def download_db():
+    "download the necessary databases"
+    run_snakemake(None, snakefile_name='Snakefile.download_db',
+                  no_use_conda=True)
 
 # 'check' command
 @click.command()
@@ -96,15 +106,16 @@ This is charcoal version v{version}
 
 Package install path: {os.path.dirname(__file__)}
 Install-wide config file: {get_package_configfile('system.conf')}
-snakemake Snakefile: {get_snakefile_path()}
+snakemake Snakefile: {get_snakefile_path('Snakefile')}
 """)
 
 # 'init' command
 @click.command()
 @click.argument('configfile')
 @click.option('--genome-dir', nargs=1)
+@click.option('--lineages', nargs=1, default="")
 @click.option('-f', '--force', is_flag=True)
-def init(configfile, genome_dir, force):
+def init(configfile, genome_dir, lineages, force):
     "create a new, empty config file."
     stubname = os.path.basename(configfile)
     if configfile.endswith('.conf'):
@@ -131,6 +142,11 @@ def init(configfile, genome_dir, force):
             fp.write("\n".join(genomes))
         print(f"created '{genome_list}' with {len(genomes)} genomes in it.")
 
+    if lineages:
+        print(f"Using provided lineages from '{lineages}'")
+    else:
+        print("(No provided lineages file given.)")
+
     print(f"creating configfile '{configfile}' for project '{stubname}'")
     with open(configfile, 'wt') as fp:
         fp.write(\
@@ -146,7 +162,7 @@ genome_dir: {genome_dir}
 
 # (optional) list of lineages for input genomes. comment out or leave
 # blank if none.
-provided_lineages:
+provided_lineages: {lineages}
 
 # match_rank is the rank _above_ which cross-lineage matches are considered
 # contamination. e.g. if set to 'superkingdom', then Archaeal matches in
@@ -161,6 +177,7 @@ cli.add_command(check)
 cli.add_command(showconf)
 cli.add_command(info)
 cli.add_command(init)
+cli.add_command(download_db)
 
 def main():
     cli()
