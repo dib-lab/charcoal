@@ -5,6 +5,7 @@ import screed
 
 from charcoal import just_taxonomy, utils
 from charcoal.lineage_db import LineageDB
+from charcoal.just_taxonomy import ContigInfo
 
 import sourmash
 from sourmash.lca import LCA_Database
@@ -433,15 +434,15 @@ def test_cleaner_gather_method_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
-    assert not is_clean
+    clean_flag = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.DIRTY
 
     chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk2[0], mh, report_fp)
-    assert is_clean
+    clean_flag = cleaner.check_gather(chunk2[0], mh, report_fp)
+    assert clean_flag == ContigInfo.CLEAN
 
 
 def test_cleaner_gather_method_1():
@@ -470,16 +471,16 @@ def test_cleaner_gather_method_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
-    assert not is_clean
+    clean_flag = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.DIRTY
     assert cleaner.n_reason_1 == 1
 
     chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk2[0], mh, report_fp)
-    assert is_clean
+    clean_flag = cleaner.check_gather(chunk2[0], mh, report_fp)
+    assert clean_flag == ContigInfo.CLEAN
     assert cleaner.n_reason_1 == 1        # should not be incremented
 
 
@@ -509,8 +510,8 @@ def test_cleaner_lca_method2_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_lca(chunk1[0], mh, report_fp)
-    assert not is_clean
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.DIRTY
     print(cleaner.n_reason_1, cleaner.n_reason_2, cleaner.n_reason_3)
     assert cleaner.n_reason_3 == 1
 
@@ -518,8 +519,8 @@ def test_cleaner_lca_method2_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    is_clean = cleaner.check_lca(chunk2[0], mh, report_fp)
-    assert is_clean
+    clean_flag = cleaner.check_lca(chunk2[0], mh, report_fp)
+    assert clean_flag == ContigInfo.CLEAN
     assert cleaner.n_reason_3 == 1        # should not be incremented
 
 
@@ -560,7 +561,6 @@ def test_cleaner_lca_method1_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_lca(chunk1[0], mh, report_fp,
-                                 force_report=True)
-    assert not is_clean
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    assert clean_flag == ContigInfo.DIRTY
     assert cleaner.n_reason_2 == 1
