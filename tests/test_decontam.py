@@ -562,3 +562,59 @@ def test_cleaner_lca_method1_1():
     clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
     assert clean_flag == ContigInfo.DIRTY
     assert cleaner.n_reason_2 == 1
+
+
+def test_cleaner_lca_method_nohash():
+    # check lca method - no hash
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([], lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    # ok! now, go for cleaning...
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
+    mh = empty_mh.copy_and_clear()
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    assert clean_flag == ContigInfo.NO_HASH
+    assert cleaner.n_reason_2 == 0
+    assert cleaner.n_reason_3 == 0
+
+
+def test_cleaner_lca_method_noident():
+    # check lca method - no matches
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
+    # no matches here => []
+    lca_db, lin_db = make_lca_and_lineages([], lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    # ok! now, go for cleaning...
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk1[0].sequence, force=True)
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    assert clean_flag == ContigInfo.NO_IDENT
+    assert cleaner.n_reason_2 == 0
+    assert cleaner.n_reason_3 == 0

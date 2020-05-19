@@ -347,6 +347,9 @@ class ContigsDecontaminator(object):
         """
         reason = 0
 
+        if not contig_mh.get_mins():
+            return ContigInfo.NO_HASH
+
         # get _all_ of the hash taxonomy assignments for this contig
         ctg_assign = gather_assignments(contig_mh.get_mins(), None,
                                         [self.lca_db], self.lin_db)
