@@ -9,10 +9,12 @@ charcoal is designed for de-contaminating metagenome-assembled genomes (MAGs).
 It is focused on removing bacterial and archaeal contaminants for now.
 
 charcoal uses k-mer-based methods to identify potential
-contaminants. It identifies contigs that are taxonomically
-inconsistent with the rest of the genome, and then removes them. It
-relies on reference databases of genomes with a high quality taxonomy.
-We currently recommend using the GTDB taxonomy, and we provide
+contaminants. Contigs that are taxonomically inconsistent with the
+rest of the genome are identified and then remove.
+
+charcoal relies on reference databases of genomes with a high quality
+taxonomy.  We recommend using the
+[GTDB taxonomy](https://gtdb.ecogenomic.org/), and we provide
 databases for that.
 
 charcoal uses relatively little memory (~2 GB per genome), takes less than
@@ -24,12 +26,43 @@ We are working on validating charcoal now (May 2020).
 charcoal is open source under the BSD 3-clause license, and is free for
 use, reuse, modification, and remixing. Please enjoy responsibly!
 
+## How charcoal finds contamination
+
+charcoal uses three heuristics to determine if a contig is a
+contaminant.
+
+* First, it searches 25,000 GTDB genomes using `sourmash gather` to
+  see where the contig belongs "best". If the contig places better
+  within a different lineage, it is removed as a contaminant.
+
+* Second, it computes the lowest common ancestor (LCA) for all the
+  hashes in the contig. If the most common ancestor is higher than the
+  match rank, the contig is removed as a contaminant.
+
+* Third, it asks if the LCA of the contig is a _different_ lineage
+  than the rest of the genome. If it is, it's removed as a
+  contaminant.
+
+Importantly, charcoal defaults to assuming that a contig is "clean" -
+if it has no information on a contig, it does not remove it.
+
+So, charcoal will fail to detect contamination in very short contigs
+for which no k-mers are chosen, as well as contigs that are completely
+novel in their DNA content.
+
+And, of course, charcoal is database dependent. So if genomes or
+databases in the GTDB 25k collection are contaminated, charcoal will
+not be able to detect those contaminants.
+
 ## Authorship and Acknowledgements
 
 charcoal development is led by Titus Brown and Taylor Reiter, and is
-based on the [sourmash](http://sourmash.rtfd.io/) software. We would
-especially like to thank Luiz Irber and Tessa Pierce for their
+heavily based on the [sourmash](http://sourmash.rtfd.io/) software. We
+would especially like to thank Luiz Irber and Tessa Pierce for their
 intellectual contributions to charcoal development!
+
+We would also like to thank the
+[GTDB project](https://gtdb.ecogenomic.org/) for all their hard work!
 
 charcoal development is funded by the Moore Foundation through grant
 GBMF4551 to C. Titus Brown. The current codebase is Copyright 2020,
@@ -46,6 +79,9 @@ Please file them as issues on
 
 ## Installing charcoal
 
+Please follow the installation instructions in
+[the project README](https://github.com/dib-lab/charcoal/blob/master/README.md).
+
 TODO: installable via pip or conda
 
 ## Running charcoal
@@ -56,9 +92,10 @@ Run charcoal like so:
 charcoal run <config file>
 ```
 
-A demo config file can be found in `demo/demo.conf`. Note that this uses
-precomputed matches; see the Quickstart (@ctb doesn't exist yet!) for
-downloading a complete bacterial/archaeal database.
+A demo config file can be found in `demo/demo.conf`. Note that this
+uses precomputed matches; see
+[the Quickstart docs](https://github.com/dib-lab/charcoal/blob/master/README.md)
+for downloading a complete bacterial/archaeal database.
 
 An empty config file for a new project can be generated using
 `charcoal init`.
@@ -133,8 +170,6 @@ charcoal uses snakemake underneath, so you can follow the
 
 ## Configuring charcoal
 
-@CTB: add gather-db and lineages configuration command.
-
 You can generate a configuration file using `charcoal init <project>`:
 
 ```
@@ -148,6 +183,7 @@ provide that to init with `--genome-dir`:
 ```
 charcoal init new-project --genome-dir path/to/genomes/
 ```
+You can also pass in a provided lineages file with `--lineage`.
 
 You can check your configuration with `charcoal check <project>.conf`,
 and show the aggregated configuration (defaults + system + project-specific
@@ -194,6 +230,17 @@ taken from the installation-wide configuration.
 
 You can find the install-wide config file location by running `charcoal info`.
 
+### Downloading databases
+
+The command
+```
+charcoal download-db
+```
+will download a sourmash database containing 25k genomes from GTDB, along
+with the GTDB lineage spreadsheet for those genomes. These will take up about
+1.5GB and will be placed in the `db/` subdirectory of the current working
+directory.
+
 ## Developer info
 
 charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
@@ -203,8 +250,9 @@ charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
 We welcome contributions - please feel free to open a Pull Request!
 
 Both scientific and engineering contributions shall be considered for
-authorship on software publications. This can include feature ideas,
-debugging, validation approaches, and documentation updates.
+authorship on software publications. This can include (but is not
+limited to) feature ideas, debugging, validation approaches, and
+documentation updates.
 
 ### Running charcoal from the development repo
 
