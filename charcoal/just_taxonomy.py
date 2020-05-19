@@ -284,6 +284,9 @@ class ContigsDecontaminator(object):
         This method discovers chunks of sequence that belong to other
         lineages.
         """
+        if not contig_mh:
+            return ContigInfo.NO_HASH
+
         threshold_bp = contig_mh.scaled * self.GATHER_THRESHOLD
         results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
                                      threshold_bp=threshold_bp)
