@@ -98,7 +98,7 @@ def test_choose_genome_lineage_1():
     provided_lin = ""
     f_ident = 1.0
     f_major = 1.0
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major,
                                             ReportingCapture())
     (chosen_lin, comment) = x
@@ -119,7 +119,7 @@ def test_choose_genome_lineage_2():
 
     f_ident = 1.0
     f_major = 1.0
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major,
                                             ReportingCapture())
     (chosen_lin, comment) = x
@@ -140,7 +140,7 @@ def test_choose_genome_lineage_3():
     f_ident = 1.0
     f_major = 1.0
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     chosen_lin, comment = x
 
@@ -162,7 +162,7 @@ def test_choose_genome_lineage_4():
     f_ident = 1.0
     f_major = 1.0
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     chosen_lin, comment = x
 
@@ -181,7 +181,7 @@ def test_choose_genome_lineage_5():
     f_ident = 0.05
     f_major = 1.0
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     (chosen_lin, comment) = x
 
@@ -191,15 +191,13 @@ def test_choose_genome_lineage_5():
 
 
 def test_choose_genome_lineage_6():
-    # bad choice - bad lca lineage, nothing else provided
-
     lca_lin = "Bacteria;Proteobacteria;Gammaproteobacteria;Alteromonadales;Shewanellaceae;Shewanella;Shewanella baltica;Shewanella baltica OS185"
     lca_lin = make_lineage(lca_lin)
     provided_lin = ""
     f_ident = 1.0
     f_major = 0.15
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     (chosen_lin, comment) = x
 

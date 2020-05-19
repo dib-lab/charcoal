@@ -400,7 +400,7 @@ class ContigsDecontaminator(object):
         return clean
 
 
-def choose_genome_lineage(lca_genome_lineage, provided_lineage,
+def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
                           f_ident, f_major, report):
 
     comment = ""
@@ -499,12 +499,13 @@ def main(args):
     provided_lin = ""
     if args.lineage and args.lineage != 'NA':
         provided_lin = args.lineage.split(';')
-        provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) ]
+        provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) if name.strip() ]
         report(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
     # choose between the lineages
     genome_lineage, comment = choose_genome_lineage(lca_genome_lineage,
                                                     provided_lin,
+                                                    match_rank,
                                                     f_ident, f_major,
                                                     report)
 
