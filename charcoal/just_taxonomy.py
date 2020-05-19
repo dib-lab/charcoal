@@ -172,7 +172,7 @@ def create_empty_output(genome, comment, summary, report, clean, dirty,
             if provided_lin:
                 provided_lin = sourmash.lca.display_lineage(provided_lin)
 
-            row = [genome] + ["", f_major, f_ident] + [""]*12 + \
+            row = [genome] + ["", f_major, f_ident] + [""]*14 + \
                [lca_lineage, provided_lin, comment]
             w.writerow(row)
     if report:
@@ -234,6 +234,8 @@ class ContigsDecontaminator(object):
         self.n_reason_3 = 0
         self.missed_n = 0
         self.missed_bp = 0
+        self.noident_n = 0
+        self.noident_bp = 0
 
         self.clean_out = None
         self.dirty_out = None
@@ -252,11 +254,7 @@ class ContigsDecontaminator(object):
             mh = self.empty_mh.copy_and_clear()
             mh.add_sequence(record.sequence, force=True)
 
-            clean = None
-            if not mh:                 # no hashes?
-                self.missed_n += 1
-                self.missed_bp += len(record.sequence)
-                clean = ContigInfo.NO_HASH
+            clean = ContigInfo.NO_HASH
 
             if mh and len(mh) >= self.GATHER_THRESHOLD:
                 clean = self.check_gather(record, mh, report_fp)
@@ -266,8 +264,16 @@ class ContigsDecontaminator(object):
             if mh and clean != ContigInfo.DIRTY:
                 clean = self.check_lca(record, mh, report_fp)
 
+            # track things
+            if clean == ContigInfo.NO_HASH:
+                self.missed_n += 1
+                self.missed_bp += len(record.sequence)
+            elif clean == ContigInfo.NO_IDENT:
+                self.noident_n += 1
+                self.noident_bp += len(record.sequence)
+
             # write out contigs -> clean or dirty files.
-            if clean != ContigInfo.DIRTY:
+            if clean != ContigInfo.DIRTY:   # non-dirty => clean
                 if self.clean_out:
                     self.clean_out.write(record)
             else:
@@ -560,6 +566,8 @@ def main(args):
     dirty_bp = cleaner.dirty_out.bp
     missed_n = cleaner.missed_n
     missed_bp = cleaner.missed_bp
+    noident_n = cleaner.noident_n
+    noident_bp = cleaner.noident_bp
 
     n_reason_1 = cleaner.n_reason_1
     n_reason_2 = cleaner.n_reason_2
@@ -576,7 +584,6 @@ def main(args):
     # look at what our database says about remaining contamination,
     # across all "clean" contigs. (CTB: Need to dig into this more to figure
     # out exactly why we still have any :)
-    # CTB: add breakdown of dirty contigs?
 
     # report gather breakdown of clean signature
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
@@ -591,7 +598,7 @@ def main(args):
     if not first_match:
         print(' ** no matches **', file=report_fp)
 
-    # get genome size and match lineage of primary match
+    # get genome size and match lineage of primary clean match
     nearest_size = 0
     match_lineage = ""
     ratio = 0.0
@@ -601,7 +608,7 @@ def main(args):
         match_lineage = lin_db.ident_to_lineage[ident]
         ratio = round(clean_bp / nearest_size, 2)
 
-    # write out a one line summary?
+    # write out a one line summary:
     if args.summary:
         comment = ""
 
@@ -616,6 +623,7 @@ def main(args):
                         nearest_size, ratio, clean_bp,
                         clean_n, dirty_n, dirty_bp,
                         missed_n, missed_bp,
+                        noident_n, noident_bp,
                         full_lineage,
                         sourmash.lca.display_lineage(provided_lin),
                         comment])
