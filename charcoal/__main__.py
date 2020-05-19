@@ -71,7 +71,9 @@ def cli():
 @click.argument('snakemake_args', nargs=-1)
 def run(configfile, snakemake_args, no_use_conda, verbose):
     "execute charcoal workflow (using snakemake underneath)"
-    run_snakemake(configfile, no_use_conda, verbose, snakemake_args)
+    run_snakemake(configfile, snakefile_name='Snakefile',
+                  no_use_conda=no_use_conda, verbose=verbose,
+                  extra_args=snakemake_args)
 
 # download databases using a special Snakefile
 @click.command()
