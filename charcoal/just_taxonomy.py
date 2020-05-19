@@ -84,6 +84,15 @@ def pretty_print_lineage(lin):
         return f'{lin[-1].rank} {lin[-1].name}'
 
 
+def pretty_print_lineage2(lin, rank):
+    "Nice output names for lineages."
+    if not lin:
+        return f'** no assignment **'
+
+    lin = utils.pop_to_rank(lin, rank)
+    return sourmash.lca.display_lineage(lin)
+
+
 def get_ident(sig):
     "Hack and slash identifiers."
     ident = sig.name()
@@ -176,7 +185,7 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
         if lineages:
             identified_counts += 1
             for lineage in lineages:
-                lineage = utils.pop_to_rank(lineage, 'genus')
+                lineage = utils.pop_to_rank(lineage, rank)
                 counts[lineage] += 1
 
     genome_lineage, count = next(iter(counts.most_common()))
@@ -188,14 +197,14 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     # report everything...
 
     print(f'{f_ident*100:.1f}% of total hashes identified.', file=report_fp)
-    print(f'{f_major*100:.1f}% of identified hashes match to {pretty_print_lineage(genome_lineage)}', file=report_fp)
+    print(f'{f_major*100:.1f}% of identified hashes match to {pretty_print_lineage2(genome_lineage, rank)}', file=report_fp)
     print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
 
     print(f'\n** hashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
     for lin, count in counts.most_common():
-        print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+        print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage2(lin, rank)}', file=report_fp)
     print('', file=report_fp)
 
     return genome_lineage, f_major, f_ident
@@ -287,8 +296,9 @@ class ContigsDecontaminator(object):
             common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
 
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s {self.match_rank}\n   gather yields match of {common_kb:.0f} kb to {pretty_print_lineage(contig_lineage)}',
-                  file=report_fp)
+            print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s {self.match_rank}', file=report_fp)
+            print(f'   contig gather yields match of {common_kb:.0f} kb to {pretty_print_lineage2(contig_lineage, self.match_rank)}', file=report_fp)
+            print(f'   vs genome lineage of {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
             print('', file=report_fp)
 
         return clean
@@ -303,10 +313,10 @@ class ContigsDecontaminator(object):
 
         print(f'\n** hashval lca counts', file=report_fp)
         for lin, count in ctg_tax_assign.most_common():
-            print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+            print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage2(lin, self.match_rank)}', file=report_fp)
         print(f'\n** hashval lineage counts - {len(ctg_assign)}', file=report_fp)
         for lin, count in ctg_counts.most_common():
-            print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage(lin)}', file=report_fp)
+            print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage2(lin, self.match_rank)}', file=report_fp)
         print('', file=report_fp)
 
 
@@ -366,8 +376,9 @@ class ContigsDecontaminator(object):
             self.n_reason_2 += 1
             print('', file=report_fp)
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {self.match_rank}\nlineage is {pretty_print_lineage(ctg_lin)}',
-                  file=report_fp)
+            print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {self.match_rank}', file=report_fp)
+            print(f'   contig is {pretty_print_lineage2(ctg_lin, self.match_rank)}', file=report_fp)
+            print(f'   vs genome {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
 
         # summary reporting --
         if not clean or force_report:
@@ -409,6 +420,7 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage,
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
+    match_rank = args.match_rank
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
                                               start_column=3)
@@ -455,7 +467,7 @@ def main(args):
 
     # calculate lineage from majority vote on LCA
     lca_genome_lineage, f_major, f_ident = \
-         get_majority_lca_at_rank(entire_mh, lca_db, lin_db, 'genus',
+         get_majority_lca_at_rank(entire_mh, lca_db, lin_db, match_rank,
                                   report_fp)
 
     report(f'K-mer classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
@@ -490,7 +502,6 @@ def main(args):
 
 
     # is match_rank lower than genome lineage? if so, raise it.
-    match_rank = args.match_rank
     lineage_ranks = [ x.rank for x in genome_lineage ]
     if match_rank not in lineage_ranks:
         report(f'** NOTE: lineage rank is {lineage_ranks[-1]}; pulling match rank back to that.')
