@@ -18,6 +18,7 @@ from sourmash.lca import LCA_Database, LineagePair
 from . import utils
 from . import lineage_db
 from .lineage_db import LineageDB
+from .version import version
 
 
 GATHER_MIN_MATCHES=3
@@ -202,7 +203,7 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     if f_major < 0.8:
         print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
 
-    print(f'\n** hashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
+    print(f'\nhashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
     for lin, count in counts.most_common():
         print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage2(lin, rank)}', file=report_fp)
     print('', file=report_fp)
@@ -404,15 +405,13 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage,
     else:
         if f_ident < 0.1:
             report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            report(f'** Please provide a lineage for this genome.')
             comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome."
         elif f_major < 0.2:
             report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
-            report(f'** Please provide a lineage for this genome.')
             comment = "too few hashes in major lineage; f_major < 20%. provide a lineage for this genome."
         else:
             genome_lineage = utils.pop_to_rank(lca_genome_lineage, 'genus')
-        report(f'Using LCA majority lineage as genome lineage.')
+            report(f'Using LCA majority lineage as genome lineage.')
 
     return genome_lineage, comment
 
@@ -460,10 +459,22 @@ def main(args):
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
+    report(f'charcoal version: v{version}')
+    report(f'match_rank: {match_rank} / scaled: {scaled} / ksize: {ksize}')
+    report('')
+    report(f'genome: {genomebase}')
+
     print(f'pass 1: reading contigs from {genomebase}')
     entire_mh = empty_mh.copy_and_clear()
+    total_bp = 0
     for n, record in enumerate(screed.open(args.genome)):
         entire_mh.add_sequence(record.sequence, force=True)
+        total_bp += len(record.sequence)
+    n_contigs = n + 1
+
+    report(f'genome has {n_contigs} contigs in {total_bp/1000:.1f}kb')
+    report(f'{len(entire_mh)} hashes total.')
+    report('')
 
     # calculate lineage from majority vote on LCA
     lca_genome_lineage, f_major, f_ident = \
@@ -487,7 +498,6 @@ def main(args):
 
     if comment: # failure to get a good lineage assignment? exit early.
         report(f'** Please provide a lineage for this genome.')
-        report(comment)
 
         # ...unless we force.
         if args.force:
