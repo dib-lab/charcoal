@@ -46,6 +46,9 @@ Please file them as issues on
 
 ## Installing charcoal
 
+Please follow the installation instructions in
+[the project README](https://github.com/dib-lab/charcoal/blob/master/README.md).
+
 TODO: installable via pip or conda
 
 ## Running charcoal
@@ -56,9 +59,10 @@ Run charcoal like so:
 charcoal run <config file>
 ```
 
-A demo config file can be found in `demo/demo.conf`. Note that this uses
-precomputed matches; see the Quickstart (@ctb doesn't exist yet!) for
-downloading a complete bacterial/archaeal database.
+A demo config file can be found in `demo/demo.conf`. Note that this
+uses precomputed matches; see
+[the Quickstart docs](https://github.com/dib-lab/charcoal/blob/master/README.md)
+for downloading a complete bacterial/archaeal database.
 
 An empty config file for a new project can be generated using
 `charcoal init`.
@@ -133,8 +137,6 @@ charcoal uses snakemake underneath, so you can follow the
 
 ## Configuring charcoal
 
-@CTB: add gather-db and lineages configuration command.
-
 You can generate a configuration file using `charcoal init <project>`:
 
 ```
@@ -148,6 +150,7 @@ provide that to init with `--genome-dir`:
 ```
 charcoal init new-project --genome-dir path/to/genomes/
 ```
+You can also pass in a provided lineages file with `--lineage`.
 
 You can check your configuration with `charcoal check <project>.conf`,
 and show the aggregated configuration (defaults + system + project-specific
@@ -193,6 +196,17 @@ project configuration. Any value not in the project config file will be
 taken from the installation-wide configuration.
 
 You can find the install-wide config file location by running `charcoal info`.
+
+### Downloading databases
+
+The command
+```
+charcoal download-db
+```
+will download a sourmash database containing 25k genomes from GTDB, along
+with the GTDB lineage spreadsheet for those genomes. These will take up about
+1.5GB and will be placed in the `db/` subdirectory of the current working
+directory.
 
 ## Developer info
 
