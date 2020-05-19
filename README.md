@@ -23,7 +23,7 @@ conda env create -f environment.yml -n charcoal
 conda activate charcoal
 ```
 
-### Run the demo!
+### Run the demo! (~1 minute)
 
 To run, execute (in the top-level directory):
 
@@ -39,7 +39,7 @@ Once that succeeds, you can configure it yourself by copying
 `demo/demo.conf` to a new file and editing it, or creating a new
 configuration file with `charcoal init <project name>`.
 
-### Create your own project!
+### Do a full configure & run! (~10 minutes)
 
 Now that the demo runs, you've got all the software installed! Hooray! Now let's see how to set up a real run, with real databases!
 
