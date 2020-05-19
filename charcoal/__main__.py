@@ -113,8 +113,9 @@ snakemake Snakefile: {get_snakefile_path('Snakefile')}
 @click.command()
 @click.argument('configfile')
 @click.option('--genome-dir', nargs=1)
+@click.option('--lineages', nargs=1, default="")
 @click.option('-f', '--force', is_flag=True)
-def init(configfile, genome_dir, force):
+def init(configfile, genome_dir, lineages, force):
     "create a new, empty config file."
     stubname = os.path.basename(configfile)
     if configfile.endswith('.conf'):
@@ -141,6 +142,11 @@ def init(configfile, genome_dir, force):
             fp.write("\n".join(genomes))
         print(f"created '{genome_list}' with {len(genomes)} genomes in it.")
 
+    if lineages:
+        print(f"Using provided lineages from '{lineages}'")
+    else:
+        print("(No provided lineages file given.)")
+
     print(f"creating configfile '{configfile}' for project '{stubname}'")
     with open(configfile, 'wt') as fp:
         fp.write(\
@@ -156,7 +162,7 @@ genome_dir: {genome_dir}
 
 # (optional) list of lineages for input genomes. comment out or leave
 # blank if none.
-provided_lineages:
+provided_lineages: {lineages}
 
 # match_rank is the rank _above_ which cross-lineage matches are considered
 # contamination. e.g. if set to 'superkingdom', then Archaeal matches in
