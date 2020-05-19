@@ -21,6 +21,7 @@ git clone https://github.com/dib-lab/charcoal
 cd ./charcoal/
 conda env create -f environment.yml -n charcoal
 conda activate charcoal
+pip install -e .
 ```
 
 ### Run the demo! (~1 minute)
@@ -28,7 +29,6 @@ conda activate charcoal
 To run, execute (in the top-level directory):
 
 ```
-pip install -e .
 charcoal run demo/demo.conf -j 8
 ```
 
