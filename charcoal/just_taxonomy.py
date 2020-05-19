@@ -293,11 +293,11 @@ class ContigsDecontaminator(object):
         if not utils.is_lineage_match(self.genome_lineage, contig_lineage,
                                       self.match_rank):
             clean=False
-            self.n_reason_3 += 1
+            self.n_reason_1 += 1
             common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
 
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 3 - gather matches to lineage outside of genome\'s {self.match_rank}', file=report_fp)
+            print(f'contig dirty, REASON 1 - gather matches to lineage outside of genome\'s {self.match_rank}', file=report_fp)
             print(f'   contig gather yields match of {common_kb:.0f} kb to {pretty_print_lineage2(contig_lineage, self.match_rank)}', file=report_fp)
             print(f'   vs genome lineage of {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
             print('', file=report_fp)
@@ -365,19 +365,19 @@ class ContigsDecontaminator(object):
             if ctg_lin:
                 bad_rank = ctg_lin[-1].rank
             clean = False
-            self.n_reason_1 += 1
+            self.n_reason_2 += 1
             print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 1 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
+            print(f'contig dirty, REASON 2 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
                   file=report_fp)
         # second check - is the majority lineage of hashes in this contig
         # outside the match rank?
         elif not utils.is_lineage_match(self.genome_lineage, ctg_lin,
                                         self.match_rank):
             clean = False
-            self.n_reason_2 += 1
+            self.n_reason_3 += 1
             print('', file=report_fp)
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 2 - contig lineage is not a match to genome\'s {self.match_rank}', file=report_fp)
+            print(f'contig dirty, REASON 3 - contig lineage is not a match to genome\'s {self.match_rank}', file=report_fp)
             print(f'   contig is {pretty_print_lineage2(ctg_lin, self.match_rank)}', file=report_fp)
             print(f'   vs genome {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
 
