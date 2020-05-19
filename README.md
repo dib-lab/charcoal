@@ -29,7 +29,7 @@ pip install -e .
 To run, execute (in the top-level directory):
 
 ```
-charcoal run demo/demo.conf -j 8
+charcoal run demo/demo.conf -j 4
 ```
 
 You will end up with clean genomes in `output.demo/*.clean.fa.gz`, and
@@ -37,8 +37,12 @@ a summary of the demo genomes in `output.demo/combined_summary.csv`.
 
 ### Do a full configure & run! (~10 minutes)
 
-Now that the demo runs, you've got all the software installed! Hooray!
+Now that the demo runs, you've got everything working! Hooray!
 Now let's see how to set up a real run, with real databases!
+
+This will take under 10 minutes and under 2 GB of disk space. You'll
+need about 8 GB of RAM (change `-j 4` to `-j 1`, below, to run it in 2
+GB of RAM, albeit 4x slower).
 
 We'll use a set of 10 genomes taken from
 [Nitrogen-fixing populations of Planctomycetes and Proteobacteria are abundant in surface ocean metagenomes, Delmont et al., 2018](https://www.nature.com/articles/s41564-018-0176-9). These
@@ -52,8 +56,9 @@ First, install the sourmash database for GTDB.
 charcoal download-db
 ```
 
-This will put two files in the `db/` directory. You can run this
-command multiple times and it should only download the databases once.
+This will put two files in the `db/` directory, totalling 1.5 GB. (You
+can run this command multiple times and it should only download the
+databases once.)
 
 #### Download the example genomes
 
