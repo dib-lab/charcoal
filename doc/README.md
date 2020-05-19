@@ -24,6 +24,34 @@ We are working on validating charcoal now (May 2020).
 charcoal is open source under the BSD 3-clause license, and is free for
 use, reuse, modification, and remixing. Please enjoy responsibly!
 
+## How charcoal finds contamination
+
+charcoal uses three heuristics to determine if a contig is a
+contaminant.
+
+* First, it searches 25,000 GTDB genomes using `sourmash gather` to
+  see where the contig belongs "best". If the contig places better
+  within a different lineage, it is removed as a contaminant.
+
+* Second, it computes the lowest common ancestor (LCA) for all the
+  hashes in the contig. If the most common ancestor is higher than the
+  match rank, the contig is removed as a contaminant.
+
+* Third, it asks if the LCA of the contig is a _different_ lineage
+  than the rest of the genome. If it is, it's removed as a
+  contaminant.
+
+Importantly, charcoal defaults to assuming that a contig is "clean" -
+if it has no information on a contig, it does not remove it.
+
+So, charcoal will fail to detect contamination in very short contigs
+for which no k-mers are chosen, as well as contigs that are completely
+novel in their DNA content.
+
+And, of course, charcoal is database dependent. So if genomes or
+databases in the GTDB 25k collection are contaminated, charcoal will
+not be able to detect those contaminants.
+
 ## Authorship and Acknowledgements
 
 charcoal development is led by Titus Brown and Taylor Reiter, and is
@@ -217,8 +245,9 @@ charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
 We welcome contributions - please feel free to open a Pull Request!
 
 Both scientific and engineering contributions shall be considered for
-authorship on software publications. This can include feature ideas,
-debugging, validation approaches, and documentation updates.
+authorship on software publications. This can include (but is not
+limited to) feature ideas, debugging, validation approaches, and
+documentation updates.
 
 ### Running charcoal from the development repo
 
