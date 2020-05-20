@@ -175,7 +175,8 @@ def do_gather_breakdown(minhash, lca_db, min_matches, report_fp):
     return first_match
 
 
-def create_empty_output(genome, comment, summary, report, clean, dirty,
+def create_empty_output(genome, comment, summary, report, contig_report,
+                        clean, dirty,
                         f_major="", f_ident="",
                         provided_lin="", lca_lineage=""):
     if summary:
@@ -192,6 +193,9 @@ def create_empty_output(genome, comment, summary, report, clean, dirty,
     if report:
         with open(report, 'wt') as fp:
             fp.write(comment)
+    if contig_report:
+        with open(contig_report, 'wt') as fp:
+            pass
     open(clean, 'wt').close()
     open(dirty, 'wt').close()
 
@@ -302,9 +306,14 @@ class ContigsDecontaminator(object):
                     self.dirty_out.write(record)
 
             hash_ident_cnt = 0
+            for hashval in mh.get_mins():
+                if hashval in self.lca_db.hashval_to_idx:
+                    hash_ident_cnt += 1
             ctg_rep = ContigReport(record.name, len(record.sequence),
                                    clean_flag, reason, ctg_lin,
                                    len(mh), hash_ident_cnt, hash_cnt)
+            assert record.name not in self.contig_reports
+            self.contig_reports[record.name] = ctg_rep
 
         # END contig loop
 
@@ -485,7 +494,8 @@ def main(args):
         print('no matches for this genome, exiting.')
         comment = "no matches to this genome were found in the database; nothing to do"
         create_empty_output(genomebase, comment, args.summary,
-                            args.report, args.clean, args.dirty)
+                            args.report, args.contig_report,
+                            args.clean, args.dirty)
         return 0
 
     report_fp = open(args.report, 'wt')
@@ -558,7 +568,8 @@ def main(args):
             print('--force requested, so continuing despite this.')
         else:
             create_empty_output(genomebase, comment, args.summary,
-                                None, args.clean, args.dirty,
+                                None, args.contig_report,
+                                args.clean, args.dirty,
                                 provided_lin=provided_lin,
                                 lca_lineage=lca_genome_lineage,
                                 f_ident=f_ident, f_major=f_major)
@@ -657,6 +668,33 @@ def main(args):
                         sourmash.lca.display_lineage(provided_lin),
                         comment])
 
+    if args.contig_report:
+        with open(args.contig_report, 'wt') as fp:
+            w = csv.writer(fp)
+            w.writerow(['genomefile',
+                           'genometax',
+                           'match_rank',
+                           'contig_name',
+                           'bp',
+                           'decision',
+                           'reason',
+                           'contigtax',
+                           'total_hashes',
+                           'ident_hashes',
+                           'match_hashes'])
+            for rep in cleaner.contig_reports.values():
+                w.writerow([args.genome,
+                            sourmash.lca.display_lineage(genome_lineage),
+                            match_rank,
+                            rep.contig_name,
+                            rep.bp,
+                            rep.info,
+                            rep.reason,
+                            sourmash.lca.display_lineage(rep.lineage),
+                            rep.total_hashes,
+                            rep.ident_hashes,
+                            rep.match_hashes])
+
     return 0
 
 
@@ -676,6 +714,7 @@ def cmdline(sys_args):
     p.add_argument('--lineage', help=';-separated lineage down to genus level',
                    default='NA')        # default is str NA
     p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
+    p.add_argument('--contig-report', help='contig report (CSV)')
     args = p.parse_args()
 
     main(args)
