@@ -32,6 +32,20 @@ class ContigInfo(Enum):
     NO_HASH = 4
 
 
+class ContigReport(object):
+    # output in addition: genomefile, genome taxonomy, match_rank
+    def __init__(self, contig_name, bp, info, reason, lineage, total_hashes,
+                 ident_hashes, match_hashes):
+        self.contig_name = contig_name
+        self.bp = bp
+        self.info = info
+        self.reason = reason
+        self.lineage = lineage
+        self.total_hashes = total_hashes
+        self.ident_hashes = ident_hashes
+        self.match_hashes = match_hashes
+
+
 def get_idents_for_hashval(lca_db, hashval):
     "Get the identifiers associated with this hashval."
     idx_list = lca_db.hashval_to_idx.get(hashval, [])
@@ -254,30 +268,32 @@ class ContigsDecontaminator(object):
             mh = self.empty_mh.copy_and_clear()
             mh.add_sequence(record.sequence, force=True)
 
-            clean = ContigInfo.NO_HASH
+            clean_flag = ContigInfo.NO_HASH
+            ctg_lin = ""
+            hash_cnt = 0
 
             if mh and len(mh) >= self.GATHER_THRESHOLD:
-                clean = self.check_gather(record, mh, report_fp)
+                clean_flag, ctg_lin, hash_cnt = self.check_gather(record, mh, report_fp)
 
             # did we find a dirty contig in step 1? if NOT, go into LCA style
             # approaches.
-            if mh and clean != ContigInfo.DIRTY:
-                clean = self.check_lca(record, mh, report_fp)
+            if mh and clean_flag != ContigInfo.DIRTY:
+                clean_flag, ctg_lin, hash_cnt = self.check_lca(record, mh, report_fp)
 
             # track things
-            if clean == ContigInfo.NO_HASH:
+            if clean_flag == ContigInfo.NO_HASH:
                 self.missed_n += 1
                 self.missed_bp += len(record.sequence)
-            elif clean == ContigInfo.NO_IDENT:
+            elif clean_flag == ContigInfo.NO_IDENT:
                 self.noident_n += 1
                 self.noident_bp += len(record.sequence)
 
             # write out contigs -> clean or dirty files.
-            if clean != ContigInfo.DIRTY:   # non-dirty => clean
+            if clean_flag != ContigInfo.DIRTY:   # non-dirty => clean
                 if self.clean_out:
                     self.clean_out.write(record)
             else:
-                assert clean == ContigInfo.DIRTY
+                assert clean_flag == ContigInfo.DIRTY
                 if self.dirty_out:
                     self.dirty_out.write(record)
 
@@ -291,14 +307,14 @@ class ContigsDecontaminator(object):
         lineages.
         """
         if not contig_mh:
-            return ContigInfo.NO_HASH
+            return ContigInfo.NO_HASH, "", 0
 
         threshold_bp = contig_mh.scaled * self.GATHER_THRESHOLD
         results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
                                      threshold_bp=threshold_bp)
 
         if not results:
-            return ContigInfo.NO_IDENT
+            return ContigInfo.NO_IDENT, "", 0
 
         match = results[0][1]
 
@@ -306,15 +322,15 @@ class ContigsDecontaminator(object):
         match_ident = get_ident(match)
         # get lineage
         contig_lineage = self.lin_db.ident_to_lineage[match_ident]
-
+        common_hashcount = contig_mh.count_common(match.minhash)
+        common_kb = common_hashcount * contig_mh.scaled / 1000
         # if it matched outside rank, => dirty.
         if utils.is_lineage_match(self.genome_lineage, contig_lineage,
-                                      self.match_rank):
+                                  self.match_rank):
             clean = ContigInfo.CLEAN
         else:
             clean = ContigInfo.DIRTY
             self.n_reason_1 += 1
-            common_kb = contig_mh.count_common(match.minhash) * contig_mh.scaled / 1000
 
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
             print(f'contig dirty, REASON 1 - gather matches to lineage outside of genome\'s {self.match_rank}', file=report_fp)
@@ -322,7 +338,7 @@ class ContigsDecontaminator(object):
             print(f'   vs genome lineage of {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
             print('', file=report_fp)
 
-        return clean
+        return clean, contig_lineage, common_hashcount
 
     def _report_lca_summary(self, report_fp, ctg_tax_assign, ctg_assign):
         scaled = self.empty_mh.scaled
@@ -357,7 +373,7 @@ class ContigsDecontaminator(object):
         reason = 0
 
         if not contig_mh.get_mins():
-            return ContigInfo.NO_HASH
+            return ContigInfo.NO_HASH, "", 0
 
         # get _all_ of the hash taxonomy assignments for this contig
         ctg_assign = gather_assignments(contig_mh.get_mins(), None,
@@ -365,7 +381,7 @@ class ContigsDecontaminator(object):
 
         ctg_tax_assign = count_lca_for_assignments(ctg_assign)
         if not ctg_tax_assign:
-            return ContigInfo.NO_IDENT
+            return ContigInfo.NO_IDENT, "", 0
 
         clean = ContigInfo.CLEAN
 
@@ -409,7 +425,9 @@ class ContigsDecontaminator(object):
         if not clean or force_report:
             self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign)
 
-        return clean
+        return clean, ctg_lin, lin_count
+
+# END CLASS
 
 
 def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
