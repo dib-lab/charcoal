@@ -5,6 +5,7 @@ import screed
 
 from charcoal import just_taxonomy, utils
 from charcoal.lineage_db import LineageDB
+from charcoal.just_taxonomy import ContigInfo
 
 import sourmash
 from sourmash.lca import LCA_Database
@@ -97,7 +98,7 @@ def test_choose_genome_lineage_1():
     provided_lin = ""
     f_ident = 1.0
     f_major = 1.0
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major,
                                             ReportingCapture())
     (chosen_lin, comment) = x
@@ -118,7 +119,7 @@ def test_choose_genome_lineage_2():
 
     f_ident = 1.0
     f_major = 1.0
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major,
                                             ReportingCapture())
     (chosen_lin, comment) = x
@@ -139,7 +140,7 @@ def test_choose_genome_lineage_3():
     f_ident = 1.0
     f_major = 1.0
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     chosen_lin, comment = x
 
@@ -161,7 +162,7 @@ def test_choose_genome_lineage_4():
     f_ident = 1.0
     f_major = 1.0
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     chosen_lin, comment = x
 
@@ -180,30 +181,28 @@ def test_choose_genome_lineage_5():
     f_ident = 0.05
     f_major = 1.0
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     (chosen_lin, comment) = x
 
     print(reporting.lines)
-    assert reporting.contains('Please provide a lineage for this genome')
+    assert 'provide a lineage for this genome' in comment
     assert 'too few identifiable hashes' in comment
 
 
 def test_choose_genome_lineage_6():
-    # bad choice - bad lca lineage, nothing else provided
-
     lca_lin = "Bacteria;Proteobacteria;Gammaproteobacteria;Alteromonadales;Shewanellaceae;Shewanella;Shewanella baltica;Shewanella baltica OS185"
     lca_lin = make_lineage(lca_lin)
     provided_lin = ""
     f_ident = 1.0
     f_major = 0.15
     reporting = ReportingCapture()
-    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin,
+    x = just_taxonomy.choose_genome_lineage(lca_lin, provided_lin, 'genus',
                                             f_ident, f_major, reporting)
     (chosen_lin, comment) = x
 
     print(reporting.lines)
-    assert reporting.contains('Please provide a lineage for this genome')
+    assert 'provide a lineage for this genome' in comment
     assert 'too few hashes in major lineage' in comment
 
 
@@ -433,15 +432,15 @@ def test_cleaner_gather_method_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
-    assert not is_clean
+    clean_flag = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.DIRTY
 
     chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk2[0], mh, report_fp)
-    assert is_clean
+    clean_flag = cleaner.check_gather(chunk2[0], mh, report_fp)
+    assert clean_flag == ContigInfo.CLEAN
 
 
 def test_cleaner_gather_method_1():
@@ -470,17 +469,17 @@ def test_cleaner_gather_method_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk1[0], mh, report_fp)
-    assert not is_clean
-    assert cleaner.n_reason_3 == 1
+    clean_flag = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.DIRTY
+    assert cleaner.n_reason_1 == 1
 
     chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    is_clean = cleaner.check_gather(chunk2[0], mh, report_fp)
-    assert is_clean
-    assert cleaner.n_reason_3 == 1        # should not be incremented
+    clean_flag = cleaner.check_gather(chunk2[0], mh, report_fp)
+    assert clean_flag == ContigInfo.CLEAN
+    assert cleaner.n_reason_1 == 1        # should not be incremented
 
 
 def test_cleaner_lca_method2_1():
@@ -509,17 +508,18 @@ def test_cleaner_lca_method2_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_lca(chunk1[0], mh, report_fp)
-    assert not is_clean
-    assert cleaner.n_reason_2 == 1
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.DIRTY
+    print(cleaner.n_reason_1, cleaner.n_reason_2, cleaner.n_reason_3)
+    assert cleaner.n_reason_3 == 1
 
     chunk2 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    is_clean = cleaner.check_lca(chunk2[0], mh, report_fp)
-    assert is_clean
-    assert cleaner.n_reason_2 == 1        # should not be incremented
+    clean_flag = cleaner.check_lca(chunk2[0], mh, report_fp)
+    assert clean_flag == ContigInfo.CLEAN
+    assert cleaner.n_reason_3 == 1        # should not be incremented
 
 
 def test_cleaner_lca_method1_1():
@@ -559,7 +559,116 @@ def test_cleaner_lca_method1_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    is_clean = cleaner.check_lca(chunk1[0], mh, report_fp,
-                                 force_report=True)
-    assert not is_clean
-    assert cleaner.n_reason_1 == 1
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    assert clean_flag == ContigInfo.DIRTY
+    assert cleaner.n_reason_2 == 1
+
+
+def test_cleaner_lca_method_nohash():
+    # check lca method - no hash
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([], lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    # ok! now, go for cleaning...
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
+    mh = empty_mh.copy_and_clear()
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    assert clean_flag == ContigInfo.NO_HASH
+    assert cleaner.n_reason_2 == 0
+    assert cleaner.n_reason_3 == 0
+
+
+def test_cleaner_lca_method_noident():
+    # check lca method - no matches
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
+    # no matches here => []
+    lca_db, lin_db = make_lca_and_lineages([], lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    # ok! now, go for cleaning...
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk1[0].sequence, force=True)
+    clean_flag = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    assert clean_flag == ContigInfo.NO_IDENT
+    assert cleaner.n_reason_2 == 0
+    assert cleaner.n_reason_3 == 0
+
+
+def test_cleaner_gather_method_nohash():
+    # check lca method - no hash
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
+    lca_db, lin_db = make_lca_and_lineages([], lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    # ok! now, go for cleaning...
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
+    mh = empty_mh.copy_and_clear()
+    clean_flag = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.NO_HASH
+    assert cleaner.n_reason_1 == 0
+
+
+def test_cleaner_gather_method_noident():
+    # check lca method - no matches
+    genome_lineage = "Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales;Akkermansiaceae;Akkermansia;Akkermansia muciniphila"
+    genome_lineage = make_lineage(genome_lineage)
+
+    match_rank = 'genus'
+    empty_mh = sourmash.MinHash(n=0, ksize=31, scaled=10000)
+
+    lineages_csv = 'tests/test-data/test-match-lineages.csv'
+    # no matches here => []
+    lca_db, lin_db = make_lca_and_lineages([], lineages_csv,
+                                           empty_mh.scaled, empty_mh.ksize)
+
+    # ok! now, go for cleaning...
+    cleaner = just_taxonomy.ContigsDecontaminator(genome_lineage,
+                                                  match_rank,
+                                                  empty_mh,
+                                                  lca_db, lin_db)
+    report_fp = StringIO()
+
+    chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
+    mh = empty_mh.copy_and_clear()
+    mh.add_sequence(chunk1[0].sequence, force=True)
+    clean_flag = cleaner.check_gather(chunk1[0], mh, report_fp)
+    assert clean_flag == ContigInfo.NO_IDENT
+    assert cleaner.n_reason_1 == 0

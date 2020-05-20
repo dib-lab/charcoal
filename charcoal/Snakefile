@@ -230,7 +230,8 @@ rule combined_summary:
                       "n_reason_1", "n_reason_2", "n_reason_3",
                       "refsize", "ratio",
                       "clean_bp", "clean_n", "dirty_n", "dirty_bp", "missed_n",
-                      "missed_bp", "taxguessed", "taxprovided",
+                      "missed_bp", "noident_n", "noident_bp",
+                      "taxguessed", "taxprovided",
                       "comment"]
 
             w.writerow(header)
