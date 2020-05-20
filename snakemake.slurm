@@ -25,7 +25,8 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-charcoal run conf/tara-delmont.conf -p -j 16 --resources mem=${SLURM_MEM_PER_NODE:-150000} -k
+charcoal run eval/tara-delmont-relaxed.conf -p -j 16 -k
+charcoal run eval/tara-delmont-strict.conf -p -j 16 -k
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables
