@@ -254,6 +254,8 @@ class ContigsDecontaminator(object):
         self.clean_out = None
         self.dirty_out = None
 
+        self.contig_reports = {}
+
     def set_clean_filename(self, filename):
         clean_fp = gzip.open(filename, 'wt')
         self.clean_out = WriteAndTrackFasta(clean_fp, self.empty_mh)
@@ -271,14 +273,16 @@ class ContigsDecontaminator(object):
             clean_flag = ContigInfo.NO_HASH
             ctg_lin = ""
             hash_cnt = 0
+            reason = 0
 
             if mh and len(mh) >= self.GATHER_THRESHOLD:
                 clean_flag, ctg_lin, hash_cnt = self.check_gather(record, mh, report_fp)
+                if clean_flag == ContigInfo.DIRTY: reason = 1
 
             # did we find a dirty contig in step 1? if NOT, go into LCA style
             # approaches.
             if mh and clean_flag != ContigInfo.DIRTY:
-                clean_flag, ctg_lin, hash_cnt = self.check_lca(record, mh, report_fp)
+                clean_flag, ctg_lin, hash_cnt, reason = self.check_lca(record, mh, report_fp)
 
             # track things
             if clean_flag == ContigInfo.NO_HASH:
@@ -296,6 +300,11 @@ class ContigsDecontaminator(object):
                 assert clean_flag == ContigInfo.DIRTY
                 if self.dirty_out:
                     self.dirty_out.write(record)
+
+            hash_ident_cnt = 0
+            ctg_rep = ContigReport(record.name, len(record.sequence),
+                                   clean_flag, reason, ctg_lin,
+                                   len(mh), hash_ident_cnt, hash_cnt)
 
         # END contig loop
 
@@ -373,7 +382,7 @@ class ContigsDecontaminator(object):
         reason = 0
 
         if not contig_mh.get_mins():
-            return ContigInfo.NO_HASH, "", 0
+            return ContigInfo.NO_HASH, "", 0, 0
 
         # get _all_ of the hash taxonomy assignments for this contig
         ctg_assign = gather_assignments(contig_mh.get_mins(), None,
@@ -381,7 +390,7 @@ class ContigsDecontaminator(object):
 
         ctg_tax_assign = count_lca_for_assignments(ctg_assign)
         if not ctg_tax_assign:
-            return ContigInfo.NO_IDENT, "", 0
+            return ContigInfo.NO_IDENT, "", 0, 0
 
         clean = ContigInfo.CLEAN
 
@@ -406,6 +415,7 @@ class ContigsDecontaminator(object):
                 bad_rank = ctg_lin[-1].rank
             clean = ContigInfo.DIRTY
             self.n_reason_2 += 1
+            reason = 2
             print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
             print(f'contig dirty, REASON 2 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
                   file=report_fp)
@@ -415,6 +425,7 @@ class ContigsDecontaminator(object):
                                         self.match_rank):
             clean = ContigInfo.DIRTY
             self.n_reason_3 += 1
+            reason = 3
             print('', file=report_fp)
             print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
             print(f'contig dirty, REASON 3 - contig lineage is not a match to genome\'s {self.match_rank}', file=report_fp)
@@ -425,7 +436,7 @@ class ContigsDecontaminator(object):
         if not clean or force_report:
             self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign)
 
-        return clean, ctg_lin, lin_count
+        return clean, ctg_lin, lin_count, reason
 
 # END CLASS
 

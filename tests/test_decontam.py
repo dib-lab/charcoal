@@ -508,7 +508,7 @@ def test_cleaner_lca_method2_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    clean_flag, ctg_lin, hash_cnt = cleaner.check_lca(chunk1[0], mh, report_fp)
+    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk1[0], mh, report_fp)
     assert clean_flag == ContigInfo.DIRTY
     print(cleaner.n_reason_1, cleaner.n_reason_2, cleaner.n_reason_3)
     assert cleaner.n_reason_3 == 1
@@ -517,7 +517,7 @@ def test_cleaner_lca_method2_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk2[0].sequence, force=True)
-    clean_flag, ctg_lin, hash_cnt = cleaner.check_lca(chunk2[0], mh, report_fp)
+    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk2[0], mh, report_fp)
     assert clean_flag == ContigInfo.CLEAN
     assert cleaner.n_reason_3 == 1        # should not be incremented
 
@@ -559,7 +559,7 @@ def test_cleaner_lca_method1_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    clean_flag, ctg_lin, hash_cnt = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
     assert clean_flag == ContigInfo.DIRTY
     assert cleaner.n_reason_2 == 1
 
@@ -585,7 +585,7 @@ def test_cleaner_lca_method_nohash():
 
     chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
     mh = empty_mh.copy_and_clear()
-    clean_flag, ctg_lin, hash_cnt = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
     assert clean_flag == ContigInfo.NO_HASH
     assert cleaner.n_reason_2 == 0
     assert cleaner.n_reason_3 == 0
@@ -614,7 +614,7 @@ def test_cleaner_lca_method_noident():
     chunk1 = load_first_chunk('tests/test-data/genomes/2.fa.gz')
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    clean_flag, ctg_lin, hash_cnt = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
     assert clean_flag == ContigInfo.NO_IDENT
     assert cleaner.n_reason_2 == 0
     assert cleaner.n_reason_3 == 0
