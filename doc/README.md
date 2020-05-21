@@ -60,9 +60,8 @@ probably a contaminant.
   is removed as a contaminant.
 
 * Second, charcoal computes the lowest common ancestor (LCA) for all
-  the hashes in the contig. If the lowest common ancestor is **higher
-  than** the configured match rank, the contig is removed as a
-  contaminant.
+  the hashes in the contig. If the most common LCA is **higher than**
+  the configured match rank, the contig is removed as a contaminant.
 
 * Third, charcoal asks if the LCA of the contig is a **different
   lineage** (differs at match rank) than the rest of the genome. If it
