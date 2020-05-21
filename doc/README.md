@@ -45,20 +45,32 @@ filing issues, writing documentation, and engaging in the project.
 
 ## How charcoal finds contamination
 
-charcoal uses three heuristics to determine if a contig is a
-contaminant.
+charcoal assigns a lineage to each input genome based on the search
+database(s), as well as any lineages that are provided.
 
-* First, it searches 25,000 GTDB genomes using `sourmash gather` to
-  see where the contig belongs "best". If the contig places better
-  within a different lineage, it is removed as a contaminant.
+charcoal then uses three heuristics to determine if a contig is a
+contaminant.  Below, the term "match rank" is a configurable parameter
+that defaults to `order`; this corresponds roughly to the notion that
+if a contig matches to two genomes that belong to different orders, it's
+probably a contaminant.
 
-* Second, it computes the lowest common ancestor (LCA) for all the
-  hashes in the contig. If the most common ancestor is higher than the
-  match rank, the contig is removed as a contaminant.
+* First, charcoal searches 25,000 GTDB genomes using `sourmash gather`
+  to see where the contig matches best against known genomes. If the
+  contig places better within a lineage that has a different match
+  rank, it is removed as a contaminant.
 
-* Third, it asks if the LCA of the contig is a _different_ lineage
-  than the rest of the genome. If it is, it's removed as a
+* Second, charcoal computes the lowest common ancestor (LCA) for all
+  the hashes in the contig. If the most common ancestor is **higher
+  than** the configured match rank, the contig is removed as a
   contaminant.
+
+* Third, charcoal asks if the LCA of the contig is a **different
+  lineage** (differs at match rank) than the rest of the genome. If it
+  is, it's removed as a contaminant.
+
+The per-genome report details contig removal in terms of these reasons
+(numbered from 1-3). The specific parameters for genome and contig
+classifications are currently being evaluated (May 2020).
 
 Importantly, charcoal defaults to assuming that a contig is "clean" -
 if it has no information on a contig, it does not remove it.
