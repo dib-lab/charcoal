@@ -54,7 +54,7 @@ def get_idents_for_hashval(lca_db, hashval):
         yield ident
 
 
-def gather_assignments(hashvals, rank, dblist, ldb):
+def gather_lca_assignments(hashvals, rank, dblist, ldb):
     """
     Collect lineage assignments from across all the databases for all the
     hashvals.
@@ -202,8 +202,8 @@ def create_empty_output(genome, comment, summary, report, contig_report,
 
 def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
     # get all of the hash taxonomy assignments for this genome
-    hash_assign = gather_assignments(entire_mh.get_mins(), rank,
-                                     [lca_db], lin_db)
+    hash_assign = gather_lca_assignments(entire_mh.get_mins(), rank,
+                                         [lca_db], lin_db)
 
     # count them and find major
     counts = Counter()
@@ -358,7 +358,8 @@ class ContigsDecontaminator(object):
 
         return clean, contig_lineage, common_hashcount
 
-    def _report_lca_summary(self, report_fp, ctg_tax_assign, ctg_assign):
+    def _report_lca_summary(self, report_fp, ctg_tax_assign, ctg_assign,
+                            f_match, f_ident):
         scaled = self.empty_mh.scaled
 
         ctg_counts = Counter()
@@ -366,6 +367,7 @@ class ContigsDecontaminator(object):
             for lineage in lineages:
                 ctg_counts[lineage] += 1
 
+        print(f'\nf_ident {f_ident:.2f} / f_match {f_match:.2f}', file=report_fp)
         print(f'\n** hashval lca counts', file=report_fp)
         for lin, count in ctg_tax_assign.most_common():
             print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage2(lin, self.match_rank)}', file=report_fp)
@@ -394,17 +396,19 @@ class ContigsDecontaminator(object):
             return ContigInfo.NO_HASH, "", 0, 0
 
         # get _all_ of the hash taxonomy assignments for this contig
-        ctg_assign = gather_assignments(contig_mh.get_mins(), None,
-                                        [self.lca_db], self.lin_db)
+        ctg_assign = gather_lca_assignments(contig_mh.get_mins(), None,
+                                            [self.lca_db], self.lin_db)
+        f_ident = len(ctg_assign) / len(contig_mh)
 
         ctg_tax_assign = count_lca_for_assignments(ctg_assign)
         if not ctg_tax_assign:
             return ContigInfo.NO_IDENT, "", 0, 0
 
-        clean = ContigInfo.CLEAN
+        clean_flag = ContigInfo.CLEAN
 
         # get top assignment for contig.
         ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
+        f_match = lin_count / len(ctg_assign)
 
         # assignment outside of genus? dirty!
         ok_ranks = set()
@@ -422,7 +426,7 @@ class ContigsDecontaminator(object):
             bad_rank = "(root)"
             if ctg_lin:
                 bad_rank = ctg_lin[-1].rank
-            clean = ContigInfo.DIRTY
+            clean_flag = ContigInfo.DIRTY
             self.n_reason_2 += 1
             reason = 2
             print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
@@ -432,7 +436,7 @@ class ContigsDecontaminator(object):
         # outside the match rank?
         elif not utils.is_lineage_match(self.genome_lineage, ctg_lin,
                                         self.match_rank):
-            clean = ContigInfo.DIRTY
+            clean_flag = ContigInfo.DIRTY
             self.n_reason_3 += 1
             reason = 3
             print('', file=report_fp)
@@ -442,10 +446,11 @@ class ContigsDecontaminator(object):
             print(f'   vs genome {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
 
         # summary reporting --
-        if clean == ContigInfo.DIRTY or force_report:
-            self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign)
+        if clean_flag == ContigInfo.DIRTY or force_report:
+            self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
+                                     f_match, f_ident)
 
-        return clean, ctg_lin, lin_count, reason
+        return clean_flag, ctg_lin, lin_count, reason
 
 # END CLASS
 
