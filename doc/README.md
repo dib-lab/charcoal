@@ -2,8 +2,8 @@
 
 Contents:
 * [Introduction](#introduction)
-* [How charcoal finds contamination](#how-charcoal-finds-contamination]
-* [Authorship and Acknowledgements](#authorship-and-acknowledgements]
+* [How charcoal finds contamination](#how-charcoal-finds-contamination)
+* [Authorship and Acknowledgements](#authorship-and-acknowledgements)
 * [Getting help](#getting-help)
 * [Installing charcoal](#installing-charcoal)
 * [Running charcoal](#running-charcoal)
