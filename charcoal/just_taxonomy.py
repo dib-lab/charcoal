@@ -442,7 +442,7 @@ class ContigsDecontaminator(object):
             print(f'   vs genome {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
 
         # summary reporting --
-        if not clean or force_report:
+        if clean == ContigInfo.DIRTY or force_report:
             self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign)
 
         return clean, ctg_lin, lin_count, reason
