@@ -1,5 +1,16 @@
 # charcoal documentation
 
+Contents:
+* [Introduction](#introduction)
+* [How charcoal finds contamination](#how-charcoal-finds-contamination)
+* [Authorship and Acknowledgements](#authorship-and-acknowledgements)
+* [Getting help](#getting-help)
+* [Installing charcoal](#installing-charcoal)
+* [Running charcoal](#running-charcoal)
+* [Configuring charcoal](#configuring-charcoal)
+* [Frequently Asked Questions](#frequently-asked-questions)
+* [Developing charcoal](#developing-charcoal)
+
 ## Introduction
 
 charcoal is a pipeline that removes contaminant contigs from genome
@@ -10,12 +21,12 @@ It is focused on removing bacterial and archaeal contaminants for now.
 
 charcoal uses k-mer-based methods to identify potential
 contaminants. Contigs that are taxonomically inconsistent with the
-rest of the genome are identified and then remove.
+rest of the genome are identified and then removed.
 
 charcoal relies on reference databases of genomes with a high quality
-taxonomy.  We recommend using the
-[GTDB taxonomy](https://gtdb.ecogenomic.org/), and we provide
-databases for that.
+taxonomy to flag likely contamination.  We provide a database and set
+of lineages from the [GTDB taxonomy](https://gtdb.ecogenomic.org/) for
+this purpose.
 
 charcoal uses relatively little memory (~2 GB per genome), takes less than
 5 minutes per genome, and is fully parallelizable per genome. We've analyzed
@@ -25,6 +36,10 @@ We are working on validating charcoal now (May 2020).
 
 charcoal is open source under the BSD 3-clause license, and is free for
 use, reuse, modification, and remixing. Please enjoy responsibly!
+
+We provide a [Code of Conduct](CODE_OF_CONDUCT.rst) that we expect
+developers, contributors, and users to follow when requesting help,
+filing issues, writing documentation, and engaging in the project.
 
 ## How charcoal finds contamination
 
@@ -241,7 +256,56 @@ with the GTDB lineage spreadsheet for those genomes. These will take up about
 1.5GB and will be placed in the `db/` subdirectory of the current working
 directory.
 
-## Developer info
+## Frequently Asked Questions
+
+#### Do I need to use the GTDB taxonomy with charcoal?
+
+charcoal uses DNA similarity to identify potential contamination, and
+relies on taxonomic annotations to decide if segments of shared DNA
+are contaminants are not. We think GTDB is the best choice for this
+purpose because their species-level clusters are based largely
+entirely on whole-genome similarity (Average Nucleotide Identity).
+
+However, outside of charcoal, there is no need to use GTDB for your genomes.
+charcoal will automatically classify your genomes for you and do the
+contamination analysis based on its own classification. The only
+time you need to work with the GTDB taxonomy is when you override this
+classification using the provided-lineages file.
+
+#### How do I use my own classification databases?
+
+You can absolutely use your own classification databases! You'll need
+to provide one or more collections of signatures calculated by
+sourmash (SBT or LCA databases, or multiple signatures), along with a
+lineage spreadsheet that connects sequence identifiers to taxonomy.
+The lineages spreadsheet should be in the form used as input by
+`sourmash lca index`.
+
+If you're adding to the default database used by charcoal, you'll need
+to provide your lineages in a GTDB-compatible way
+(e.g. `d__Eukaryota`).  But you can also easily use (e.g.) the NCBI
+taxonomy if you want; there are scripts available through
+[the sourmash project](https://github.com/dib-lab/sourmash) to help
+you with this, please ask
+[on the issue tracker](https://github.com/dib-lab/sourmash/issues).
+
+One warning: we do not yet have a simple way to evaluate the impact of
+confused taxonomies on charcoal's performance, and it's not
+immediately clear what would happen if a "bad" set of genomes or
+confounded set of taxonomies are provided to charcoal. See
+[charcoal issue #77](https://github.com/dib-lab/charcoal/issues/77).
+
+#### How do I decontaminate genomes that charcoal can't classify?
+
+With the default GTDB database, charcoal cannot automatically classify
+any eukaryote genomes, and may also miss unknown archaea and bacteria.
+However, this doesn't mean that charcoal cannot decontaminate these
+genomes.  You can provide your own lineages to charcoal and it will
+happily remove sequences that _disagree_ with those lineages -- see the
+`provided_lineages` option in the config file! charcoal will put
+unidentified sequences in the clean genome bin.
+
+## Developing charcoal
 
 charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
 
@@ -249,10 +313,24 @@ charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
 
 We welcome contributions - please feel free to open a Pull Request!
 
-Both scientific and engineering contributions shall be considered for
-authorship on software publications. This can include (but is not
-limited to) feature ideas, debugging, validation approaches, and
-documentation updates.
+Scientific, engineering and community contributors to charcoal are
+eligible for authorship on publications about the charcoal
+software. This can include (but is not limited to) documentation
+updates, detailed bug reporting, performance and benchmark reporting,
+validation and evaluation, and code contributions.
+
+### Our philosophy
+
+We adhere to the following guiding principles in developing charcoal:
+
+* we default to high specificity when removing contamination.
+* decisions made by charcoal will be clearly documented and supported by reporting.
+* decisions made by the software and the developers will be made transparently and documented via issues and pull requests.
+* the software will be documented and supported.
+* as of a v1.0 release, we will use [semantic versioning](https://semver.org/) to support stable use of charcoal in pipelines.
+* the developers of charcoal will strive to ["eat our own dogfood"](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) - we will document how and why we use it ourselves.
+* charcoal should work well with other programs and be a good member of the bioinformatics ecosystem.
+* the charcoal software should be well tested and stable.
 
 ### Running charcoal from the development repo
 
