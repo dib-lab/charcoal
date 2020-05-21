@@ -60,7 +60,7 @@ probably a contaminant.
   is removed as a contaminant.
 
 * Second, charcoal computes the lowest common ancestor (LCA) for all
-  the hashes in the contig. If the most common ancestor is **higher
+  the hashes in the contig. If the lowest common ancestor is **higher
   than** the configured match rank, the contig is removed as a
   contaminant.
 
