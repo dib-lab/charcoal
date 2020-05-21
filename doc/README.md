@@ -1,5 +1,7 @@
 # charcoal documentation
 
+May 2020
+
 Contents:
 * [Introduction](#introduction)
 * [How charcoal finds contamination](#how-charcoal-finds-contamination)
@@ -76,12 +78,25 @@ heavily based on the [sourmash](http://sourmash.rtfd.io/) software. We
 would especially like to thank Luiz Irber and Tessa Pierce for their
 intellectual contributions to charcoal development!
 
-We would also like to thank the
-[GTDB project](https://gtdb.ecogenomic.org/) for all their hard work!
+Erich Schwarz demonstrated the utility of a k-mer based approach to
+eukaryotic genome assembly decontamination a while back, and [contributed
+significantly](https://github.com/dib-lab/sourmash/issues/940) to pushing
+this forward in sourmash.
+
+Donovan Parks suggested using sourmash to develop systematic
+decontamination approaches.
+
+Boris Vinatzer, Lenwood Heath, Leighton Pritchard, and Jonathan Eisen
+also served as a useful sounding board in developing an understanding
+of the taxonomic issues at hand.
+
+We would especially like to thank the
+[GTDB project](https://gtdb.ecogenomic.org/) for all their hard work
+and their software and databases!
 
 charcoal development is funded by the Moore Foundation through grant
-GBMF4551 to C. Titus Brown. The current codebase is Copyright 2020,
-Regents of the University of California.
+GBMF4551 to C. Titus Brown. The codebase is Copyright 2020, Regents of
+the University of California (as of May 2020).
 
 This initial version of charcoal is a product of the [Lab for Data-
 Intensive Biology](http://ivory.idyll.org/lab/).
@@ -311,7 +326,8 @@ charcoal is developed collaboratively at https://github.com/dib-lab/charcoal/.
 
 ### Contributions and authorship
 
-We welcome contributions - please feel free to open a Pull Request!
+We welcome contributions - please feel free to open a Pull Request or [file an
+issue](https://github.com/dib-lab/charcoal/issues) to get started!
 
 Scientific, engineering and community contributors to charcoal are
 eligible for authorship on publications about the charcoal
