@@ -56,8 +56,8 @@ probably a contaminant.
 
 * First, charcoal searches 25,000 GTDB genomes using `sourmash gather`
   to see where the contig matches best against known genomes. If the
-  contig places within a lineage that has a different match rank, it
-  is removed as a contaminant.
+  contig places within a lineage that has a different match rank than
+  the genome, it is removed as a contaminant.
 
 * Second, charcoal computes the lowest common ancestor (LCA) for all
   the hashes in the contig. If the most common LCA is **higher than**
