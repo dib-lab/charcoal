@@ -197,6 +197,7 @@ rule contigs_clean_just_taxonomy:
         clean=output_dir + '/{f}.clean.fa.gz',
         dirty=output_dir + '/{f}.dirty.fa.gz',
         report=output_dir + '/{f}.report.txt',
+        contig_report=output_dir + '/{f}.contigs.csv',
         csv=output_dir + '/{f}.summary.csv'
     conda: 'conf/env-sourmash.yml'
     params:
@@ -210,7 +211,8 @@ rule contigs_clean_just_taxonomy:
             --clean {output.clean} --dirty {output.dirty} \
             --report {output.report} --summary {output.csv} \
             --lineage {params.lineage:q} {params.force} \
-            --match-rank {params.match_rank}
+            --match-rank {params.match_rank} \
+            --contig-report {output.contig_report}
     """
 
 # build the combined summary
