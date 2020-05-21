@@ -8,7 +8,7 @@ Contents:
 * [Installing charcoal](#installing-charcoal)
 * [Running charcoal](#running-charcoal)
 * [Configuring charcoal](#configuring-charcoal)
-* [Freqeuently Asked Questions](#frequently-asked-questions)
+* [Frequently Asked Questions](#frequently-asked-questions)
 * [Developing charcoal](#developing-charcoal)
 
 ## Introduction
@@ -21,7 +21,7 @@ It is focused on removing bacterial and archaeal contaminants for now.
 
 charcoal uses k-mer-based methods to identify potential
 contaminants. Contigs that are taxonomically inconsistent with the
-rest of the genome are identified and then remove.
+rest of the genome are identified and then removed.
 
 charcoal relies on reference databases of genomes with a high quality
 taxonomy to flag likely contamination.  We provide a database and set
