@@ -26,10 +26,11 @@ GATHER_MIN_MATCHES=3
 
 from enum import Enum
 class ContigInfo(Enum):
-    CLEAN = 1
-    DIRTY = 2
-    NO_IDENT = 3
-    NO_HASH = 4
+    "enum for contig information"
+    CLEAN = 1                             # proven clean
+    DIRTY = 2                             # proven dirty
+    NO_IDENT = 3                          # no identified hashes in contig
+    NO_HASH = 4                           # no hashes in this contig
 
 
 class ContigReport(object):
