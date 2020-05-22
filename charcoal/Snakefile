@@ -4,6 +4,7 @@
 # --configfile must be specified on command line.
 #
 import csv, sys
+from snakemake.workflow import srcdir
 
 strict_val = config.get('strict', '1')
 strict_mode = int(strict_val)
@@ -190,6 +191,7 @@ rule gather_all:
 # actually do cleaning
 rule contigs_clean_just_taxonomy:
     input:
+#        script = srcdir('just_taxonomy.py'),
         genome = genome_dir + '/{f}',
         matches = output_dir + '/{f}.gather-matches.sig',
         lineages = config['lineages_csv']

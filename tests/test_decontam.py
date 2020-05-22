@@ -559,9 +559,10 @@ def test_cleaner_lca_method1_1():
 
     mh = empty_mh.copy_and_clear()
     mh.add_sequence(chunk1[0].sequence, force=True)
-    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=True)
+    clean_flag, ctg_lin, hash_cnt, reason = cleaner.check_lca(chunk1[0], mh, report_fp, force_report=False)
     assert clean_flag == ContigInfo.DIRTY
     assert cleaner.n_reason_2 == 1
+    assert '** hashval lca counts' in report_fp.getvalue()
 
 
 def test_cleaner_lca_method_nohash():
