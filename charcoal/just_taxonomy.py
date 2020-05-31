@@ -552,6 +552,16 @@ def main(args):
 
     report(f'K-mer classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
 
+    if f_major == 1.0 and f_ident == 1.0:
+        comment = "All genome hashes belong to one lineage! Nothing to do."
+        report(comment)
+        create_empty_output(genomebase, comment, args.summary,
+                            None, args.contig_report,
+                            args.clean, args.dirty,
+                            lca_lineage=lca_genome_lineage,
+                            f_ident=f_ident, f_major=f_major)
+        return 0
+
     # did we get a passed-in lineage assignment?
     provided_lin = ""
     if args.lineage and args.lineage != 'NA':
