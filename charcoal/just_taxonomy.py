@@ -142,7 +142,7 @@ class WriteAndTrackFasta(object):
         self.outfp.close()
 
 
-def do_gather_breakdown(minhash, lca_db, min_matches, report_fp):
+def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, match_rank, report_fp):
     "Report all gather matches to report_fp; return first match sig."
     import copy
     minhash = copy.copy(minhash)
@@ -166,7 +166,15 @@ def do_gather_breakdown(minhash, lca_db, min_matches, report_fp):
             first_match_under_fp = True
             print('  --------- (likely false positives below this line) ---------', file=report_fp)
 
-        print(f'  {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
+        # check lineage - contam or not, at match rank?
+        match_ident = get_ident(match_sig)
+        match_lineage = lin_db.ident_to_lineage[match_ident]
+        if utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
+            flag = '  '
+        else:
+            flag = '!!'
+
+        print(f'  {flag} {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
 
@@ -637,8 +645,9 @@ def main(args):
     clean_mh = cleaner.clean_out.minhash
     first_match = None
     if clean_mh:
-        first_match = do_gather_breakdown(clean_mh, lca_db,
+        first_match = do_gather_breakdown(clean_mh, lca_db, lin_db,
                                           GATHER_MIN_MATCHES,
+                                          genome_lineage, match_rank,
                                           report_fp)
 
     if not first_match:
