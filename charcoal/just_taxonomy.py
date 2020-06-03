@@ -132,6 +132,9 @@ def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
                 lineage = utils.pop_to_rank(lineage, rank)
                 counts[lineage] += 1
 
+    # if we entered this function, we should have matches.
+    assert counts
+
     genome_lineage, count = next(iter(counts.most_common()))
 
     f_ident = identified_counts / len(entire_mh)

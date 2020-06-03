@@ -80,3 +80,32 @@ def test_main_1():
         with open(args.report, 'rt') as fp:
             data = fp.read()
             assert 'All genome hashes belong to one lineage! Nothing to do.' in data
+
+
+def test_main_2_unknown_lineage():
+    # no matches
+    genome = get_test_data('genomes/2.fa.gz')
+    lineages_csv = get_test_data('test-match-lineages.csv')
+
+    with TempDirectory() as tmpdir:
+        matches_sig = os.path.join(tmpdir, 'empty.sig')
+        # create empty file
+        with open(matches_sig, 'wt') as fp:
+            pass
+
+        args = build_args_with_tmpdir(tmpdir,
+                                      genome=genome, matches_sig=matches_sig,
+                                      lineages_csv=lineages_csv,
+                                      match_rank='order')
+
+        main(args)
+
+        assert os.path.exists(args.clean)
+        assert os.path.exists(args.dirty)
+        assert os.path.exists(args.report)
+        assert os.path.exists(args.summary)
+        assert os.path.exists(args.contig_report)
+
+        with open(args.report, 'rt') as fp:
+            data = fp.read()
+            assert 'no matches to this genome were found in the database; nothing to do' in data
