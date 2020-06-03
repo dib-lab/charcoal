@@ -1,3 +1,5 @@
+"Test decontamination logic and actions."
+
 from io import StringIO
 import gzip
 
