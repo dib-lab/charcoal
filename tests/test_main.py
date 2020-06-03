@@ -2,9 +2,11 @@ import types
 import tempfile
 import shutil
 import os.path
+import random
 
 
 from charcoal.just_taxonomy import main
+from .test_decontam import load_first_chunk
 
 
 def get_test_data(filename):
@@ -109,3 +111,81 @@ def test_main_2_unknown_lineage():
         with open(args.report, 'rt') as fp:
             data = fp.read()
             assert 'no matches to this genome were found in the database; nothing to do' in data
+
+
+def test_main_3_unknown_lineage():
+    # ???
+    chunk = load_first_chunk(get_test_data('genomes/2.fa.gz'))[0]
+    matches_sig = get_test_data('2.fa.gz.gather-matches.sig.gz')
+    lineages_csv = get_test_data('test-match-lineages.csv')
+
+    random_dna = ['A', 'C', 'G', 'T'] * int(50000 * 10)
+    random.shuffle(random_dna)
+    random_dna = "".join(random_dna)
+
+    with TempDirectory() as tmpdir:
+        genomefile = os.path.join(tmpdir, 'genome.fa')
+        with open(genomefile, 'wt') as fp:
+            print(f'>{chunk.name}\n{chunk.sequence}', file=fp)
+            print(f'>random\n{random_dna}\n', file=fp)
+
+        lineage = ''
+        args = build_args_with_tmpdir(tmpdir,
+                                      genome=genomefile,
+                                      matches_sig=matches_sig,
+                                      lineages_csv=lineages_csv,
+                                      lineage=lineage,
+                                      match_rank='order',
+                                      force=False)
+
+        main(args)
+
+        assert os.path.exists(args.clean)
+        assert os.path.exists(args.dirty)
+        assert os.path.exists(args.report)
+        assert os.path.exists(args.summary)
+        assert os.path.exists(args.contig_report)
+
+        with open(args.report, 'rt') as fp:
+            data = fp.read()
+            print(data)
+            assert 'ERROR: fraction of total identified hashes (f_ident) < 10%.' in data
+
+
+def test_main_4_unknown_lineage():
+    # ???
+    chunk = load_first_chunk(get_test_data('genomes/2.fa.gz'))[0]
+    matches_sig = get_test_data('2.fa.gz.gather-matches.sig.gz')
+    lineages_csv = get_test_data('test-match-lineages.csv')
+
+    random_dna = ['A', 'C', 'G', 'T'] * int(50000 * 10)
+    random.shuffle(random_dna)
+    random_dna = "".join(random_dna)
+
+    with TempDirectory() as tmpdir:
+        genomefile = os.path.join(tmpdir, 'genome.fa')
+        with open(genomefile, 'wt') as fp:
+            print(f'>{chunk.name}\n{chunk.sequence}', file=fp)
+            print(f'>random\n{random_dna}\n', file=fp)
+
+        lineage = 'Bacteria;Verrucomicrobia;Verrucomicrobiae;Verrucomicrobiales'
+        args = build_args_with_tmpdir(tmpdir,
+                                      genome=genomefile,
+                                      matches_sig=matches_sig,
+                                      lineages_csv=lineages_csv,
+                                      lineage=lineage,
+                                      match_rank='order',
+                                      force=False)
+
+        main(args)
+
+        assert os.path.exists(args.clean)
+        assert os.path.exists(args.dirty)
+        assert os.path.exists(args.report)
+        assert os.path.exists(args.summary)
+        assert os.path.exists(args.contig_report)
+
+        with open(args.report, 'rt') as fp:
+            data = fp.read()
+            print(data)
+            assert 'Using provided lineage as genome lineage.' in data
