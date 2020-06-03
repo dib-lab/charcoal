@@ -1,3 +1,5 @@
+"Test main() behavior, including file creation etc."
+
 import types
 import tempfile
 import shutil
