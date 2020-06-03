@@ -19,6 +19,9 @@ from . import utils
 from . import lineage_db
 from .lineage_db import LineageDB
 from .version import version
+from .utils import (get_idents_for_hashval, gather_lca_assignments,
+    count_lca_for_assignments, pretty_print_lineage, pretty_print_lineage2,
+    WriteAndTrackFasta)
 
 
 GATHER_MIN_MATCHES=3
@@ -33,6 +36,14 @@ class ContigInfo(Enum):
     NO_HASH = 4                           # no hashes in this contig
 
 
+def get_ident(sig):
+    "Hack and slash identifiers."
+    ident = sig.name()
+    ident = ident.split()[0]
+    ident = ident.split('.')[0]
+    return ident
+
+
 class ContigReport(object):
     # output in addition: genomefile, genome taxonomy, match_rank
     def __init__(self, contig_name, bp, info, reason, lineage, total_hashes,
@@ -45,101 +56,6 @@ class ContigReport(object):
         self.total_hashes = total_hashes
         self.ident_hashes = ident_hashes
         self.match_hashes = match_hashes
-
-
-def get_idents_for_hashval(lca_db, hashval):
-    "Get the identifiers associated with this hashval."
-    idx_list = lca_db.hashval_to_idx.get(hashval, [])
-    for idx in idx_list:
-        ident = lca_db.idx_to_ident[idx]
-        yield ident
-
-
-def gather_lca_assignments(hashvals, rank, dblist, ldb):
-    """
-    Collect lineage assignments from across all the databases for all the
-    hashvals.
-    """
-    assignments = defaultdict(set)
-    for hashval in hashvals:
-        for lca_db in dblist:
-            lineages = set()
-            for ident in get_idents_for_hashval(lca_db, hashval):
-                lineage = ldb.ident_to_lineage[ident]
-
-                if rank:
-                    lineage = utils.pop_to_rank(lineage, rank)
-                assignments[hashval].add(lineage)
-
-    return assignments
-
-
-def count_lca_for_assignments(assignments):
-    """
-    For each hashval, count the LCA across its assignments.
-    """
-    counts = Counter()
-    for hashval in assignments:
-
-        # for each list of tuple_info [(rank, name), ...] build
-        # a tree that lets us discover lowest-common-ancestor.
-        lineages = assignments[hashval]
-        tree = sourmash.lca.build_tree(lineages)
-
-        # now find either a leaf or the first node with multiple
-        # children; that's our lowest-common-ancestor node.
-        lca, reason = sourmash.lca.find_lca(tree)
-        counts[lca] += 1
-
-    return counts
-
-
-def pretty_print_lineage(lin):
-    "Nice output names for lineages."
-    if not lin:
-        return f'** no assignment **'
-    elif lin[-1].rank == 'strain':
-        strain = lin[-1].name
-        return f'{strain}'
-    elif lin[-1].rank == 'species':
-        species = lin[-1].name
-        return f'{species}'
-    else:
-        return f'{lin[-1].rank} {lin[-1].name}'
-
-
-def pretty_print_lineage2(lin, rank):
-    "Nice output names for lineages."
-    if not lin:
-        return f'** no assignment **'
-
-    lin = utils.pop_to_rank(lin, rank)
-    return sourmash.lca.display_lineage(lin)
-
-
-def get_ident(sig):
-    "Hack and slash identifiers."
-    ident = sig.name()
-    ident = ident.split()[0]
-    ident = ident.split('.')[0]
-    return ident
-
-
-class WriteAndTrackFasta(object):
-    def __init__(self, outfp, mh_ex):
-        self.minhash = mh_ex.copy_and_clear()
-        self.outfp = outfp
-        self.n = 0
-        self.bp = 0
-
-    def write(self, record):
-        self.outfp.write(f'>{record.name}\n{record.sequence}\n')
-        self.minhash.add_sequence(record.sequence, force=True)
-        self.n += 1
-        self.bp += len(record.sequence)
-
-    def close(self):
-        self.outfp.close()
 
 
 def do_gather_breakdown(minhash, lca_db, min_matches, report_fp):

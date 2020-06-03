@@ -2,61 +2,11 @@
 utility functions for charcoal.
 """
 import math
-import numpy as np
-from numpy import genfromtxt
+from collections import defaultdict, Counter
 import screed
 
+import sourmash
 from sourmash.lca import lca_utils
-
-
-def load_hashset(filename):
-    "Load set of hashes from a file."
-    with open(filename, 'rt') as fp:
-        hashes = set([ int(x.strip()) for x in fp if x.strip() ])
-    return hashes
-
-
-def load_matrix_csv(filename):
-    mat = genfromtxt(filename, delimiter=',')
-    return mat
-
-def make_distance_matrix(mat, delete_empty=False):
-    """
-    Construct distance matrix from metagenome x hash matrices.
-    """
-    n_hashes = mat.shape[1]
-    n_orig_hashes = n_hashes
-
-    # go through and normalize all the sample-presence vectors for each hash;
-    # track those with all 0s for later removal.
-    to_delete = []
-    for i in range(n_hashes):
-        if sum(mat[:, i]):
-            mat[:, i] /= math.sqrt(np.dot(mat[:, i], mat[:, i]))
-        else:
-            to_delete.append(i)
-
-    if delete_empty:
-        # remove all columns with zeros
-        print('removing {} null presence vectors'.format(len(to_delete)))
-        for row_n in reversed(to_delete):
-            mat = np.delete(mat, row_n, 1)
-
-        assert mat.shape[1] == n_hashes - len(to_delete)
-
-    n_hashes = mat.shape[1]
-
-    # construct distance matrix using angular distance
-    D = np.zeros((n_hashes, n_hashes))
-    for i in range(n_hashes):
-        for j in range(n_hashes):
-            cos_sim = np.dot(mat[:, i], mat[:, j])
-            cos_sim = min(cos_sim, 1.0)
-            ang_sim = 1 - 2*math.acos(cos_sim) / math.pi
-            D[i][j] = ang_sim
-
-    # done!
-    return D, n_orig_hashes
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -96,78 +46,88 @@ def pop_to_rank(lin, rank):
     return tuple(lin)
 
 
-class HashesToTaxonomy(object):
-    def __init__(self, genome_file, ksize, scaled, fragment_size, lca_db_file):
-        self.genome_file = genome_file
-        self.ksize = ksize
-        self.scaled = scaled
-        self.fragment_size = fragment_size
-        self.lca_db_file = lca_db_file
-
-        self.d = {}
-
-    def __setitem__(self, hashval, lineage):
-        self.d[hashval] = lineage
-
-    def __getitem__(self, hashval):
-        return self.d[hashval]
-
-    def __len__(self):
-        return len(self.d)
-
-    def __iter__(self):
-        return iter(self.d)
-
-    def items(self):
-        return self.d.items()
+def get_idents_for_hashval(lca_db, hashval):
+    "Get the identifiers associated with this hashval."
+    idx_list = lca_db.hashval_to_idx.get(hashval, [])
+    for idx in idx_list:
+        ident = lca_db.idx_to_ident[idx]
+        yield ident
 
 
-class HashesToLengths(object):
-    def __init__(self, genome_file, ksize, scaled, fragment_size):
-        self.genome_file = genome_file
-        self.ksize = ksize
-        self.scaled = scaled
-        self.fragment_size = fragment_size
+def gather_lca_assignments(hashvals, rank, dblist, ldb):
+    """
+    Collect lineage assignments from across all the databases for all the
+    hashvals.
+    """
+    assignments = defaultdict(set)
+    for hashval in hashvals:
+        for lca_db in dblist:
+            lineages = set()
+            for ident in get_idents_for_hashval(lca_db, hashval):
+                lineage = ldb.ident_to_lineage[ident]
 
-        self.d = {}
+                if rank:
+                    lineage = pop_to_rank(lineage, rank)
+                assignments[hashval].add(lineage)
 
-    def __setitem__(self, hashval, length):
-        self.d[hashval] = length
-
-    def __getitem__(self, hashval):
-        return self.d[hashval]
-
-    def __len__(self):
-        return len(self.d)
-
-    def __iter__(self):
-        return iter(self.d)
-
-    def items(self):
-        return self.d.items()
+    return assignments
 
 
-class MetagenomesMatrix(object):
-    def __init__(self, genome_file, query_hashlist, query_fragment_size, ksize):
-        self.genome_file = genome_file
-        self.query_hashlist = list(sorted(query_hashlist))
-        self.query_fragment_size = query_fragment_size
-        self.ksize = ksize
-        self.mat = None
+def count_lca_for_assignments(assignments):
+    """
+    For each hashval, count the LCA across its assignments.
+    """
+    counts = Counter()
+    for hashval in assignments:
+
+        # for each list of tuple_info [(rank, name), ...] build
+        # a tree that lets us discover lowest-common-ancestor.
+        lineages = assignments[hashval]
+        tree = sourmash.lca.build_tree(lineages)
+
+        # now find either a leaf or the first node with multiple
+        # children; that's our lowest-common-ancestor node.
+        lca, reason = sourmash.lca.find_lca(tree)
+        counts[lca] += 1
+
+    return counts
 
 
-class GenomeShredder(object):
-    def __init__(self, genome_file, fragment_size):
-        self.genome_file = genome_file
-        self.fragment_size = fragment_size
+def pretty_print_lineage(lin):
+    "Nice output names for lineages."
+    if not lin:
+        return f'** no assignment **'
+    elif lin[-1].rank == 'strain':
+        strain = lin[-1].name
+        return f'{strain}'
+    elif lin[-1].rank == 'species':
+        species = lin[-1].name
+        return f'{species}'
+    else:
+        return f'{lin[-1].rank} {lin[-1].name}'
 
-    def __iter__(self):
-        fragment_size = self.fragment_size
 
-        for record in screed.open(self.genome_file):
-            if not fragment_size:
-                yield record.name, record.sequence, 0, len(record.sequence)
-            else:
-                for start in range(0, len(record.sequence), fragment_size):
-                    seq = record.sequence[start:start + fragment_size]
-                    yield record.name, seq, start, start + len(seq)
+def pretty_print_lineage2(lin, rank):
+    "Nice output names for lineages."
+    if not lin:
+        return f'** no assignment **'
+
+    lin = pop_to_rank(lin, rank)
+    return sourmash.lca.display_lineage(lin)
+
+
+class WriteAndTrackFasta(object):
+    def __init__(self, outfp, mh_ex):
+        self.minhash = mh_ex.copy_and_clear()
+        self.outfp = outfp
+        self.n = 0
+        self.bp = 0
+
+    def write(self, record):
+        self.outfp.write(f'>{record.name}\n{record.sequence}\n')
+        self.minhash.add_sequence(record.sequence, force=True)
+        self.n += 1
+        self.bp += len(record.sequence)
+
+    def close(self):
+        self.outfp.close()
