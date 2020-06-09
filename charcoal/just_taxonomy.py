@@ -100,6 +100,40 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, ma
     return first_match
 
 
+def collect_gather_hashes(minhash, lca_db, lin_db, min_matches, genome_lineage, match_rank):
+    "Report all gather matches to report_fp; return first match sig."
+    import copy
+    minhash = copy.copy(minhash)
+    query_sig = sourmash.SourmashSignature(minhash)
+
+    threshold_percent = min_matches / len(minhash)
+    hashes = set()
+
+    # do the gather:
+    while 1:
+        results = lca_db.gather(query_sig, threshold_bp=0)
+        if not results:
+            break
+
+        (match, match_sig, _) = results[0]
+
+        if match <= threshold_percent:
+            break
+
+        # check lineage - contam or not, at match rank?
+        match_ident = get_ident(match_sig)
+        match_lineage = lin_db.ident_to_lineage[match_ident]
+        if utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
+            pass
+        else:
+            hashes.update(match_sig.minhash.get_mins())
+
+        minhash.remove_many(match_sig.minhash.get_mins())
+        query_sig = sourmash.SourmashSignature(minhash)
+
+    return hashes
+
+
 def create_empty_output(genome, comment, summary, report, contig_report,
                         clean, dirty,
                         f_major="", f_ident="",
@@ -330,6 +364,8 @@ class ContigsDecontaminator(object):
 
         ctg_tax_assign = count_lca_for_assignments(ctg_assign)
         if not ctg_tax_assign:
+            x = set(contig_mh.get_mins())
+            assert not x.intersection(self.bad_hashes)
             return ContigInfo.NO_IDENT, "", 0, 0
 
         clean_flag = ContigInfo.CLEAN
@@ -350,7 +386,7 @@ class ContigsDecontaminator(object):
 
         # first check - is the majority LCA of hashes in this contig
         # outside the match rank?
-        if (not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks):
+        if 0 and ((not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks)):
             bad_rank = "(root)"
             if ctg_lin:
                 bad_rank = ctg_lin[-1].rank
@@ -362,8 +398,8 @@ class ContigsDecontaminator(object):
                   file=report_fp)
         # second check - is the majority lineage of hashes in this contig
         # outside the match rank?
-        elif not utils.is_lineage_match(self.genome_lineage, ctg_lin,
-                                        self.match_rank):
+        elif 0 and (not utils.is_lineage_match(self.genome_lineage, ctg_lin,
+                                        self.match_rank)):
             clean_flag = ContigInfo.DIRTY
             self.n_reason_3 += 1
             reason = 3
@@ -373,8 +409,16 @@ class ContigsDecontaminator(object):
             print(f'   contig is {pretty_print_lineage2(ctg_lin, self.match_rank)}', file=report_fp)
             print(f'   vs genome {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
 
+        # intersect bad hashes?
+        x = set(contig_mh.get_mins())
+        do_report = len(x.intersection(self.bad_hashes))
+
         # summary reporting --
-        if clean_flag == ContigInfo.DIRTY or force_report:
+        if clean_flag == ContigInfo.DIRTY or force_report or do_report:
+            print(f'ZZZ intersection with bad hashes: {do_report} of {len(x)}', file=report_fp)
+            do_gather_breakdown(contig_mh, self.lca_db, self.lin_db,
+                                self.GATHER_THRESHOLD, self.genome_lineage,
+                                self.match_rank, report_fp)
             self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
                                      f_match, f_ident)
 
@@ -528,8 +572,14 @@ def main(args):
     report(f'\nFull lineage being used for contamination analysis:')
     report(f'   {sourmash.lca.display_lineage(genome_lineage)}')
 
+    bad_hashes = collect_gather_hashes(entire_mh, lca_db, lin_db,
+                                       GATHER_MIN_MATCHES,
+                                       genome_lineage, match_rank)
+    report(f'XXX {len(bad_hashes)}')
+
     cleaner = ContigsDecontaminator(genome_lineage, match_rank,
                                     empty_mh, lca_db, lin_db)
+    cleaner.bad_hashes = bad_hashes
 
     cleaner.set_clean_filename(args.clean)
     cleaner.set_dirty_filename(args.dirty)
