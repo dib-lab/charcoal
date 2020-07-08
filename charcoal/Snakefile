@@ -155,6 +155,13 @@ rule showconf:
 
 ###
 
+def make_moltype_compute_args(moltype):
+    if moltype == 'DNA':
+        args = "--dna"
+    elif moltype in ('protein', 'dayhoff', 'hp'):
+        args = "--no-dna --{}".format(moltype)
+    return args
+
 # generate a signature
 rule contigs_sig:
     input:
@@ -164,10 +171,11 @@ rule contigs_sig:
     conda: 'conf/env-sourmash.yml'
     params:
         scaled = config['scaled'],
-        ksize = config['ksize']
+        ksize = config['ksize'],
+        moltype = make_moltype_compute_args(config['moltype'])
     shell: """
         sourmash compute -k {params.ksize} --scaled {params.scaled} \
-            {input} -o {output}
+            {params.moltype} {input} -o {output}
     """
 
 # run a gather against the database.
@@ -180,9 +188,12 @@ rule gather_all:
         csv = output_dir + '/{filename}.gather-matches.csv',
         matches = output_dir + '/{filename}.gather-matches.sig',
         txt = output_dir + '/{filename}.gather-matches.txt'
+    params:
+        moltype = "--{}".format(config['moltype'].lower())
     conda: 'conf/env-sourmash.yml'
     shell: """
         sourmash gather {input.query} {input.databases} -o {output.csv} \
+            {params.moltype} \
             --save-matches {output.matches} --threshold-bp=0 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
