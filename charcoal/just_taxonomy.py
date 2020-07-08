@@ -25,6 +25,8 @@ from .utils import (get_idents_for_hashval, gather_lca_assignments,
 
 
 GATHER_MIN_MATCHES=3
+F_IDENT_THRESHOLD=0.01
+F_MAJOR_THRESHOLD=0.02
 
 
 from enum import Enum
@@ -390,11 +392,11 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
         genome_lineage = utils.pop_to_rank(provided_lineage, 'genus')
         report(f'\nUsing provided lineage as genome lineage.')
     else:
-        if f_ident < 0.1:
+        if f_ident < F_IDENT_THRESHOLD:
             report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome."
-        elif f_major < 0.2:
-            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
+            comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome." # @CTB
+        elif f_major < F_MAJOR_THRESHOLD:
+            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.') # @CTB
             comment = "too few hashes in major lineage; f_major < 20%. provide a lineage for this genome."
         else:
             genome_lineage = utils.pop_to_rank(lca_genome_lineage, 'genus')
