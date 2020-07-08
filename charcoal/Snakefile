@@ -216,7 +216,8 @@ rule contigs_clean_just_taxonomy:
     params:
         lineage = get_provided_lineage,
         force = force_param,
-        match_rank = match_rank
+        match_rank = match_rank,
+        moltype = config['moltype']
     shell: """
         python -m charcoal.just_taxonomy \
             --genome {input.genome} --lineages_csv {input.lineages} \

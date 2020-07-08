@@ -432,9 +432,10 @@ def main(args):
     empty_mh = siglist[0].minhash.copy_and_clear()
     ksize = empty_mh.ksize
     scaled = empty_mh.scaled
+    moltype = empty_mh.moltype
 
     # create empty LCA database to populate...
-    lca_db = LCA_Database(ksize=ksize, scaled=scaled)
+    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
     lin_db = LineageDB()
 
     # ...with specific matches.
