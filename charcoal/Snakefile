@@ -189,11 +189,12 @@ rule gather_all:
         matches = output_dir + '/{filename}.gather-matches.sig',
         txt = output_dir + '/{filename}.gather-matches.txt'
     params:
-        moltype = "--{}".format(config['moltype'].lower())
+        moltype = "--{}".format(config['moltype'].lower()),
+        gather_scaled = config['gather_scaled']
     conda: 'conf/env-sourmash.yml'
     shell: """
         sourmash gather {input.query} {input.databases} -o {output.csv} \
-            {params.moltype} \
+            {params.moltype} --scaled {params.gather_scaled} \
             --save-matches {output.matches} --threshold-bp=0 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
