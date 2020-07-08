@@ -1,5 +1,5 @@
 #!/bin/bash -login
-#SBATCH -p bmm                 # partition, or queue, to assign to
+#SBATCH -p med2                # partition, or queue, to assign to
 #SBATCH -J charcoal            # name for job
 #SBATCH -N 1                   # one "node", or computer
 #SBATCH -n 1                   # one task for this node
@@ -25,8 +25,9 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-charcoal run eval/tara-delmont-relaxed.conf -p -j 16 -k
-charcoal run eval/tara-delmont-strict.conf -p -j 16 -k
+#charcoal run eval/tara-delmont-relaxed.conf -p -j 16 -k
+#charcoal run eval/tara-delmont-strict.conf -p -j 16 -k
+charcoal run conf/ibd2.conf -j 16 -k
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables
