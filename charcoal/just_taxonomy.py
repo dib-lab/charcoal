@@ -25,6 +25,8 @@ from .utils import (get_idents_for_hashval, gather_lca_assignments,
 
 
 GATHER_MIN_MATCHES=3
+F_IDENT_THRESHOLD=0.1
+F_MAJOR_THRESHOLD=0.2
 
 
 from enum import Enum
@@ -85,12 +87,14 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, ma
         # check lineage - contam or not, at match rank?
         match_ident = get_ident(match_sig)
         match_lineage = lin_db.ident_to_lineage[match_ident]
-        if utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
-            flag = '  '
-        else:
-            flag = '!!'
+        match_lineage = utils.pop_to_rank(match_lineage, match_rank)
 
-        print(f'  {flag} {match*100:.2f}% - to {match_sig.name()}', file=report_fp)
+        lineage_display = match_lineage[-1].name
+        if not utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
+            lineage_display = '!! ' + lineage_display
+
+        print(f'  {match*100:.2f}% - to {match_sig.name()}, {lineage_display}', file=report_fp)
+
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
 
@@ -434,22 +438,22 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
     genome_lineage = None
 
     if provided_lineage:
-        if utils.is_lineage_match(provided_lineage, lca_genome_lineage, 'genus'):
-            report(f'(provided lineage agrees with k-mer classification at genus level)')
+        if utils.is_lineage_match(provided_lineage, lca_genome_lineage, match_rank):
+            report(f'(provided lineage agrees with k-mer classification at {match_rank} level)')
         else:
-            report(f'(provided lineage disagrees with k-mer classification at or above genus level)')
+            report(f'(provided lineage disagrees with k-mer classification at or above {match_rank} level)')
 
-        genome_lineage = utils.pop_to_rank(provided_lineage, 'genus')
+        genome_lineage = utils.pop_to_rank(provided_lineage, match_rank)
         report(f'\nUsing provided lineage as genome lineage.')
     else:
-        if f_ident < 0.1:
+        if f_ident < F_IDENT_THRESHOLD:
             report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome."
-        elif f_major < 0.2:
-            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.')
+            comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome." # @CTB
+        elif f_major < F_MAJOR_THRESHOLD:
+            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.') # @CTB
             comment = "too few hashes in major lineage; f_major < 20%. provide a lineage for this genome."
         else:
-            genome_lineage = utils.pop_to_rank(lca_genome_lineage, 'genus')
+            genome_lineage = utils.pop_to_rank(lca_genome_lineage, match_rank)
             report(f'Using LCA majority lineage as genome lineage.')
 
     return genome_lineage, comment
@@ -484,9 +488,10 @@ def main(args):
     empty_mh = siglist[0].minhash.copy_and_clear()
     ksize = empty_mh.ksize
     scaled = empty_mh.scaled
+    moltype = empty_mh.moltype
 
     # create empty LCA database to populate...
-    lca_db = LCA_Database(ksize=ksize, scaled=scaled)
+    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
     lin_db = LineageDB()
 
     # ...with specific matches.
