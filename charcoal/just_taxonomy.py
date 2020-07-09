@@ -300,7 +300,11 @@ class ContigsDecontaminator(object):
         if not results:
             return ContigInfo.NO_IDENT, "", 0
 
+        score = results[0][0]
         match = results[0][1]
+
+        if score < F_IDENT_THRESHOLD:
+            return ContigInfo.NO_IDENT, "", 0
 
         # get identity
         match_ident = get_ident(match)
