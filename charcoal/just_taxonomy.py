@@ -462,7 +462,8 @@ def main(args):
             report(f'found exact match: {ss.name()}. removing.')
         else:
             new_siglist.append(ss)
-    siglist = new_siglist
+    if new_siglist:
+        siglist = new_siglist
 
     # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
