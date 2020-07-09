@@ -25,8 +25,11 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-charcoal run eval/tara-delmont-relaxed.conf -p -j 16 -k
-charcoal run eval/tara-delmont-strict.conf -p -j 16 -k
+charcoal run conf/gtdb-random-dna.conf -p -j 16 -k --no-use-conda
+#charcoal run demo/demo.conf -p -j 16 -k --no-use-conda
+#charcoal run conf/tara-delmont.conf -p -j 16 -k --no-use-conda
+#charcoal run eval/tara-delmont-relaxed.conf -p -j 16 -k
+#charcoal run eval/tara-delmont-strict.conf -p -j 16 -k
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables

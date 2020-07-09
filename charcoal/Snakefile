@@ -193,9 +193,10 @@ rule gather_all:
         gather_scaled = config['gather_scaled']
     conda: 'conf/env-sourmash.yml'
     shell: """
-        sourmash gather {input.query} {input.databases} -o {output.csv} \
+        sourmash search {input.query} {input.databases} -o {output.csv} \
+            --containment \
             {params.moltype} --scaled {params.gather_scaled} \
-            --save-matches {output.matches} --threshold-bp=0 >& {output.txt}
+            --save-matches {output.matches} --threshold=0.001 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
     """
