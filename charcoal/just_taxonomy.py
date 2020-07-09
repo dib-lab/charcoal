@@ -436,20 +436,6 @@ def main(args):
     scaled = empty_mh.scaled
     moltype = empty_mh.moltype
 
-    # create empty LCA database to populate...
-    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
-    lin_db = LineageDB()
-
-    # ...with specific matches.
-    for ss in siglist:
-        ident = get_ident(ss)
-        lineage = tax_assign[ident]
-
-        lca_db.insert(ss, ident=ident)
-        lin_db.insert(ident, lineage)
-
-    print(f'loaded {len(siglist)} signatures & created LCA Database')
-
     report(f'charcoal version: v{version}')
     report(f'match_rank: {match_rank} / scaled: {scaled} / ksize: {ksize}')
     report('')
@@ -467,13 +453,15 @@ def main(args):
     report(f'{len(entire_mh)} hashes total.')
     report('')
 
-    # @CTB hack hack hack
+    # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
     for ss in siglist:
-        if entire_mh.similarity(ss.minhash) == 1.0:
-            report(f'found exact match: {ss.name()}. removing.')
-        else:
+        if entire_mh.similarity(ss.minhash) < 1.0:
             new_siglist.append(ss)
+        else:
+            report(f'found exact match: {ss.name()}. removing.')
+
+    # ...but leave exact matches in if they're the only matches, I guess!
     if new_siglist:
         siglist = new_siglist
 
@@ -488,6 +476,8 @@ def main(args):
 
         lca_db.insert(ss, ident=ident)
         lin_db.insert(ident, lineage)
+
+    print(f'loaded {len(siglist)} signatures & created LCA Database')
 
     # calculate lineage from majority vote on LCA
     lca_genome_lineage, f_major, f_ident = \
