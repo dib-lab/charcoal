@@ -436,6 +436,18 @@ def main(args):
     scaled = empty_mh.scaled
     moltype = empty_mh.moltype
 
+    # create empty LCA database to populate...
+    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
+    lin_db = LineageDB()
+
+    # ...with specific matches.
+    for ss in siglist:
+        ident = get_ident(ss)
+        lineage = tax_assign[ident]
+
+        lca_db.insert(ss, ident=ident)
+        lin_db.insert(ident, lineage)
+
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
     report(f'charcoal version: v{version}')
