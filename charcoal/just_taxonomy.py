@@ -517,7 +517,15 @@ def main(args):
         if entire_mh.similarity(ss.minhash) < 1.0:
             new_siglist.append(ss)
         else:
-            report(f'found exact match: {ss.name()}. removing.')
+            if args.lineage and args.lineage != 'NA':
+                report(f'found exact match: {ss.name()}. removing.')
+            else:
+                report(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
+                comment = "Exact match in matches, but no provided lineage."
+                create_empty_output(genomebase, comment, args.summary,
+                                    None, args.contig_report,
+                                    args.clean, args.dirty)
+                return 0
 
     # ...but leave exact matches in if they're the only matches, I guess!
     if new_siglist:
