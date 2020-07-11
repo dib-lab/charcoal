@@ -180,12 +180,12 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
 
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
     sum_ident = 0
-    first_lin = None
+    first_lin = ()
     first_count = 0
 
     for lin, count in gather_at_rank(entire_mh, lca_db, lin_db, match_rank):
         if count >= GATHER_MIN_MATCHES:
-            if first_lin is None:
+            if not first_lin:
                 first_lin = lin
                 first_count = count
 
@@ -429,10 +429,10 @@ def main(args):
     report('')
 
     # calculate lineage from majority vote on LCA
-    lca_genome_lineage, f_major, f_ident = \
+    guessed_genome_lineage, f_major, f_ident = \
          guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp)
 
-    report(f'Gather classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
+    report(f'Gather classification on this genome yields: {pretty_print_lineage(guessed_genome_lineage)}')
 
     if f_major == 1.0 and f_ident == 1.0:
         comment = "All genome hashes belong to one lineage! Nothing to do."
@@ -440,7 +440,7 @@ def main(args):
         create_empty_output(genomebase, comment, args.summary,
                             None, args.contig_report,
                             args.clean, args.dirty,
-                            lca_lineage=lca_genome_lineage,
+                            lca_lineage=guessed_genome_lineage,
                             f_ident=f_ident, f_major=f_major)
         return 0
 
@@ -452,7 +452,7 @@ def main(args):
         report(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
     # choose between the lineages
-    genome_lineage, comment = choose_genome_lineage(lca_genome_lineage,
+    genome_lineage, comment = choose_genome_lineage(guessed_genome_lineage,
                                                     provided_lin,
                                                     match_rank,
                                                     f_ident, f_major,
@@ -469,7 +469,7 @@ def main(args):
                                 None, args.contig_report,
                                 args.clean, args.dirty,
                                 provided_lin=provided_lin,
-                                lca_lineage=lca_genome_lineage,
+                                lca_lineage=guessed_genome_lineage,
                                 f_ident=f_ident, f_major=f_major)
             return 0
 
