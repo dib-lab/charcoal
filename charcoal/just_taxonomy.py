@@ -426,12 +426,14 @@ def main(args):
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
+    identical_match_removed = False
     for ss in siglist:
         if entire_mh.similarity(ss.minhash) < 1.0:
             new_siglist.append(ss)
         else:
             if args.lineage and args.lineage != 'NA':
                 report(f'found exact match: {ss.name()}. removing.')
+                identical_match_removed = True
             else:
                 report(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
                 comment = "Exact match in matches, but no provided lineage."
@@ -540,7 +542,7 @@ def main(args):
                                                            lin, match_rank):
             fail = True
 
-    if fail and 0:
+    if fail and identical_match_removed:
         print(f'\nbreakdown of dirty contigs w/gather:', file=report_fp)
         do_gather_breakdown(dirty_mh, lca_db, lin_db,
                             GATHER_MIN_MATCHES,
