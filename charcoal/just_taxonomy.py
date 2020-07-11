@@ -99,7 +99,7 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, ma
         query_sig = sourmash.SourmashSignature(minhash)
 
     if first_match_under_fp:
-        print(f'** note: matches under {threshold_percent*100:.3f}% may be false positives', file=report_fp)
+        print(f'** note: matches under {threshold_percent*100:.1f}% may be false positives', file=report_fp)
 
     return first_match
 
@@ -163,44 +163,52 @@ def create_empty_output(genome, comment, summary, report, contig_report,
     open(dirty, 'wt').close()
 
 
-def get_majority_lca_at_rank(entire_mh, lca_db, lin_db, rank, report_fp):
-    # get all of the hash taxonomy assignments for this genome
-    hash_assign = gather_lca_assignments(entire_mh.get_mins(), rank,
-                                         [lca_db], lin_db)
+def gather_at_rank(mh, lca_db, lin_db, match_rank):
+    import copy
+    minhash = copy.copy(mh)
+    query_sig = sourmash.SourmashSignature(minhash)
 
-    # count them and find major
+    # do the gather:
     counts = Counter()
-    identified_counts = 0
-    for hashval, lineages in hash_assign.items():
-        if lineages:
-            identified_counts += 1
-            for lineage in lineages:
-                lineage = utils.pop_to_rank(lineage, rank)
-                counts[lineage] += 1
+    while 1:
+        results = lca_db.gather(query_sig, threshold_bp=0)
+        if not results:
+            break
 
-    # if we entered this function, we should have matches.
-    assert counts
+        (match, match_sig, _) = results[0]
 
-    genome_lineage, count = next(iter(counts.most_common()))
+        # check lineage - contam or not, at match rank?
+        match_ident = get_ident(match_sig)
+        match_lineage = lin_db.ident_to_lineage[match_ident]
+        match_lineage = utils.pop_to_rank(match_lineage, match_rank)
 
-    f_ident = identified_counts / len(entire_mh)
-    f_major = count / identified_counts
-    total_counts = len(hash_assign)
+        common = match_sig.minhash.count_common(query_sig.minhash)
+        counts[match_lineage] += common
 
-    # report everything...
+        minhash.remove_many(match_sig.minhash.get_mins())
+        query_sig = sourmash.SourmashSignature(minhash)
 
-    print(f'{f_ident*100:.1f}% of total hashes identified.', file=report_fp)
-    print(f'{f_major*100:.1f}% of identified hashes match to {pretty_print_lineage2(genome_lineage, rank)}', file=report_fp)
-    print(f'({identified_counts} identified hashes, {count} in most common)', file=report_fp)
-    if f_major < 0.8:
-        print(f'** WARNING ** majority lineage is less than 80% of assigned lineages. Beware!', file=report_fp)
+    for k, v in counts.most_common():
+        yield k, v
 
-    print(f'\nhashval lineage counts for genome - {total_counts} => {total_counts*entire_mh.scaled/1000:.0f} kb', file=report_fp)
-    for lin, count in counts.most_common():
-        print(f'   {count*entire_mh.scaled/1000:.0f} kb {pretty_print_lineage2(lin, rank)}', file=report_fp)
-    print('', file=report_fp)
 
-    return genome_lineage, f_major, f_ident
+def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
+    sum_ident = 0
+    first_lin = None
+    first_count = 0
+
+    for lin, count in gather_at_rank(entire_mh, lca_db, lin_db, match_rank):
+        if count >= GATHER_MIN_MATCHES:
+            if first_lin is None:
+                first_lin = lin
+                first_count = count
+
+        sum_ident += count
+
+    f_ident = sum_ident / len(entire_mh)
+    f_major = first_count / sum_ident
+
+    return first_lin, f_ident, f_major
 
 
 class ContigsDecontaminator(object):
@@ -248,11 +256,6 @@ class ContigsDecontaminator(object):
             if mh and len(mh) >= self.GATHER_THRESHOLD:
                 clean_flag, ctg_lin, hash_cnt = self.check_gather(record, mh, report_fp)
                 if clean_flag == ContigInfo.DIRTY: reason = 1
-
-            # did we find a dirty contig in step 1? if NOT, go into LCA style
-            # approaches.
-            if mh and clean_flag != ContigInfo.DIRTY:
-                clean_flag, ctg_lin, hash_cnt, reason = self.check_lca(record, mh, report_fp)
 
             # track things
             if clean_flag == ContigInfo.NO_HASH:
@@ -320,7 +323,7 @@ class ContigsDecontaminator(object):
             clean = ContigInfo.DIRTY
             self.n_reason_1 += 1
 
-            print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
+            print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)\n', file=report_fp)
             print(f'contig dirty, REASON 1 - gather matches to lineage outside of genome\'s {self.match_rank}', file=report_fp)
             print(f'   contig gather yields match of {common_kb:.0f} kb to {pretty_print_lineage2(contig_lineage, self.match_rank)}', file=report_fp)
             print(f'   vs genome lineage of {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
@@ -345,92 +348,6 @@ class ContigsDecontaminator(object):
         for lin, count in ctg_counts.most_common():
             print(f'   {count*scaled/1000:.0f} kb {pretty_print_lineage2(lin, self.match_rank)}', file=report_fp)
         print('', file=report_fp)
-
-
-    def check_lca(self, record, contig_mh, report_fp, force_report=False):
-        """Does this contig have any hashes with LCA outside the given rank?
-
-        The first check in this method looks specifically at hashes that
-        belong to multiple or other lineages, i.e. identical sequence
-        that has "blurred" taxonomy.  These could be due to lateral gene
-        transfer, or mistakes in the taxonomy, or highly conserved
-        sequence, or something else. The 'taxonomic signature' of these
-        hashes is that the LCA of the hash is outside the match rank.
-
-        The second check in this method looks for contigs that have majority
-        LCA assignment outside of the allowed match rank.
-        """
-        reason = 0
-
-        if not contig_mh.get_mins():
-            return ContigInfo.NO_HASH, "", 0, 0
-
-        # get _all_ of the hash taxonomy assignments for this contig
-        ctg_assign = gather_lca_assignments(contig_mh.get_mins(), None,
-                                            [self.lca_db], self.lin_db)
-        f_ident = len(ctg_assign) / len(contig_mh)
-
-        ctg_tax_assign = count_lca_for_assignments(ctg_assign)
-        if not ctg_tax_assign:
-            x = set(contig_mh.get_mins())
-            assert not x.intersection(self.bad_hashes)
-            return ContigInfo.NO_IDENT, "", 0, 0
-
-        clean_flag = ContigInfo.CLEAN
-
-        # get top assignment for contig.
-        ctg_lin, lin_count = next(iter(ctg_tax_assign.most_common()))
-        f_match = lin_count / len(ctg_assign)
-
-        # assignment outside of genus? dirty!
-        ok_ranks = set()
-        passed_rank = False
-        for rank in sourmash.lca.taxlist():   # CTB: save on class.
-            if rank == self.match_rank:
-                passed_rank = True
-
-            if passed_rank:
-                ok_ranks.add(rank)
-
-        # first check - is the majority LCA of hashes in this contig
-        # outside the match rank?
-        if 0 and ((not ctg_lin) or (ctg_lin[-1].rank not in ok_ranks)):
-            bad_rank = "(root)"
-            if ctg_lin:
-                bad_rank = ctg_lin[-1].rank
-            clean_flag = ContigInfo.DIRTY
-            self.n_reason_2 += 1
-            reason = 2
-            print(f'\n---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 2 - contig LCA is above {self.match_rank}\nlca rank is {bad_rank}',
-                  file=report_fp)
-        # second check - is the majority lineage of hashes in this contig
-        # outside the match rank?
-        elif 0 and (not utils.is_lineage_match(self.genome_lineage, ctg_lin,
-                                        self.match_rank)):
-            clean_flag = ContigInfo.DIRTY
-            self.n_reason_3 += 1
-            reason = 3
-            print('', file=report_fp)
-            print(f'---- contig {record.name} ({len(record.sequence)/1000:.0f} kb)', file=report_fp)
-            print(f'contig dirty, REASON 3 - contig lineage is not a match to genome\'s {self.match_rank}', file=report_fp)
-            print(f'   contig is {pretty_print_lineage2(ctg_lin, self.match_rank)}', file=report_fp)
-            print(f'   vs genome {pretty_print_lineage2(self.genome_lineage, self.match_rank)}', file=report_fp)
-
-        # intersect bad hashes?
-        x = set(contig_mh.get_mins())
-        do_report = len(x.intersection(self.bad_hashes))
-
-        # summary reporting --
-        if clean_flag == ContigInfo.DIRTY or force_report or do_report:
-            print(f'ZZZ intersection with bad hashes: {do_report} of {len(x)}', file=report_fp)
-            do_gather_breakdown(contig_mh, self.lca_db, self.lin_db,
-                                self.GATHER_THRESHOLD, self.genome_lineage,
-                                self.match_rank, report_fp)
-            self._report_lca_summary(report_fp, ctg_tax_assign, ctg_assign,
-                                     f_match, f_ident)
-
-        return clean_flag, ctg_lin, lin_count, reason
 
 # END CLASS
 
@@ -458,7 +375,7 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
             comment = "too few hashes in major lineage; f_major < 20%. provide a lineage for this genome."
         else:
             genome_lineage = utils.pop_to_rank(lca_genome_lineage, match_rank)
-            report(f'Using LCA majority lineage as genome lineage.')
+            report(f'Using majority gather lineage as genome lineage.')
 
     return genome_lineage, comment
 
@@ -527,10 +444,9 @@ def main(args):
 
     # calculate lineage from majority vote on LCA
     lca_genome_lineage, f_major, f_ident = \
-         get_majority_lca_at_rank(entire_mh, lca_db, lin_db, match_rank,
-                                  report_fp)
+         guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp)
 
-    report(f'K-mer classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
+    report(f'Gather classification on this genome yields: {pretty_print_lineage(lca_genome_lineage)}')
 
     if f_major == 1.0 and f_ident == 1.0:
         comment = "All genome hashes belong to one lineage! Nothing to do."
