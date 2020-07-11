@@ -62,46 +62,32 @@ class ContigReport(object):
 
 def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, match_rank, report_fp):
     "Report all gather matches to report_fp; return first match sig."
-    import copy
-    minhash = copy.copy(minhash)
-    query_sig = sourmash.SourmashSignature(minhash)
-
     threshold_percent = min_matches / len(minhash)
 
     # do the gather:
-    first_match = None
+    first_count = None
     first_match_under_fp = False
-    while 1:
-        results = lca_db.gather(query_sig, threshold_bp=0)
-        if not results:
-            break
+    for lin, count in gather_at_rank(minhash, lca_db, lin_db, match_rank):
+        if not first_count:               # set first_count once
+            first_count = count
 
-        (match, match_sig, _) = results[0]
-        if not first_match:               # set first_match once
-            first_match = match_sig
-
-        if match <= threshold_percent and not first_match_under_fp:
+        if count <= min_matches and not first_match_under_fp:
             first_match_under_fp = True
             print('  --------- (likely false positives below this line) ---------', file=report_fp)
 
-        # check lineage - contam or not, at match rank?
-        match_ident = get_ident(match_sig)
-        match_lineage = lin_db.ident_to_lineage[match_ident]
-        match_lineage = utils.pop_to_rank(match_lineage, match_rank)
+        assert lin[-1].rank == match_rank
 
-        lineage_display = match_lineage[-1].name
-        if not utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
+        f_count = count / len(minhash)
+        lineage_display = lin[-1].name
+        if not utils.is_lineage_match(genome_lineage, lin, match_rank):
             lineage_display = '!! ' + lineage_display
 
-        print(f'  {match*100:.2f}% - to {match_sig.name()}, {lineage_display}', file=report_fp)
-
-        minhash.remove_many(match_sig.minhash.get_mins())
-        query_sig = sourmash.SourmashSignature(minhash)
+        print(f'  {f_count*100:.2f}% - to {lineage_display}', file=report_fp)
 
     if first_match_under_fp:
-        print(f'** note: matches under {threshold_percent*100:.1f}% may be false positives', file=report_fp)
+        print(f'** note: matches under {threshold_percent*100:.3f}% may be false positives', file=report_fp)
 
-    return first_match
+    return first_count
 
 
 def collect_gather_hashes(minhash, lca_db, lin_db, min_matches, genome_lineage, match_rank):
@@ -543,6 +529,16 @@ def main(args):
     # across all "clean" contigs. (CTB: Need to dig into this more to figure
     # out exactly why we still have any :)
 
+    # report gather breakdown of dirty signature
+    print(f'\nbreakdown of dirty contigs w/gather:', file=report_fp)
+
+    dirty_mh = cleaner.dirty_out.minhash
+    if dirty_mh:
+        do_gather_breakdown(dirty_mh, lca_db, lin_db,
+                            GATHER_MIN_MATCHES,
+                            genome_lineage, match_rank,
+                            report_fp)
+
     # report gather breakdown of clean signature
     print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
 
@@ -562,10 +558,10 @@ def main(args):
     match_lineage = ""
     ratio = 0.0
     if first_match:
-        nearest_size = len(first_match.minhash) * first_match.minhash.scaled
-        ident = get_ident(first_match)
-        match_lineage = lin_db.ident_to_lineage[ident]
-        ratio = round(clean_bp / nearest_size, 2)
+        nearest_size = first_match * scaled
+        ident = '**'
+        match_lineage = ""
+        ratio = 0
 
     # write out a one line summary:
     if args.summary:
