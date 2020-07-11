@@ -123,8 +123,9 @@ class WriteAndTrackFasta(object):
         self.n = 0
         self.bp = 0
 
-    def write(self, record):
-        self.outfp.write(f'>{record.name}\n{record.sequence}\n')
+    def write(self, record, no_write=False):
+        if not no_write:
+            self.outfp.write(f'>{record.name}\n{record.sequence}\n')
         self.minhash.add_sequence(record.sequence, force=True)
         self.n += 1
         self.bp += len(record.sequence)

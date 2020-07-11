@@ -174,8 +174,8 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
 
-    for k, v in counts.most_common():
-        yield k, v
+    for lin, count in counts.most_common():
+        yield lin, count
 
 
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
@@ -228,7 +228,7 @@ class ContigsDecontaminator(object):
         dirty_fp = gzip.open(filename, 'wt')
         self.dirty_out = WriteAndTrackFasta(dirty_fp, self.empty_mh)
 
-    def clean_contigs(self, screed_iter, report_fp):
+    def clean_contigs(self, screed_iter, report_fp, no_write=False):
         for n, record in enumerate(screed_iter):
             # make a new minhash and start examining it.
             mh = self.empty_mh.copy_and_clear()
@@ -254,11 +254,11 @@ class ContigsDecontaminator(object):
             # write out contigs -> clean or dirty files.
             if clean_flag != ContigInfo.DIRTY:   # non-dirty => clean
                 if self.clean_out:
-                    self.clean_out.write(record)
+                    self.clean_out.write(record, no_write=no_write)
             else:
                 assert clean_flag == ContigInfo.DIRTY
                 if self.dirty_out:
-                    self.dirty_out.write(record)
+                    self.dirty_out.write(record, no_write=no_write)
 
             hash_ident_cnt = 0
             for hashval in mh.get_mins():
@@ -281,6 +281,16 @@ class ContigsDecontaminator(object):
         """
         if not contig_mh:
             return ContigInfo.NO_HASH, "", 0
+
+        good_count = 0
+        for lin, count in gather_at_rank(contig_mh, self.lca_db,
+                                         self.lin_db, self.match_rank):
+            if utils.is_lineage_match(lin, self.genome_lineage,
+                                      self.match_rank):
+                good_count += count
+
+        if good_count >= self.GATHER_THRESHOLD:
+            return ContigInfo.CLEAN, "", good_count
 
         threshold_bp = contig_mh.scaled * self.GATHER_THRESHOLD
         results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
@@ -502,6 +512,27 @@ def main(args):
     # do the cleaning
     screed_iter = screed.open(args.genome)
     cleaner.clean_contigs(screed_iter, report_fp)
+    dirty_mh = cleaner.dirty_out.minhash
+
+    fail = False
+    for lin, count in gather_at_rank(dirty_mh, lca_db, lin_db, match_rank):
+        if count >= GATHER_MIN_MATCHES and utils.is_lineage_match(genome_lineage,
+                                                           lin, match_rank):
+            fail = True
+
+    if fail and 0:
+        print(f'\nbreakdown of dirty contigs w/gather:', file=report_fp)
+        do_gather_breakdown(dirty_mh, lca_db, lin_db,
+                            GATHER_MIN_MATCHES,
+                            genome_lineage, match_rank,
+                            report_fp)
+
+        comment = "cannot remove contamination without removing clean sequence; punting"
+        report(comment)
+        create_empty_output(genomebase, comment, args.summary,
+                            args.report, args.contig_report, args.clean,
+                            args.dirty)
+        sys.exit(0)
 
     # recover information from cleaner object
     clean_n = cleaner.clean_out.n
