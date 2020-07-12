@@ -67,7 +67,7 @@ class ContigReport(object):
 def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage,
                         match_rank, report_fp,
                         reverse_flag=False, display_fp=False):
-    "Report all gather matches to report_fp; return first match sig."
+    "Report all gather matches to report_fp; return first match count."
     threshold_percent = min_matches / len(minhash)
 
     # do the gather:
@@ -86,6 +86,7 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage,
 
         assert lin[-1].rank == match_rank
 
+        # display matches --
         f_count = count / len(minhash)
         lineage_display = lin[-1].name
 
@@ -93,6 +94,7 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage,
         if not utils.is_lineage_match(genome_lineage, lin, match_rank):
             matches_lineage = False
 
+        # should we flag this match?
         if not matches_lineage and not reverse_flag:
             lineage_display = '!! ' + lineage_display
         elif matches_lineage and reverse_flag:
@@ -130,7 +132,7 @@ def collect_gather_hashes(minhash, lca_db, lin_db, min_matches, genome_lineage, 
         match_ident = get_ident(match_sig)
         match_lineage = lin_db.ident_to_lineage[match_ident]
         if utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
-            pass
+            pass # matches!
         else:
             hashes.update(match_sig.minhash.get_mins())
 
@@ -144,6 +146,7 @@ def create_empty_output(genome, comment, summary, report, contig_report,
                         clean, dirty,
                         f_major="", f_ident="",
                         provided_lin="", lca_lineage=""):
+    "Create empty output from early exit, so snakemake doesn't complain."
     if summary:
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
@@ -166,6 +169,7 @@ def create_empty_output(genome, comment, summary, report, contig_report,
 
 
 def gather_at_rank(mh, lca_db, lin_db, match_rank):
+    "Run gather, and aggregate at given rank."
     import copy
     minhash = copy.copy(mh)
     query_sig = sourmash.SourmashSignature(minhash)
@@ -179,28 +183,33 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
 
         (match, match_sig, _) = results[0]
 
-        # check lineage - contam or not, at match rank?
+        # retrieve lineage & pop to match_rank
         match_ident = get_ident(match_sig)
         match_lineage = lin_db.ident_to_lineage[match_ident]
         match_lineage = utils.pop_to_rank(match_lineage, match_rank)
 
+        # count at match_rank
         common = match_sig.minhash.count_common(query_sig.minhash)
         counts[match_lineage] += common
 
+        # finish out gather algorithm!
         minhash.remove_many(match_sig.minhash.get_mins())
         query_sig = sourmash.SourmashSignature(minhash)
 
+    # return!
     for lin, count in counts.most_common():
         yield lin, count
 
 
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
+    "Guess likely taxonomy using gather."
     sum_ident = 0
     first_lin = ()
     first_count = 0
 
     for lin, count in gather_at_rank(entire_mh, lca_db, lin_db, match_rank):
         if count >= GATHER_MIN_MATCHES:
+            # record the first lineage we come across as likely lineage.
             if not first_lin:
                 first_lin = lin
                 first_count = count
@@ -382,17 +391,19 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
         report(f'\nUsing provided lineage as genome lineage.')
     else:
         if f_ident < F_IDENT_THRESHOLD:
-            report(f'** ERROR: fraction of total identified hashes (f_ident) < 10%.')
-            comment = "too few identifiable hashes; f_ident < 10%. provide a lineage for this genome." # @CTB
+            report(f'** ERROR: fraction of total identified hashes (f_ident) < {F_IDENT_THRESHOLD*100:.0f}%.')
+            comment = f"too few identifiable hashes; f_ident < {F_IDENT_THRESHOLD*100:.0f}%. provide a lineage for this genome."
         elif f_major < F_MAJOR_THRESHOLD:
-            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < 20%.') # @CTB
-            comment = "too few hashes in major lineage; f_major < 20%. provide a lineage for this genome."
+            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {F_MAJOR_THRESHOLD*100:.0f}%.')
+            comment = f"too few hashes in major lineage; f_major < {F_MAJOR_THRESHOLD*100:.0f}%. provide a lineage for this genome."
         else:
             genome_lineage = utils.pop_to_rank(lca_genome_lineage, match_rank)
             report(f'Using majority gather lineage as genome lineage.')
 
     return genome_lineage, comment
 
+
+###
 
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
@@ -604,8 +615,7 @@ def main(args):
     report(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, and were counted as clean')
 
     # look at what our database says about remaining contamination,
-    # across all "clean" contigs. (CTB: Need to dig into this more to figure
-    # out exactly why we still have any :)
+    # across all "clean" contigs.
 
     # report gather breakdown of dirty signature
     print(f'\nbreakdown of dirty sequence w/gather ({dirty_n} contigs, {kb(dirty_bp)} kb):', file=report_fp)
