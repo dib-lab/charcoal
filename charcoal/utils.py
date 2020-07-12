@@ -132,3 +132,44 @@ class WriteAndTrackFasta(object):
 
     def close(self):
         self.outfp.close()
+
+
+def gather_at_rank(mh, lca_db, lin_db, match_rank):
+    "Run gather, and aggregate at given rank."
+    import copy
+    minhash = copy.copy(mh)
+    query_sig = sourmash.SourmashSignature(minhash)
+
+    # do the gather:
+    counts = Counter()
+    while 1:
+        results = lca_db.gather(query_sig, threshold_bp=0)
+        if not results:
+            break
+
+        (match, match_sig, _) = results[0]
+
+        # retrieve lineage & pop to match_rank
+        match_ident = get_ident(match_sig)
+        match_lineage = lin_db.ident_to_lineage[match_ident]
+        match_lineage = pop_to_rank(match_lineage, match_rank)
+
+        # count at match_rank
+        common = match_sig.minhash.count_common(query_sig.minhash)
+        counts[match_lineage] += common
+
+        # finish out gather algorithm!
+        minhash.remove_many(match_sig.minhash.get_mins())
+        query_sig = sourmash.SourmashSignature(minhash)
+
+    # return!
+    for lin, count in counts.most_common():
+        yield lin, count
+
+
+def get_ident(sig):
+    "Hack and slash identifiers."
+    ident = sig.name()
+    ident = ident.split()[0]
+    ident = ident.split('.')[0]
+    return ident

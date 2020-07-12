@@ -21,7 +21,7 @@ from .lineage_db import LineageDB
 from .version import version
 from .utils import (get_idents_for_hashval, gather_lca_assignments,
     count_lca_for_assignments, pretty_print_lineage, pretty_print_lineage2,
-    WriteAndTrackFasta)
+    WriteAndTrackFasta, gather_at_rank, get_ident)
 
 
 GATHER_MIN_MATCHES=3
@@ -40,14 +40,6 @@ class ContigInfo(Enum):
 
 def kb(bp):
     return int(bp/1000)
-
-
-def get_ident(sig):
-    "Hack and slash identifiers."
-    ident = sig.name()
-    ident = ident.split()[0]
-    ident = ident.split('.')[0]
-    return ident
 
 
 class ContigReport(object):
@@ -108,55 +100,21 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage,
     return first_count
 
 
-def collect_gather_hashes(minhash, lca_db, lin_db, min_matches, genome_lineage, match_rank):
-    "Report all gather matches to report_fp; return first match sig."
-    import copy
-    minhash = copy.copy(minhash)
-    query_sig = sourmash.SourmashSignature(minhash)
-
-    threshold_percent = min_matches / len(minhash)
-    hashes = set()
-
-    # do the gather:
-    while 1:
-        results = lca_db.gather(query_sig, threshold_bp=0)
-        if not results:
-            break
-
-        (match, match_sig, _) = results[0]
-
-        if match <= threshold_percent:
-            break
-
-        # check lineage - contam or not, at match rank?
-        match_ident = get_ident(match_sig)
-        match_lineage = lin_db.ident_to_lineage[match_ident]
-        if utils.is_lineage_match(genome_lineage, match_lineage, match_rank):
-            pass # matches!
-        else:
-            hashes.update(match_sig.minhash.get_mins())
-
-        minhash.remove_many(match_sig.minhash.get_mins())
-        query_sig = sourmash.SourmashSignature(minhash)
-
-    return hashes
-
-
 def create_empty_output(genome, comment, summary, report, contig_report,
                         clean, dirty,
                         f_major="", f_ident="",
-                        provided_lin="", lca_lineage=""):
+                        provided_lin="", guessed_lineage=""):
     "Create empty output from early exit, so snakemake doesn't complain."
     if summary:
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
-            if lca_lineage:
-                lca_lineage = sourmash.lca.display_lineage(lca_lineage)
+            if guessed_lineage:
+                guessed_lineage = sourmash.lca.display_lineage(guessed_lineage)
             if provided_lin:
                 provided_lin = sourmash.lca.display_lineage(provided_lin)
 
             row = [genome] + ["", f_major, f_ident] + [""]*14 + \
-               [lca_lineage, provided_lin, comment]
+               [guessed_lineage, provided_lin, comment]
             w.writerow(row)
     if report:
         with open(report, 'wt') as fp:
@@ -166,39 +124,6 @@ def create_empty_output(genome, comment, summary, report, contig_report,
             pass
     open(clean, 'wt').close()
     open(dirty, 'wt').close()
-
-
-def gather_at_rank(mh, lca_db, lin_db, match_rank):
-    "Run gather, and aggregate at given rank."
-    import copy
-    minhash = copy.copy(mh)
-    query_sig = sourmash.SourmashSignature(minhash)
-
-    # do the gather:
-    counts = Counter()
-    while 1:
-        results = lca_db.gather(query_sig, threshold_bp=0)
-        if not results:
-            break
-
-        (match, match_sig, _) = results[0]
-
-        # retrieve lineage & pop to match_rank
-        match_ident = get_ident(match_sig)
-        match_lineage = lin_db.ident_to_lineage[match_ident]
-        match_lineage = utils.pop_to_rank(match_lineage, match_rank)
-
-        # count at match_rank
-        common = match_sig.minhash.count_common(query_sig.minhash)
-        counts[match_lineage] += common
-
-        # finish out gather algorithm!
-        minhash.remove_many(match_sig.minhash.get_mins())
-        query_sig = sourmash.SourmashSignature(minhash)
-
-    # return!
-    for lin, count in counts.most_common():
-        yield lin, count
 
 
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
@@ -373,16 +298,16 @@ class ContigsDecontaminator(object):
 # END CLASS
 
 
-def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
+def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
                           f_ident, f_major, report):
 
     comment = ""
     genome_lineage = None
 
     if provided_lineage:
-        if utils.is_lineage_match(provided_lineage, lca_genome_lineage, match_rank):
+        if utils.is_lineage_match(provided_lineage, guessed_genome_lineage, match_rank):
             report(f'(provided lineage agrees with k-mer classification at {match_rank} level)')
-        elif lca_genome_lineage:
+        elif guessed_genome_lineage:
             report(f'(provided lineage disagrees with k-mer classification at or above {match_rank} level)')
         else:
             pass
@@ -397,7 +322,7 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
             report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {F_MAJOR_THRESHOLD*100:.0f}%.')
             comment = f"too few hashes in major lineage; f_major < {F_MAJOR_THRESHOLD*100:.0f}%. provide a lineage for this genome."
         else:
-            genome_lineage = utils.pop_to_rank(lca_genome_lineage, match_rank)
+            genome_lineage = utils.pop_to_rank(guessed_genome_lineage, match_rank)
             report(f'Using majority gather lineage as genome lineage.')
 
     return genome_lineage, comment
@@ -501,7 +426,7 @@ def main(args):
         create_empty_output(genomebase, comment, args.summary,
                             None, args.contig_report,
                             args.clean, args.dirty,
-                            lca_lineage=guessed_genome_lineage,
+                            guessed_lineage=guessed_genome_lineage,
                             f_ident=f_ident, f_major=f_major)
         return 0
 
@@ -530,7 +455,7 @@ def main(args):
                                 None, args.contig_report,
                                 args.clean, args.dirty,
                                 provided_lin=provided_lin,
-                                lca_lineage=guessed_genome_lineage,
+                                guessed_lineage=guessed_genome_lineage,
                                 f_ident=f_ident, f_major=f_major)
             return 0
 
@@ -544,15 +469,8 @@ def main(args):
     report(f'\nFull lineage being used for contamination analysis:')
     report(f'   {sourmash.lca.display_lineage(genome_lineage)}')
 
-    bad_hashes = collect_gather_hashes(entire_mh, lca_db, lin_db,
-                                       GATHER_MIN_MATCHES,
-                                       genome_lineage, match_rank)
-    report(f'XXX {len(bad_hashes)}')
-
     cleaner = ContigsDecontaminator(genome_lineage, match_rank,
                                     empty_mh, lca_db, lin_db)
-    cleaner.bad_hashes = bad_hashes
-
     cleaner.set_clean_filename(args.clean)
     cleaner.set_dirty_filename(args.dirty)
 
@@ -651,8 +569,6 @@ def main(args):
                                           GATHER_MIN_MATCHES,
                                           genome_lineage, match_rank,
                                           report_fp)
-
-    print('XYZ', first_match)
 
     if not first_match:
         print(' ** no matches to clean sequence **', file=report_fp)
