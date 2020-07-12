@@ -103,18 +103,18 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage,
 def create_empty_output(genome, comment, summary, report, contig_report,
                         clean, dirty,
                         f_major="", f_ident="",
-                        provided_lin="", lca_lineage=""):
+                        provided_lin="", guessed_lineage=""):
     "Create empty output from early exit, so snakemake doesn't complain."
     if summary:
         with open(summary, 'wt') as fp:
             w = csv.writer(fp)
-            if lca_lineage:
-                lca_lineage = sourmash.lca.display_lineage(lca_lineage)
+            if guessed_lineage:
+                guessed_lineage = sourmash.lca.display_lineage(guessed_lineage)
             if provided_lin:
                 provided_lin = sourmash.lca.display_lineage(provided_lin)
 
             row = [genome] + ["", f_major, f_ident] + [""]*14 + \
-               [lca_lineage, provided_lin, comment]
+               [guessed_lineage, provided_lin, comment]
             w.writerow(row)
     if report:
         with open(report, 'wt') as fp:
@@ -298,16 +298,16 @@ class ContigsDecontaminator(object):
 # END CLASS
 
 
-def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
+def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
                           f_ident, f_major, report):
 
     comment = ""
     genome_lineage = None
 
     if provided_lineage:
-        if utils.is_lineage_match(provided_lineage, lca_genome_lineage, match_rank):
+        if utils.is_lineage_match(provided_lineage, guessed_genome_lineage, match_rank):
             report(f'(provided lineage agrees with k-mer classification at {match_rank} level)')
-        elif lca_genome_lineage:
+        elif guessed_genome_lineage:
             report(f'(provided lineage disagrees with k-mer classification at or above {match_rank} level)')
         else:
             pass
@@ -322,7 +322,7 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
             report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {F_MAJOR_THRESHOLD*100:.0f}%.')
             comment = f"too few hashes in major lineage; f_major < {F_MAJOR_THRESHOLD*100:.0f}%. provide a lineage for this genome."
         else:
-            genome_lineage = utils.pop_to_rank(lca_genome_lineage, match_rank)
+            genome_lineage = utils.pop_to_rank(guessed_genome_lineage, match_rank)
             report(f'Using majority gather lineage as genome lineage.')
 
     return genome_lineage, comment
@@ -404,7 +404,7 @@ def main(args):
         create_empty_output(genomebase, comment, args.summary,
                             None, args.contig_report,
                             args.clean, args.dirty,
-                            lca_lineage=guessed_genome_lineage,
+                            guessed_lineage=guessed_genome_lineage,
                             f_ident=f_ident, f_major=f_major)
         return 0
 
@@ -433,7 +433,7 @@ def main(args):
                                 None, args.contig_report,
                                 args.clean, args.dirty,
                                 provided_lin=provided_lin,
-                                lca_lineage=guessed_genome_lineage,
+                                guessed_lineage=guessed_genome_lineage,
                                 f_ident=f_ident, f_major=f_major)
             return 0
 
