@@ -361,20 +361,6 @@ def main(args):
     scaled = empty_mh.scaled
     moltype = empty_mh.moltype
 
-    # create empty LCA database to populate...
-    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
-    lin_db = LineageDB()
-
-    # ...with specific matches.
-    for ss in siglist:
-        ident = get_ident(ss)
-        lineage = tax_assign[ident]
-
-        lca_db.insert(ss, ident=ident)
-        lin_db.insert(ident, lineage)
-
-    print(f'loaded {len(siglist)} signatures & created LCA Database')
-
     report(f'charcoal version: v{version}')
     report(f'match_rank: {match_rank} / scaled: {scaled} / ksize: {ksize}')
     report('')
@@ -391,6 +377,42 @@ def main(args):
     report(f'genome has {n_contigs} contigs in {total_bp/1000:.1f}kb')
     report(f'{len(entire_mh)} hashes total.')
     report('')
+
+    # Hack for examining members of our search database: remove exact matches.
+    new_siglist = []
+    identical_match_removed = False
+    for ss in siglist:
+        if entire_mh.similarity(ss.minhash) < 1.0:
+            new_siglist.append(ss)
+        else:
+            if args.lineage and args.lineage != 'NA':
+                report(f'found exact match: {ss.name()}. removing.')
+                identical_match_removed = True
+            else:
+                report(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
+                comment = "Exact match in matches, but no provided lineage."
+                create_empty_output(genomebase, comment, args.summary,
+                                    None, args.contig_report,
+                                    args.clean, args.dirty)
+                return 0
+
+    # ...but leave exact matches in if they're the only matches, I guess!
+    if new_siglist:
+        siglist = new_siglist
+
+    # create empty LCA database to populate...
+    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
+    lin_db = LineageDB()
+
+    # ...with specific matches.
+    for ss in siglist:
+        ident = get_ident(ss)
+        lineage = tax_assign[ident]
+
+        lca_db.insert(ss, ident=ident)
+        lin_db.insert(ident, lineage)
+
+    print(f'loaded {len(siglist)} signatures & created LCA Database')
 
     # calculate lineage from majority vote on LCA
     guessed_genome_lineage, f_major, f_ident = \
@@ -467,19 +489,28 @@ def main(args):
                                                            lin, match_rank):
             fail = True
 
-    if fail and 0:
-        print(f'\nbreakdown of dirty contigs w/gather:', file=report_fp)
+    if fail and identical_match_removed:
+        report("** ERROR. Stopping without cleaning.")
+        report("")
+        comment = "cannot remove contamination without removing clean sequence; punting"
+        report(comment)
+
+        dirty_n = cleaner.dirty_out.n
+        dirty_bp = cleaner.dirty_out.bp
+        report("")
+        report(f'genome {match_rank} is {genome_lineage[-1].name}.')
+        report("")
+        print(f'breakdown of dirty sequence w/gather ({dirty_n} contigs, {kb(dirty_bp)} kb):', file=report_fp)
+
         do_gather_breakdown(dirty_mh, lca_db, lin_db,
                             GATHER_MIN_MATCHES,
                             genome_lineage, match_rank,
-                            report_fp)
+                            report_fp, reverse_flag=True)
 
-        comment = "cannot remove contamination without removing clean sequence; punting"
-        report(comment)
         create_empty_output(genomebase, comment, args.summary,
-                            args.report, args.contig_report, args.clean,
+                            None, args.contig_report, args.clean,
                             args.dirty)
-        sys.exit(0)
+        return
 
     # recover information from cleaner object
     clean_n = cleaner.clean_out.n
@@ -504,6 +535,8 @@ def main(args):
     report(f'Summary report:')
     report('')
     report(f'genome {match_rank} is {genome_lineage[-1].name}.')
+    if identical_match_removed:
+        report(f"(warning: query in database, so 'clean' assignments may be incorrect)")
     report('')
 
     report(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.')
