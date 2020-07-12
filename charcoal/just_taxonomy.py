@@ -572,18 +572,27 @@ def main(args):
             fail = True
 
     if fail and identical_match_removed:
-        print(f'\nbreakdown of dirty contigs w/gather:', file=report_fp)
+        report("** ERROR. Stopping without cleaning.")
+        report("")
+        comment = "cannot remove contamination without removing clean sequence; punting"
+        report(comment)
+
+        dirty_n = cleaner.dirty_out.n
+        dirty_bp = cleaner.dirty_out.bp
+        report("")
+        report(f'genome {match_rank} is {genome_lineage[-1].name}.')
+        report("")
+        print(f'breakdown of dirty sequence w/gather ({dirty_n} contigs, {kb(dirty_bp)} kb):', file=report_fp)
+
         do_gather_breakdown(dirty_mh, lca_db, lin_db,
                             GATHER_MIN_MATCHES,
                             genome_lineage, match_rank,
-                            report_fp)
+                            report_fp, reverse_flag=True)
 
-        comment = "cannot remove contamination without removing clean sequence; punting"
-        report(comment)
         create_empty_output(genomebase, comment, args.summary,
-                            args.report, args.contig_report, args.clean,
+                            None, args.contig_report, args.clean,
                             args.dirty)
-        sys.exit(0)
+        return
 
     # recover information from cleaner object
     clean_n = cleaner.clean_out.n
@@ -608,6 +617,8 @@ def main(args):
     report(f'Summary report:')
     report('')
     report(f'genome {match_rank} is {genome_lineage[-1].name}.')
+    if identical_match_removed:
+        report(f"(warning: query in database, so 'clean' assignments may be incorrect)")
     report('')
 
     report(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.')
