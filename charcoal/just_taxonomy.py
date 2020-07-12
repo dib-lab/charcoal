@@ -38,6 +38,10 @@ class ContigInfo(Enum):
     NO_HASH = 4                           # no hashes in this contig
 
 
+def kb(bp):
+    return int(bp/1000)
+
+
 def get_ident(sig):
     "Hack and slash identifiers."
     ident = sig.name()
@@ -60,7 +64,9 @@ class ContigReport(object):
         self.match_hashes = match_hashes
 
 
-def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, match_rank, report_fp):
+def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage,
+                        match_rank, report_fp,
+                        reverse_flag=False, display_fp=False):
     "Report all gather matches to report_fp; return first match sig."
     threshold_percent = min_matches / len(minhash)
 
@@ -68,18 +74,28 @@ def do_gather_breakdown(minhash, lca_db, lin_db, min_matches, genome_lineage, ma
     first_count = None
     first_match_under_fp = False
     for lin, count in gather_at_rank(minhash, lca_db, lin_db, match_rank):
+        if count <= min_matches:
+            if display_fp and first_match_under_fp:
+                first_match_under_fp = True
+                print('  --------- (likely false positives below this line) ---------', file=report_fp)
+            elif not display_fp:
+                break
+
         if not first_count:               # set first_count once
             first_count = count
-
-        if count <= min_matches and not first_match_under_fp:
-            first_match_under_fp = True
-            print('  --------- (likely false positives below this line) ---------', file=report_fp)
 
         assert lin[-1].rank == match_rank
 
         f_count = count / len(minhash)
         lineage_display = lin[-1].name
+
+        matches_lineage = True
         if not utils.is_lineage_match(genome_lineage, lin, match_rank):
+            matches_lineage = False
+
+        if not matches_lineage and not reverse_flag:
+            lineage_display = '!! ' + lineage_display
+        elif matches_lineage and reverse_flag:
             lineage_display = '!! ' + lineage_display
 
         print(f'  {f_count*100:.2f}% - to {lineage_display}', file=report_fp)
@@ -357,8 +373,10 @@ def choose_genome_lineage(lca_genome_lineage, provided_lineage, match_rank,
     if provided_lineage:
         if utils.is_lineage_match(provided_lineage, lca_genome_lineage, match_rank):
             report(f'(provided lineage agrees with k-mer classification at {match_rank} level)')
-        else:
+        elif lca_genome_lineage:
             report(f'(provided lineage disagrees with k-mer classification at or above {match_rank} level)')
+        else:
+            pass
 
         genome_lineage = utils.pop_to_rank(provided_lineage, match_rank)
         report(f'\nUsing provided lineage as genome lineage.')
@@ -551,27 +569,37 @@ def main(args):
     assert n_reason_1 + n_reason_2 + n_reason_3 == dirty_n
 
     # do some reporting.
-    print('--------------', file=report_fp)
+    report('--------------')
+
+    report('')
+    report(f'Summary report:')
+    report('')
+    report(f'genome {match_rank} is {genome_lineage[-1].name}.')
+    report('')
+
     report(f'kept {clean_n} contigs containing {int(clean_bp/1000)} kb.')
     report(f'removed {dirty_n} contigs containing {int(dirty_bp/1000)} kb.')
-    report(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, and counted as clean')
+    report(f'{missed_n} contigs ({int(missed_bp/1000)} kb total) had no hashes, and were counted as clean')
 
     # look at what our database says about remaining contamination,
     # across all "clean" contigs. (CTB: Need to dig into this more to figure
     # out exactly why we still have any :)
 
     # report gather breakdown of dirty signature
-    print(f'\nbreakdown of dirty contigs w/gather:', file=report_fp)
+    print(f'\nbreakdown of dirty sequence w/gather ({dirty_n} contigs, {kb(dirty_bp)} kb):', file=report_fp)
 
     dirty_mh = cleaner.dirty_out.minhash
+    first_match = None
     if dirty_mh:
-        do_gather_breakdown(dirty_mh, lca_db, lin_db,
+        first_match = do_gather_breakdown(dirty_mh, lca_db, lin_db,
                             GATHER_MIN_MATCHES,
                             genome_lineage, match_rank,
-                            report_fp)
+                            report_fp, reverse_flag=True)
+    if not first_match:
+        print(' ** no matches to dirty sequence **', file=report_fp)
 
     # report gather breakdown of clean signature
-    print(f'\nbreakdown of clean contigs w/gather:', file=report_fp)
+    print(f'\nbreakdown of clean sequence w/gather ({clean_n} contigs, {kb(clean_bp)} kb):', file=report_fp)
 
     clean_mh = cleaner.clean_out.minhash
     first_match = None
@@ -581,8 +609,15 @@ def main(args):
                                           genome_lineage, match_rank,
                                           report_fp)
 
+    print('XYZ', first_match)
+
     if not first_match:
-        print(' ** no matches **', file=report_fp)
+        print(' ** no matches to clean sequence **', file=report_fp)
+
+    report('')
+    report('Please have a nice day!')
+
+    ### output:
 
     # get genome size and match lineage of primary clean match
     nearest_size = 0
