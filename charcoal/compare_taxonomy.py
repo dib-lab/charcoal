@@ -8,6 +8,8 @@ import gzip
 from collections import Counter, defaultdict
 import csv
 import os.path
+import json
+import glob
 
 import screed
 
@@ -114,9 +116,9 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
     return genome_lineage, comment
 
 
-def get_genome_taxonomy(matches_filename, genome_filename, provided_lineage,
+def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                         tax_assign, match_rank):
-    genomebase = os.path.basename(genome_filename)
+    print('XXX', matches_filename)
     with open(matches_filename, 'rt') as fp:
         siglist = list(sourmash.load_signatures(fp))
 
@@ -130,13 +132,8 @@ def get_genome_taxonomy(matches_filename, genome_filename, provided_lineage,
     scaled = empty_mh.scaled
     moltype = empty_mh.moltype
 
-    print(f'pass 1: reading contigs from {genomebase}')
-    entire_mh = empty_mh.copy_and_clear()
-    total_bp = 0
-    for n, record in enumerate(screed.open(genome_filename)):
-        entire_mh.add_sequence(record.sequence, force=True)
-        total_bp += len(record.sequence)
-    n_contigs = n + 1
+    genome_sig = sourmash.load_one_signature(genome_sig_filename)
+    entire_mh = genome_sig.minhash
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
@@ -206,12 +203,40 @@ def main(args):
                                               start_column=3)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
-    genome_lineage = get_genome_taxonomy(args.matches_sig,
-                                         args.genome,
-                                         args.lineage,
-                                         tax_assign, match_rank)
+    genome_names = [ x.strip() for x in open(args.genome_list_file) ]
+    genome_names = [ os.path.basename(n) for n in genome_names ]
+    dirname = args.input_directory
 
-    print('XXX', sourmash.lca.display_lineage(genome_lineage))
+    provided_lineages = {}
+    if args.provided_lineages:
+        with open(args.provided_lineages, 'rt') as fp:
+            r = csv.reader(fp)
+            for row in r:
+                genome_name = row[0]
+                lin = row[1:]
+                provided_lineages[genome_name] = lin
+
+    print(f"loaded {len(provided_lineages)} provided lineages")
+
+    info_d = {}
+    for genome_name in genome_names:
+        matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
+        genome_sig = os.path.join(dirname, genome_name + '.sig')
+        lineage = provided_lineages.get(genome_name, '')
+
+        genome_lineage = get_genome_taxonomy(matches_filename,
+                                             genome_sig,
+                                             lineage,
+                                             tax_assign, match_rank)
+        if genome_lineage:
+            print('XXX', sourmash.lca.display_lineage(genome_lineage))
+
+        with open('foo', 'rt') as fp:
+            contigs_d = json.load(fp)
+
+        info_obj = GenomeAndContigsInfo(genome_name, genome_lineage, contigs_d)
+
+        info_d[genome_name] = info_obj
 
     ####
 
@@ -221,17 +246,21 @@ def main(args):
 def cmdline(sys_args):
     "Command line entry point w/argparse action."
     p = argparse.ArgumentParser(sys_args)
-    p.add_argument('--genome', help='genome file', required=True)
+    p.add_argument('--input-directory', required=True)
+    p.add_argument('--genome-list-file', required=True)
+    #p.add_argument('--genome_sig', help='genome signature', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
-    p.add_argument('--matches_sig', help='all relevant matches', required=True)
-    p.add_argument('--summary', help='CSV one line output')
-    p.add_argument('--force', help='continue past survivable errors',
-                   action='store_true')
+    p.add_argument('--provided_lineages', help='provided lineages', required=True)
+    #p.add_argument('--matches_sig', help='all relevant matches', required=True)
+    #p.add_argument('--contigs_json', help='output of contigs_search', required=True)
+    #p.add_argument('--summary', help='CSV one line output')
+    #p.add_argument('--force', help='continue past survivable errors',
+    #               action='store_true')
 
-    p.add_argument('--lineage', help=';-separated lineage down to genus level',
-                   default='NA')        # default is str NA
+    #p.add_argument('--lineage', help=';-separated lineage down to genus level',
+    #               default='NA')        # default is str NA
     p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
-    p.add_argument('--contig-report', help='contig report (CSV)')
+    #p.add_argument('--contig-report', help='contig report (CSV)')
     args = p.parse_args()
 
     main(args)
