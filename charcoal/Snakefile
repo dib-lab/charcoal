@@ -135,8 +135,9 @@ wildcard_constraints:
 # default rule - produce *.clean.fa.gz, and the summary
 rule all:
     input:
-        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
-        output_dir + '/combined_summary.csv',
+        expand(output_dir + '/{g}.gather-matches.sig', g=genome_list),
+        expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+#        output_dir + '/combined_summary.csv',
 
 # check config files only
 rule check:
@@ -199,6 +200,25 @@ rule gather_all:
             --save-matches {output.matches} --threshold=0.001 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
+    """
+
+# generate contigs taxonomy
+rule make_contigs_taxonomy_json:
+    input:
+        genome = genome_dir + '/{f}',
+        matches = output_dir + '/{f}.gather-matches.sig',
+        lineages = config['lineages_csv']
+    output:
+        json=output_dir + '/{f}.contigs-tax.json',
+    conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = match_rank,
+    shell: """
+        python -m charcoal.contigs_search \
+            --genome {input.genome} --lineages_csv {input.lineages} \
+            --matches_sig {input.matches} \
+            --match-rank {params.match_rank} \
+            --json-out {output.json}
     """
 
 # actually do cleaning

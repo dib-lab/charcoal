@@ -39,6 +39,9 @@ def main(args):
 
     if not siglist:
         print('no matches for this genome, exiting.')
+        contigs_tax = {}
+        with open(args.json_out, 'wt') as fp:
+            fp.write(json.dumps(contigs_tax))
         return 0
 
     # construct a template minhash object that we can use to create new 'uns

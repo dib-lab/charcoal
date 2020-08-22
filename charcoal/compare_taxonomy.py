@@ -223,6 +223,7 @@ def main(args):
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
         lineage = provided_lineages.get(genome_name, '')
+        contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
 
         genome_lineage = get_genome_taxonomy(matches_filename,
                                              genome_sig,
@@ -231,7 +232,7 @@ def main(args):
         if genome_lineage:
             print('XXX', sourmash.lca.display_lineage(genome_lineage))
 
-        with open('foo', 'rt') as fp:
+        with open(contigs_json, 'rt') as fp:
             contigs_d = json.load(fp)
 
         info_obj = GenomeAndContigsInfo(genome_name, genome_lineage, contigs_d)
@@ -239,6 +240,8 @@ def main(args):
         info_d[genome_name] = info_obj
 
     ####
+
+    print('XXX', len(info_d))
 
     return 0
 
