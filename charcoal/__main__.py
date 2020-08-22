@@ -33,7 +33,6 @@ def run_snakemake(configfile, no_use_conda=False, verbose=False,
     # add outdir override?
     if outdir:
         cmd += ["--config", f"output_dir={outdir}"]
-        print('XYZ', cmd)
 
     # snakemake sometimes seems to want a default -j; set it to 1 for now.
     # can overridden later on command line.

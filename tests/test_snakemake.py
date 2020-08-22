@@ -71,11 +71,21 @@ def xxx_test_make_report(request, genome_file):
 
 
 @pytest.mark.dependency()
-def test_make_output(request):
+def test_make_output_dna(request):
 #    depends(request, [f"test_make_report[{g}]" for g in demo_genomes])
 
     target = 'combined_summary.csv'
     status = _run_snakemake_test('demo/demo.conf', target, ['-j', '4'])
+
+    assert status == 0
+    assert os.path.exists(os.path.join(_tempdir, target))
+
+@pytest.mark.dependency()
+def test_make_output_prot(request):
+#    depends(request, [f"test_make_report[{g}]" for g in demo_genomes])
+
+    target = 'combined_summary.csv'
+    status = _run_snakemake_test('demo/demo.prot.conf', target, ['-j', '4'])
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))

@@ -24,7 +24,6 @@ genome_list = [ line for line in genome_list if line ]   # remove empty lines
 
 genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
-print('XXX', output_dir)
 
 ### verification / strict mode
 
