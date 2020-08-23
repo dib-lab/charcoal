@@ -44,33 +44,42 @@ def kb(bp):
     return int(bp/1000)
 
 
+
+def calculate_contam(info_obj, rank, filter_names=None):
+    genome_lin = info_obj.genome_tax
+    good_names = set()
+    good_n = 0
+    good_bp = 0
+    bad_names = set()
+    bad_n = 0
+    bad_bp = 0
+
+    for contig_name, (contig_len, contig_taxlist) in info_obj.contigs_d.items():
+        if filter_names and contig_name in filter_names:
+            continue
+
+        contig_taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
+        top_hit = None
+        if contig_taxlist_at_rank:
+            top_hit = contig_taxlist_at_rank[0][0]
+
+        if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
+            bad_names.add(contig_name)
+            bad_n += 1
+            bad_bp += contig_len
+        else:
+            good_names.add(contig_name)
+            good_n += 1
+            good_bp += contig_len
+
+    return (good_names, good_n, good_bp, bad_names, bad_n, bad_bp)
+
+
 class GenomeAndContigsInfo(object):
     def __init__(self, genome_name, genome_tax, contigs_d):
         self.genome_name = genome_name
         self.genome_tax = genome_tax
         self.contigs_d = contigs_d
-
-    def calculate_contam(self, rank):
-        genome_lin = self.genome_tax
-        good_n = 0
-        good_bp = 0
-        bad_n = 0
-        bad_bp = 0
-
-        for contig_name, (contig_len, contig_taxlist) in self.contigs_d.items():
-            contig_taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
-            top_hit = None
-            if contig_taxlist_at_rank:
-                top_hit = contig_taxlist_at_rank[0][0]
-
-            if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
-                bad_n += 1
-                bad_bp += contig_len
-            else:
-                good_n += 1
-                good_bp += contig_len
-
-        return (good_n, good_bp, bad_n, bad_bp)
 
 
 class ContigReport(object):
@@ -271,8 +280,23 @@ def main(args):
 
         info_d[genome_name] = info_obj
 
-        x = info_obj.calculate_contam('genus')
-        print('ZZZ', genome_name, x)
+        eliminate = set()
+        print(f'examining {genome_name} for contamination:')
+
+        total_bad_n = 0
+        total_bad_bp = 0
+        for rank in sourmash.lca.taxlist():
+            x = calculate_contam(info_obj, rank, filter_names=eliminate)
+            (good_names, good_n, good_bp, bad_names, bad_n, bad_bp) = x
+            eliminate.update(bad_names)
+            total_bad_n += bad_n
+            total_bad_bp += bad_bp
+
+            print(f'   {rank}: {bad_n} contigs w/ {kb(bad_bp)}kb')
+            if rank == match_rank:
+                break
+
+        print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
 
     ####
 
