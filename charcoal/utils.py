@@ -167,6 +167,15 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
         yield lin, count
 
 
+def summarize_at_rank(lincounts, rank):
+    newcounts = Counter()
+    for lin, count in lincounts:
+        lin = pop_to_rank(lin, rank)
+        newcounts[lin] += count
+
+    return newcounts.most_common()
+
+
 def get_ident(sig):
     "Hack and slash identifiers."
     ident = sig.name()

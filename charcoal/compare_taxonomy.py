@@ -23,7 +23,7 @@ from .lineage_db import LineageDB
 from .version import version
 from .utils import (get_idents_for_hashval, gather_lca_assignments,
     count_lca_for_assignments, pretty_print_lineage, pretty_print_lineage2,
-    WriteAndTrackFasta, gather_at_rank, get_ident)
+    WriteAndTrackFasta, gather_at_rank, get_ident, summarize_at_rank)
 
 
 GATHER_MIN_MATCHES=3
@@ -49,6 +49,28 @@ class GenomeAndContigsInfo(object):
         self.genome_name = genome_name
         self.genome_tax = genome_tax
         self.contigs_d = contigs_d
+
+    def calculate_contam(self, rank):
+        genome_lin = self.genome_tax
+        good_n = 0
+        good_bp = 0
+        bad_n = 0
+        bad_bp = 0
+
+        for contig_name, (contig_len, contig_taxlist) in self.contigs_d.items():
+            contig_taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
+            top_hit = None
+            if contig_taxlist_at_rank:
+                top_hit = contig_taxlist_at_rank[0][0]
+
+            if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
+                bad_n += 1
+                bad_bp += contig_len
+            else:
+                good_n += 1
+                good_bp += contig_len
+
+        return (good_n, good_bp, bad_n, bad_bp)
 
 
 class ContigReport(object):
@@ -120,7 +142,10 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                         tax_assign, match_rank):
     print('XXX', matches_filename)
     with open(matches_filename, 'rt') as fp:
-        siglist = list(sourmash.load_signatures(fp))
+        try:
+            siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
+        except sourmash.exceptions.SourmashError:
+            siglist = None
 
     if not siglist:
         print('no matches for this genome, exiting.')
@@ -218,6 +243,7 @@ def main(args):
 
     print(f"loaded {len(provided_lineages)} provided lineages")
 
+    # for every genome, assign genome taxonomy and load contig taxonomies.
     info_d = {}
     for genome_name in genome_names:
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
@@ -234,14 +260,23 @@ def main(args):
 
         with open(contigs_json, 'rt') as fp:
             contigs_d = json.load(fp)
+            for k in contigs_d:
+                (size, v) = contigs_d[k]
+                vv = []
+                for (lin, count) in v:
+                    vv.append(([ LineagePair(*x) for x in lin ], count))
+                contigs_d[k] = (size, vv)
 
         info_obj = GenomeAndContigsInfo(genome_name, genome_lineage, contigs_d)
 
         info_d[genome_name] = info_obj
 
+        x = info_obj.calculate_contam('genus')
+        print('ZZZ', genome_name, x)
+
     ####
 
-    print('XXX', len(info_d))
+    print(f"processed {len(info_d)} genomes.")
 
     return 0
 
