@@ -137,6 +137,7 @@ rule all:
     input:
         expand(output_dir + '/{g}.gather-matches.sig', g=genome_list),
         expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+        output_dir + '/summary_by_rank.csv',
 #        output_dir + '/combined_summary.csv',
 
 # check config files only
@@ -292,6 +293,8 @@ rule summarize_all:
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
+    output:
+        output_dir + '/summary_by_rank.csv'
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = match_rank,

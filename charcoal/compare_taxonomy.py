@@ -254,6 +254,10 @@ def main(args):
 
     # for every genome, assign genome taxonomy and load contig taxonomies.
     info_d = {}
+    summary_d = {}
+    fp = open(os.path.join(dirname, 'summary_by_rank.csv'), 'wt')
+    summary_w = csv.writer(fp)
+    summary_w.writerow(['genome', 'total_bad_bp', 'superkingdom_bp', 'phylum_bp', 'class_bp', 'order_bp', 'family_bp', 'genus_bp'])
     for genome_name in genome_names:
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
@@ -283,6 +287,8 @@ def main(args):
         eliminate = set()
         print(f'examining {genome_name} for contamination:')
 
+        summary_d[genome_name] = {}
+
         total_bad_n = 0
         total_bad_bp = 0
         for rank in sourmash.lca.taxlist():
@@ -293,10 +299,12 @@ def main(args):
             total_bad_bp += bad_bp
 
             print(f'   {rank}: {bad_n} contigs w/ {kb(bad_bp)}kb')
+            summary_d[genome_name][rank] = bad_bp
             if rank == match_rank:
                 break
 
         print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
+        summary_w.writerow([genome_name, total_bad_bp, summary_d[genome_name]['superkingdom'], summary_d[genome_name]['phylum'], summary_d[genome_name]['class'], summary_d[genome_name]['order'], summary_d[genome_name]['family'], summary_d[genome_name]['genus']])
 
     ####
 
