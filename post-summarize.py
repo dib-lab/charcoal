@@ -30,6 +30,7 @@ def main(args):
 
     cleaned = {}
     reasons = collections.Counter()
+    taxcounts = collections.Counter()
     for g, row in all_rows.items():
         f_removed = row['f_removed']
         if not f_removed: f_removed = 0.0
@@ -39,12 +40,20 @@ def main(args):
             row['f_removed'] = f_removed
             cleaned[g] = row
 
+            taxcounts[row['brieftax']] += 1
+
         if row['comment']:
             reasons[row['comment']] += 1
 
     print('Summary of comments:')
     for reason, count in reasons.most_common():
         print(f'   {count} rows - {reason}')
+    print('')
+
+    print('Summary of taxonomy counts of contaminated (top 10):')
+    for n, (brieftax, count) in enumerate(taxcounts.most_common()):
+        print(f'   {count} rows - {brieftax}')
+        if n == 9: break
     print('')
         
     # output a sorted version, with only places where f_removed is set
