@@ -283,3 +283,24 @@ rule combined_summary:
                    assert len(row) == len(header), (len(row), len(header), i)
 
                    w.writerow(row)
+
+
+# actually do cleaning
+rule summarize_all:
+    input:
+        all=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+        lineages = config['lineages_csv'],
+        provided_lineages = provided_lineages_file,
+        genome_list = genome_list_file
+    conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = match_rank,
+        output_dir = output_dir,
+    shell: """
+        python -m charcoal.compare_taxonomy \
+            --input-directory {params.output_dir} \
+            --genome-list-file {input.genome_list} \
+            --lineages_csv {input.lineages} \
+            --match-rank {params.match_rank} \
+            --provided_lineages {input.provided_lineages}
+    """
