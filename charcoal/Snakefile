@@ -133,12 +133,9 @@ wildcard_constraints:
     size="\d+"
 
 # default rule - produce *.clean.fa.gz, and the summary
-rule all:
+rule inspect:
     input:
-        expand(output_dir + '/{g}.gather-matches.sig', g=genome_list),
-        expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
-        output_dir + '/summary_by_rank.csv',
-#        output_dir + '/combined_summary.csv',
+        output_dir + '/hit_list_for_filtering.csv'
 
 # check config files only
 rule check:
@@ -294,7 +291,7 @@ rule summarize_all:
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
     output:
-        output_dir + '/summary_by_rank.csv'
+        output_dir + '/hit_list_for_filtering.csv'
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = match_rank,
@@ -305,5 +302,6 @@ rule summarize_all:
             --genome-list-file {input.genome_list} \
             --lineages_csv {input.lineages} \
             --match-rank {params.match_rank} \
-            --provided_lineages {input.provided_lineages}
+            --provided_lineages {input.provided_lineages} \
+            --output {output}
     """

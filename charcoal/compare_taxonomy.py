@@ -149,7 +149,6 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
 
 def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                         tax_assign, match_rank):
-    print('XXX', matches_filename)
     with open(matches_filename, 'rt') as fp:
         try:
             siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
@@ -158,7 +157,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     if not siglist:
         print('no matches for this genome, exiting.')
-        return None
+        return None, 'no matches for this genome, exiting.', 0.0, 0.0
 
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
@@ -181,7 +180,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                 identical_match_removed = True
             else:
                 print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
-                return 0
+                return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.', 1.0, 1.0
 
     # ...but leave exact matches in if they're the only matches, I guess!
     if new_siglist:
@@ -209,7 +208,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     if f_major == 1.0 and f_ident == 1.0:
         comment = "All genome hashes belong to one lineage! Nothing to do."
-        return 0
+        return None, comment, f_major, f_ident
 
     # did we get a passed-in lineage assignment?
     provided_lin = ""
@@ -225,7 +224,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                                                     f_ident, f_major,
                                                     print)
 
-    return genome_lineage
+    return genome_lineage, comment, f_major, f_ident
 
 
 ###
@@ -252,25 +251,29 @@ def main(args):
 
     print(f"loaded {len(provided_lineages)} provided lineages")
 
-    # for every genome, assign genome taxonomy and load contig taxonomies.
+    # process every genome individually.
     info_d = {}
     summary_d = {}
-    fp = open(os.path.join(dirname, 'summary_by_rank.csv'), 'wt')
+    fp = open(args.output, 'wt')
     summary_w = csv.writer(fp)
-    summary_w.writerow(['genome', 'total_bad_bp', 'superkingdom_bp', 'phylum_bp', 'class_bp', 'order_bp', 'family_bp', 'genus_bp'])
+    summary_w.writerow(['genome', 'filter_at', 'override_filter_at', 'f_ident', 'f_major', 'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp', 'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp', 'lineage', 'comment'])
     for genome_name in genome_names:
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
         lineage = provided_lineages.get(genome_name, '')
         contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
 
-        genome_lineage = get_genome_taxonomy(matches_filename,
-                                             genome_sig,
-                                             lineage,
-                                             tax_assign, match_rank)
+        genome_lineage, comment, f_major, f_ident = get_genome_taxonomy(matches_filename,
+                                                      genome_sig,
+                                                      lineage,
+                                                      tax_assign, match_rank)
         if genome_lineage:
-            print('XXX', sourmash.lca.display_lineage(genome_lineage))
+            filter_at = match_rank
+        else:
+            genome_lineage = []
+            filter_at = 'none'
 
+        # load contigs JSON file
         with open(contigs_json, 'rt') as fp:
             contigs_d = json.load(fp)
             for k in contigs_d:
@@ -280,6 +283,7 @@ def main(args):
                     vv.append(([ LineagePair(*x) for x in lin ], count))
                 contigs_d[k] = (size, vv)
 
+        # make an info object to store everything; probably not needed?
         info_obj = GenomeAndContigsInfo(genome_name, genome_lineage, contigs_d)
 
         info_d[genome_name] = info_obj
@@ -299,12 +303,12 @@ def main(args):
             total_bad_bp += bad_bp
 
             print(f'   {rank}: {bad_n} contigs w/ {kb(bad_bp)}kb')
-            summary_d[genome_name][rank] = bad_bp
+            summary_d[genome_name][rank] = total_bad_bp
             if rank == match_rank:
                 break
 
         print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
-        summary_w.writerow([genome_name, total_bad_bp, summary_d[genome_name]['superkingdom'], summary_d[genome_name]['phylum'], summary_d[genome_name]['class'], summary_d[genome_name]['order'], summary_d[genome_name]['family'], summary_d[genome_name]['genus']])
+        summary_w.writerow([genome_name, filter_at, '', f'{f_ident:.03}', f'{f_major:.03}', total_bad_bp, summary_d[genome_name]['superkingdom'], summary_d[genome_name]['phylum'], summary_d[genome_name]['class'], summary_d[genome_name]['order'], summary_d[genome_name]['family'], summary_d[genome_name]['genus'], sourmash.lca.display_lineage(genome_lineage), comment])
 
     ####
 
@@ -318,6 +322,7 @@ def cmdline(sys_args):
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--input-directory', required=True)
     p.add_argument('--genome-list-file', required=True)
+    p.add_argument('-o', '--output', required=True)
     #p.add_argument('--genome_sig', help='genome signature', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided_lineages', help='provided lineages', required=True)
