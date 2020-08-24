@@ -157,7 +157,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     if not siglist:
         print('no matches for this genome, exiting.')
-        return None, 'no matches for this genome, exiting.'
+        return None, 'no matches for this genome, exiting.', 0.0, 0.0
 
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
@@ -180,7 +180,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                 identical_match_removed = True
             else:
                 print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
-                return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.'
+                return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.', 1.0, 1.0
 
     # ...but leave exact matches in if they're the only matches, I guess!
     if new_siglist:
@@ -208,7 +208,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     if f_major == 1.0 and f_ident == 1.0:
         comment = "All genome hashes belong to one lineage! Nothing to do."
-        return None, comment
+        return None, comment, f_major, f_ident
 
     # did we get a passed-in lineage assignment?
     provided_lin = ""
@@ -224,7 +224,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                                                     f_ident, f_major,
                                                     print)
 
-    return genome_lineage, comment
+    return genome_lineage, comment, f_major, f_ident
 
 
 ###
@@ -256,14 +256,14 @@ def main(args):
     summary_d = {}
     fp = open(args.output, 'wt')
     summary_w = csv.writer(fp)
-    summary_w.writerow(['genome', 'filter_at', 'override_filter_at', 'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp', 'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp', 'lineage', 'comment'])
+    summary_w.writerow(['genome', 'filter_at', 'override_filter_at', 'f_ident', 'f_major', 'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp', 'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp', 'lineage', 'comment'])
     for genome_name in genome_names:
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
         lineage = provided_lineages.get(genome_name, '')
         contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
 
-        genome_lineage, comment = get_genome_taxonomy(matches_filename,
+        genome_lineage, comment, f_major, f_ident = get_genome_taxonomy(matches_filename,
                                                       genome_sig,
                                                       lineage,
                                                       tax_assign, match_rank)
@@ -308,7 +308,7 @@ def main(args):
                 break
 
         print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
-        summary_w.writerow([genome_name, filter_at, '', total_bad_bp, summary_d[genome_name]['superkingdom'], summary_d[genome_name]['phylum'], summary_d[genome_name]['class'], summary_d[genome_name]['order'], summary_d[genome_name]['family'], summary_d[genome_name]['genus'], sourmash.lca.display_lineage(genome_lineage), comment])
+        summary_w.writerow([genome_name, filter_at, '', f'{f_ident:.03}', f'{f_major:.03}', total_bad_bp, summary_d[genome_name]['superkingdom'], summary_d[genome_name]['phylum'], summary_d[genome_name]['class'], summary_d[genome_name]['order'], summary_d[genome_name]['family'], summary_d[genome_name]['genus'], sourmash.lca.display_lineage(genome_lineage), comment])
 
     ####
 
