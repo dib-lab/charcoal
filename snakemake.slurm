@@ -5,7 +5,7 @@
 #SBATCH -n 1                   # one task for this node
 #SBATCH -c 16                  # cores per task
 #SBATCH -t 1-0                 # ask for a full day
-#SBATCH --mem=30000             # memory (30,000 mb = 30gb)
+#SBATCH --mem=60000             # memory (30,000 mb = 30gb)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=titus@idyll.org
 
@@ -25,10 +25,11 @@ set -x
 cd ~/charcoal
 
 # run the snakemake!
-charcoal run conf/gtdb-random-dna.conf -p -j 16 -k --no-use-conda
-charcoal run conf/gtdb-contam-dna.conf -p -j 16 -k --no-use-conda
+#charcoal run conf/gtdb-random-dna.conf -p -j 16 -k --no-use-conda
+#charcoal run conf/gtdb-contam-dna.conf -p -j 16 -k --no-use-conda
 #charcoal run eval/tara-delmont-relaxed.conf -p -j 16 -k
 #charcoal run eval/tara-delmont-strict.conf -p -j 16 -k
+charcoal run conf/tara-delmont.conf -p -j 16 -k
 #charcoal run conf/ibd2.conf -j 16 -k
 
 # print out various information about the job
