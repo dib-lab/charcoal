@@ -1,12 +1,9 @@
 #! /usr/bin/env python
 """
-Remove bad contigs based solely on taxonomy.
+Do gather matches on contigs.
 """
 import sys
 import argparse
-import gzip
-from collections import Counter, defaultdict
-import csv
 import os.path
 import json
 
@@ -14,15 +11,11 @@ import screed
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
-from sourmash.lca import LCA_Database, LineagePair
+from sourmash.lca import LCA_Database
 
-from . import utils
-from . import lineage_db
 from .lineage_db import LineageDB
 from .version import version
-from .utils import (get_idents_for_hashval, gather_lca_assignments,
-    count_lca_for_assignments, pretty_print_lineage, pretty_print_lineage2,
-    WriteAndTrackFasta, gather_at_rank, get_ident)
+from .utils import (gather_at_rank, get_ident)
 
 
 def main(args):
@@ -41,7 +34,6 @@ def main(args):
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
-    identical_match_removed = False
     for ss in siglist:
         if genome_sig.similarity(ss) < 1.0:
             new_siglist.append(ss)
