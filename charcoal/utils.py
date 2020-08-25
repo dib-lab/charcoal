@@ -2,11 +2,12 @@
 utility functions for charcoal.
 """
 import math
+import json
 from collections import defaultdict, Counter
 import screed
 
 import sourmash
-from sourmash.lca import lca_utils
+from sourmash.lca import lca_utils, LineagePair
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -182,3 +183,16 @@ def get_ident(sig):
     ident = ident.split()[0]
     ident = ident.split('.')[0]
     return ident
+
+def load_contigs_gather_json(filename):
+    # load contigs JSON file - @CTB
+    with open(filename, 'rt') as fp:
+        contigs_d = json.load(fp)
+        for k in contigs_d:
+            (size, v) = contigs_d[k]
+            vv = []
+            for (lin, count) in v:
+                vv.append(([ LineagePair(*x) for x in lin ], count))
+            contigs_d[k] = (size, vv)
+
+    return contigs_d

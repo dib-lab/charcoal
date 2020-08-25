@@ -6,7 +6,6 @@ import sys
 import argparse
 import csv
 import os.path
-import json
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
@@ -15,7 +14,7 @@ from sourmash.lca import LCA_Database, LineagePair
 from . import utils
 from .lineage_db import LineageDB
 from .utils import (gather_at_rank, get_ident, summarize_at_rank,
-                    pretty_print_lineage)
+                    pretty_print_lineage, load_contigs_gather_json)
 
 
 GATHER_MIN_MATCHES=3
@@ -23,18 +22,8 @@ F_IDENT_THRESHOLD=0.1
 F_MAJOR_THRESHOLD=0.2
 
 
-from enum import Enum
-class ContigInfo(Enum):
-    "enum for contig information"
-    CLEAN = 1                             # proven clean
-    DIRTY = 2                             # proven dirty
-    NO_IDENT = 3                          # no identified hashes in contig
-    NO_HASH = 4                           # no hashes in this contig
-
-
 def kb(bp):
     return int(bp/1000)
-
 
 
 def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
@@ -258,15 +247,8 @@ def main(args):
             genome_lineage = []
             filter_at = 'none'
 
-        # load contigs JSON file - @CTB
-        with open(contigs_json, 'rt') as fp:
-            contigs_d = json.load(fp)
-            for k in contigs_d:
-                (size, v) = contigs_d[k]
-                vv = []
-                for (lin, count) in v:
-                    vv.append(([ LineagePair(*x) for x in lin ], count))
-                contigs_d[k] = (size, vv)
+        # load contigs tax
+        contigs_d = load_contigs_gather_json(contigs_json)
 
         # track contigs that have been eliminated at various ranks
         eliminate = set()
