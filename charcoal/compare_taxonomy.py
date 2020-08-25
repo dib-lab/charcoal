@@ -56,7 +56,16 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
             if count < GATHER_MIN_MATCHES:
                 top_hit = None
 
+        is_bad = False
         if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
+            is_bad = True
+
+            # rescue?
+            for hit, count in contig_taxlist_at_rank[1:]:
+                if utils.is_lineage_match(genome_lin, hit, rank):
+                    is_bad = False
+
+        if is_bad:
             bad_names[contig_name] = contig_len
         else:
             good_names[contig_name] = contig_len
@@ -140,12 +149,14 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
+    removed_exact_match = False
     for ss in siglist:
         if entire_mh.similarity(ss.minhash) < 1.0:
             new_siglist.append(ss)
         else:
             if provided_lineage and provided_lineage != 'NA':
                 print(f'found exact match: {ss.name()}. removing.')
+                removed_exact_match = True
             else:
                 print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
                 return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.', 1.0, 1.0
@@ -194,7 +205,6 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     return genome_lineage, comment, f_major, f_ident
 
-
 ###
 
 def main(args):
@@ -240,13 +250,11 @@ def main(args):
                                 args.min_f_ident,
                                 args.min_f_major)
         genome_lineage, comment, f_major, f_ident = x
-
         # did we get a lineage for this genome? if so, propose filtering at
         # default rank 'match_rank', otherwise ...do not filter.
         if genome_lineage:
             filter_at = match_rank
         else:
-            print('XXX', genome_name, "no genome lineage")
             genome_lineage = []
             filter_at = 'none'
 
