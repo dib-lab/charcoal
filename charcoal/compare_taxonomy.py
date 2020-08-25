@@ -52,7 +52,9 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
         contig_taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
         top_hit = None
         if contig_taxlist_at_rank:
-            top_hit = contig_taxlist_at_rank[0][0]
+            top_hit, count = contig_taxlist_at_rank[0]
+            if count < GATHER_MIN_MATCHES:
+                top_hit = None
 
         if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
             bad_names.add(contig_name)
@@ -64,13 +66,6 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
             good_bp += contig_len
 
     return (good_names, good_n, good_bp, bad_names, bad_n, bad_bp)
-
-
-class GenomeAndContigsInfo(object):
-    def __init__(self, genome_name, genome_tax, contigs_d):
-        self.genome_name = genome_name
-        self.genome_tax = genome_tax
-        self.contigs_d = contigs_d
 
 
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
