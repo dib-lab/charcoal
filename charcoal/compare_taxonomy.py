@@ -215,7 +215,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
     # did we get a passed-in lineage assignment?
     provided_lin = ""
     if provided_lineage:
-        provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lin) if name.strip() ]
+        provided_lin = [ LineagePair(rank, name) for (rank, name) in zip(sourmash.lca.taxlist(), provided_lineage) if name.strip() ]
         print(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
     # choose between the lineages
