@@ -204,6 +204,7 @@ rule gather_all:
 rule make_contigs_taxonomy_json:
     input:
         genome = genome_dir + '/{f}',
+        genome_sig = output_dir + '/{f}.sig',
         matches = output_dir + '/{f}.gather-matches.sig',
         lineages = config['lineages_csv']
     output:
@@ -214,6 +215,7 @@ rule make_contigs_taxonomy_json:
     shell: """
         python -m charcoal.contigs_search \
             --genome {input.genome} --lineages_csv {input.lineages} \
+            --genome_sig {input.genome_sig} \
             --matches_sig {input.matches} \
             --match-rank {params.match_rank} \
             --json-out {output.json}

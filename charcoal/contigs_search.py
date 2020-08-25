@@ -37,8 +37,19 @@ def main(args):
     with open(args.matches_sig, 'rt') as fp:
         siglist = list(sourmash.load_signatures(fp))
 
+    genome_sig = sourmash.load_one_signature(args.genome_sig)
+
+    # Hack for examining members of our search database: remove exact matches.
+    new_siglist = []
+    identical_match_removed = False
+    for ss in siglist:
+        if genome_sig.similarity(ss) < 1.0:
+            new_siglist.append(ss)
+
+    siglist = new_siglist
+
     if not siglist:
-        print('no matches for this genome, exiting.')
+        print('no non-identical matches for this genome, exiting.')
         contigs_tax = {}
         with open(args.json_out, 'wt') as fp:
             fp.write(json.dumps(contigs_tax))
@@ -90,6 +101,7 @@ def cmdline(sys_args):
     "Command line entry point w/argparse action."
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--genome', help='genome file', required=True)
+    p.add_argument('--genome_sig', help='genome sig', required=True)
     p.add_argument('--matches_sig', help='all relevant matches', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
     p.add_argument('--force', help='continue past survivable errors',
