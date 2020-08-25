@@ -11,8 +11,6 @@ import os.path
 import json
 import glob
 
-import screed
-
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
 from sourmash.lca import LCA_Database, LineagePair
@@ -21,9 +19,8 @@ from . import utils
 from . import lineage_db
 from .lineage_db import LineageDB
 from .version import version
-from .utils import (get_idents_for_hashval, gather_lca_assignments,
-    count_lca_for_assignments, pretty_print_lineage, pretty_print_lineage2,
-    WriteAndTrackFasta, gather_at_rank, get_ident, summarize_at_rank)
+from .utils import (gather_at_rank, get_ident, summarize_at_rank,
+                    pretty_print_lineage)
 
 
 GATHER_MIN_MATCHES=3
