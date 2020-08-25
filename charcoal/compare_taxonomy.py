@@ -38,10 +38,10 @@ def kb(bp):
 
 
 def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
-    good_names = set()
+    good_names = dict()
     good_n = 0
     good_bp = 0
-    bad_names = set()
+    bad_names = dict()
     bad_n = 0
     bad_bp = 0
 
@@ -57,15 +57,11 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
                 top_hit = None
 
         if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
-            bad_names.add(contig_name)
-            bad_n += 1
-            bad_bp += contig_len
+            bad_names[contig_name] = contig_len
         else:
-            good_names.add(contig_name)
-            good_n += 1
-            good_bp += contig_len
+            good_names[contig_name] = contig_len
 
-    return (good_names, good_n, good_bp, bad_names, bad_n, bad_bp)
+    return (good_names, bad_names)
 
 
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
@@ -250,6 +246,7 @@ def main(args):
         if genome_lineage:
             filter_at = match_rank
         else:
+            print('XXX', genome_name, "no genome lineage")
             genome_lineage = []
             filter_at = 'none'
 
@@ -272,18 +269,22 @@ def main(args):
         summary_d[genome_name]['f_major'] = f_major
         summary_d[genome_name]['comment'] = comment
         summary_d[genome_name]['lineage'] = genome_lineage
+        summary_d[genome_name]['filter_at'] = filter_at
 
         total_bad_n = 0
         total_bad_bp = 0
         for rank in sourmash.lca.taxlist():
-            x = calculate_contam(genome_lineage, contigs_d,
-                                 rank, filter_names=eliminate)
-            (good_names, good_n, good_bp, bad_names, bad_n, bad_bp) = x
+            (good_names, bad_names) = calculate_contam(genome_lineage,
+                                                       contigs_d,
+                                                       rank,
+                                                       filter_names=eliminate)
             eliminate.update(bad_names)
+            bad_n = len(bad_names)
+            bad_bp = sum(bad_names.values())
             total_bad_n += bad_n
             total_bad_bp += bad_bp
 
-            print(f'   {rank}: {bad_n} contigs w/ {kb(bad_bp)}kb')
+            print(f'   {rank}: {len(bad_names)} contigs w/ {kb(bad_bp)}kb')
             summary_d[genome_name][rank] = total_bad_bp
             if rank == match_rank:
                 break
@@ -307,7 +308,7 @@ def main(args):
     for genome_name, vals in summary_items:
         vals = summary_d[genome_name]
         summary_w.writerow([genome_name,
-                            filter_at, '',
+                            vals['filter_at'], '',
                             vals["total_bad_bp"],
                             vals['superkingdom'],
                             vals['phylum'],
