@@ -74,20 +74,6 @@ class GenomeAndContigsInfo(object):
         self.contigs_d = contigs_d
 
 
-class ContigReport(object):
-    # output in addition: genomefile, genome taxonomy, match_rank
-    def __init__(self, contig_name, bp, info, reason, lineage, total_hashes,
-                 ident_hashes, match_hashes):
-        self.contig_name = contig_name
-        self.bp = bp
-        self.info = info
-        self.reason = reason
-        self.lineage = lineage
-        self.total_hashes = total_hashes
-        self.ident_hashes = ident_hashes
-        self.match_hashes = match_hashes
-
-
 def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
     "Guess likely taxonomy using gather."
     sum_ident = 0
@@ -224,14 +210,20 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     match_rank = args.match_rank
+
+    # load taxonomy assignments for all the things
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
                                               start_column=3)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
-    genome_names = [ x.strip() for x in open(args.genome_list_file) ]
-    genome_names = [ os.path.basename(n) for n in genome_names ]
+    # load in all the genome names
+    genome_names = set([ x.strip() for x in open(args.genome_list_file) ])
+    genome_names = set([ os.path.basename(n) for n in genome_names ])
     dirname = args.input_directory
 
+    print(f"loaded list of {len(genome_names)} genomes.")
+
+    # load the provided lineages file
     provided_lineages = {}
     if args.provided_lineages:
         with open(args.provided_lineages, 'rt') as fp:
@@ -244,7 +236,6 @@ def main(args):
     print(f"loaded {len(provided_lineages)} provided lineages")
 
     # process every genome individually.
-    info_d = {}
     summary_d = {}
     for genome_name in genome_names:
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
@@ -252,19 +243,23 @@ def main(args):
         lineage = provided_lineages.get(genome_name, '')
         contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
 
-        genome_lineage, comment, f_major, f_ident = get_genome_taxonomy(matches_filename,
-                                                      genome_sig,
-                                                      lineage,
-                                                      tax_assign, match_rank,
-                                                      args.min_f_ident,
-                                                      args.min_f_major)
+        x = get_genome_taxonomy(matches_filename,
+                                genome_sig,
+                                lineage,
+                                tax_assign, match_rank,
+                                args.min_f_ident,
+                                args.min_f_major)
+        genome_lineage, comment, f_major, f_ident = x
+
+        # did we get a lineage for this genome? if so, propose filtering at
+        # default rank 'match_rank', otherwise ...do not filter.
         if genome_lineage:
             filter_at = match_rank
         else:
             genome_lineage = []
             filter_at = 'none'
 
-        # load contigs JSON file
+        # load contigs JSON file - @CTB
         with open(contigs_json, 'rt') as fp:
             contigs_d = json.load(fp)
             for k in contigs_d:
@@ -274,11 +269,7 @@ def main(args):
                     vv.append(([ LineagePair(*x) for x in lin ], count))
                 contigs_d[k] = (size, vv)
 
-        # make an info object to store everything; probably not needed?
-        info_obj = GenomeAndContigsInfo(genome_name, genome_lineage, contigs_d)
-
-        info_d[genome_name] = info_obj
-
+        # track contigs that have been eliminated at various ranks
         eliminate = set()
         print(f'examining {genome_name} for contamination:')
 
@@ -306,21 +297,37 @@ def main(args):
 
         print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
 
-
+    # output a sorted summary CSV
     fp = open(args.output, 'wt')
     summary_w = csv.writer(fp)
-    summary_w.writerow(['genome', 'filter_at', 'override_filter_at', 'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp', 'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp', 'f_ident', 'f_major', 'lineage', 'comment'])
+    
+    summary_w.writerow(['genome', 'filter_at', 'override_filter_at',
+        'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp',
+        'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp',
+        'f_ident', 'f_major', 'lineage', 'comment'])
 
     summary_items = list(summary_d.items())
     summary_items.sort(key=lambda x: -x[1]["total_bad_bp"])
 
     for genome_name, vals in summary_items:
         vals = summary_d[genome_name]
-        summary_w.writerow([genome_name, filter_at, '', vals["total_bad_bp"], vals['superkingdom'], vals['phylum'], vals['class'], vals['order'], vals['family'], vals['genus'], f'{vals["f_ident"]:.03}', f'{vals["f_major"]:.03}', sourmash.lca.display_lineage(vals["lineage"]), vals["comment"]])
+        summary_w.writerow([genome_name,
+                            filter_at, '',
+                            vals["total_bad_bp"],
+                            vals['superkingdom'],
+                            vals['phylum'],
+                            vals['class'],
+                            vals['order'],
+                            vals['family'],
+                            vals['genus'],
+                            f'{vals["f_ident"]:.03}',
+                            f'{vals["f_major"]:.03}',
+                            sourmash.lca.display_lineage(vals["lineage"]),
+                            vals["comment"]])
 
     ####
 
-    print(f"processed {len(info_d)} genomes.")
+    print(f"processed {len(genome_names)} genomes.")
 
     return 0
 
