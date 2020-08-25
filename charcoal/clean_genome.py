@@ -15,7 +15,7 @@ from sourmash.lca import LineagePair, taxlist
 
 from . import utils
 from .version import version
-from .utils import (summarize_at_rank)
+from .utils import (summarize_at_rank, load_contigs_gather_json)
 
 
 def make_lineage(lineage):
@@ -62,15 +62,7 @@ def main(args):
     lineage = make_lineage(lineage)
 
     # load contigs JSON file
-    with open(args.contigs_json, 'rt') as fp:
-        contigs_d = json.load(fp)
-        for k in contigs_d:
-            (size, v) = contigs_d[k]
-            vv = []
-            for (lin, count) in v:
-                vv.append(([ LineagePair(*x) for x in lin ], count))
-            contigs_d[k] = (size, vv)
-
+    contigs_d = load_contigs_gather_json(args.contigs_json)
     print(f'loaded {len(contigs_d)} contig assignments.')
 
     xopen = open
