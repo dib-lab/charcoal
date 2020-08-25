@@ -1,24 +1,19 @@
 #! /usr/bin/env python
 """
-Remove bad contigs based solely on taxonomy.
+Create a "hit list" of how much will be removed at what ranks.
 """
 import sys
 import argparse
-import gzip
-from collections import Counter, defaultdict
 import csv
 import os.path
 import json
-import glob
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
 from sourmash.lca import LCA_Database, LineagePair
 
 from . import utils
-from . import lineage_db
 from .lineage_db import LineageDB
-from .version import version
 from .utils import (gather_at_rank, get_ident, summarize_at_rank,
                     pretty_print_lineage)
 
@@ -169,14 +164,12 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
-    identical_match_removed = False
     for ss in siglist:
         if entire_mh.similarity(ss.minhash) < 1.0:
             new_siglist.append(ss)
         else:
             if provided_lineage and provided_lineage != 'NA':
                 print(f'found exact match: {ss.name()}. removing.')
-                identical_match_removed = True
             else:
                 print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
                 return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.', 1.0, 1.0
