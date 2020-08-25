@@ -21,7 +21,7 @@ from .utils import (gather_at_rank, get_ident)
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
-    match_rank = args.match_rank
+    match_rank = 'genus'
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
                                               start_column=3)
@@ -98,8 +98,6 @@ def cmdline(sys_args):
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')
-
-    p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
 
     p.add_argument('--json-out', help='JSON-format output file of all tax results')
     args = p.parse_args()

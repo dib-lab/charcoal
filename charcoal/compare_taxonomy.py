@@ -37,8 +37,7 @@ def kb(bp):
 
 
 
-def calculate_contam(info_obj, rank, filter_names=None):
-    genome_lin = info_obj.genome_tax
+def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
     good_names = set()
     good_n = 0
     good_bp = 0
@@ -46,7 +45,7 @@ def calculate_contam(info_obj, rank, filter_names=None):
     bad_n = 0
     bad_bp = 0
 
-    for contig_name, (contig_len, contig_taxlist) in info_obj.contigs_d.items():
+    for contig_name, (contig_len, contig_taxlist) in contigs_d.items():
         if filter_names and contig_name in filter_names:
             continue
 
@@ -209,7 +208,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
-    match_rank = args.match_rank
+    match_rank = 'genus'
 
     # load taxonomy assignments for all the things
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -282,7 +281,8 @@ def main(args):
         total_bad_n = 0
         total_bad_bp = 0
         for rank in sourmash.lca.taxlist():
-            x = calculate_contam(info_obj, rank, filter_names=eliminate)
+            x = calculate_contam(genome_lineage, contigs_d,
+                                 rank, filter_names=eliminate)
             (good_names, good_n, good_bp, bad_names, bad_n, bad_bp) = x
             eliminate.update(bad_names)
             total_bad_n += bad_n
@@ -340,7 +340,6 @@ def cmdline(sys_args):
     p.add_argument('-o', '--output', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided_lineages', help='provided lineages', required=True)
-    p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
     args = p.parse_args()

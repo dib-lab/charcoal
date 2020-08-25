@@ -100,15 +100,6 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
-match_rank = config['match_rank']
-#allowed_match_ranks = ['superkingdom', 'phylum', 'class', 'order', 'family',
-#                      'genus']
-allowed_match_ranks = ['genus']
-if match_rank not in allowed_match_ranks:
-    print(f'** ERROR: unknown match_rank {match_rank}.')
-    print(f'** allowed values are {",".join(allowed_match_ranks)}')
-    sys.exit(-1)
-
 min_f_ident = config['min_f_ident']
 min_f_ident = float(min_f_ident)
 
@@ -222,14 +213,11 @@ rule make_contigs_taxonomy_json:
     output:
         json=output_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
-    params:
-        match_rank = match_rank,
     shell: """
         python -m charcoal.contigs_search \
             --genome {input.genome} --lineages_csv {input.lineages} \
             --genome_sig {input.genome_sig} \
             --matches_sig {input.matches} \
-            --match-rank {params.match_rank} \
             --json-out {output.json}
     """
 
@@ -309,7 +297,6 @@ rule make_hit_list:
         output_dir + '/hit_list_for_filtering.csv'
     conda: 'conf/env-sourmash.yml'
     params:
-        match_rank = match_rank,
         output_dir = output_dir,
         min_f_major = min_f_major,
         min_f_ident = min_f_ident,
@@ -318,7 +305,6 @@ rule make_hit_list:
             --input-directory {params.output_dir} \
             --genome-list-file {input.genome_list} \
             --lineages_csv {input.lineages} \
-            --match-rank {params.match_rank} \
             --provided_lineages {input.provided_lineages} \
             --output {output} \
             --min_f_ident={params.min_f_ident} \
