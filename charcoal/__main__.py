@@ -170,13 +170,6 @@ genome_dir: {genome_dir}
 # (optional) list of lineages for input genomes. comment out or leave
 # blank if none.
 provided_lineages: {lineages}
-
-# match_rank is the rank _above_ which cross-lineage matches are considered
-# contamination. e.g. if set to 'superkingdom', then Archaeal matches in
-# Bacterial genomes will be contamination, but nothing else.
-#
-# values can be superkingdom, phylum, class, order, family, or genus.
-match_rank: order
 """)
 
 cli.add_command(run)
