@@ -256,9 +256,6 @@ def main(args):
     # process every genome individually.
     info_d = {}
     summary_d = {}
-    fp = open(args.output, 'wt')
-    summary_w = csv.writer(fp)
-    summary_w.writerow(['genome', 'filter_at', 'override_filter_at', 'f_ident', 'f_major', 'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp', 'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp', 'lineage', 'comment'])
     for genome_name in genome_names:
         matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
@@ -296,6 +293,10 @@ def main(args):
         print(f'examining {genome_name} for contamination:')
 
         summary_d[genome_name] = {}
+        summary_d[genome_name]['f_ident'] = f_ident
+        summary_d[genome_name]['f_major'] = f_major
+        summary_d[genome_name]['comment'] = comment
+        summary_d[genome_name]['lineage'] = genome_lineage
 
         total_bad_n = 0
         total_bad_bp = 0
@@ -311,8 +312,21 @@ def main(args):
             if rank == match_rank:
                 break
 
+        summary_d[genome_name]['total_bad_bp'] = total_bad_bp
+
         print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
-        summary_w.writerow([genome_name, filter_at, '', f'{f_ident:.03}', f'{f_major:.03}', total_bad_bp, summary_d[genome_name]['superkingdom'], summary_d[genome_name]['phylum'], summary_d[genome_name]['class'], summary_d[genome_name]['order'], summary_d[genome_name]['family'], summary_d[genome_name]['genus'], sourmash.lca.display_lineage(genome_lineage), comment])
+
+
+    fp = open(args.output, 'wt')
+    summary_w = csv.writer(fp)
+    summary_w.writerow(['genome', 'filter_at', 'override_filter_at', 'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp', 'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp', 'f_ident', 'f_major', 'lineage', 'comment'])
+
+    summary_items = list(summary_d.items())
+    summary_items.sort(key=lambda x: -x[1]["total_bad_bp"])
+
+    for genome_name, vals in summary_items:
+        vals = summary_d[genome_name]
+        summary_w.writerow([genome_name, filter_at, '', vals["total_bad_bp"], vals['superkingdom'], vals['phylum'], vals['class'], vals['order'], vals['family'], vals['genus'], f'{vals["f_ident"]:.03}', f'{vals["f_major"]:.03}', sourmash.lca.display_lineage(vals["lineage"]), vals["comment"]])
 
     ####
 
