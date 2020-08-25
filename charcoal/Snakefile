@@ -286,7 +286,8 @@ rule combined_summary:
 # actually do cleaning
 rule summarize_all:
     input:
-        all=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+        all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+        all_sig=expand(output_dir + '/{g}.gather-matches.sig', g=genome_list),
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file

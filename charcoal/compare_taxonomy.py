@@ -168,6 +168,8 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
     genome_sig = sourmash.load_one_signature(genome_sig_filename)
     entire_mh = genome_sig.minhash
 
+    assert entire_mh.scaled == scaled
+
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
     identical_match_removed = False
