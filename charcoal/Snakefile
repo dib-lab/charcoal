@@ -86,12 +86,12 @@ if provided_lineages_file:
         r = csv.reader(fp)
         for row in r:
             genome_filename = row[0]
-            if genome_filename not in genome_list:
+#            if genome_filename not in genome_list:
 #                print(f'** WARNING: lineage was provided for unknown genome {genome_filename}')
 #                print(f'** in provided lineages file {provided_lineages_file}')
 #                print(f'** ({genome_filename} not in {genome_list_file})')
-                if strict_mode:
-                    sys.exit(-1)
+#                if strict_mode:
+#                    sys.exit(-1)
             if not row[1:]:
                 print(f'** cannot parse provided lineage for {genome_filename}')
                 print(f'** ; is it comma separated?')
