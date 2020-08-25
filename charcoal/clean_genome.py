@@ -53,13 +53,17 @@ def main(args):
         print(f'genome {genome_name} not found in hit list spreadsheet {args.hit_list}; exiting')
         sys.exit(-1)
 
-    lineage = make_lineage(lineage)
     filter_rank = filter_at
     if override_filter_at:
         filter_rank = override_filter_at
 
-    print(f'filtering {genome_name} contigs at {filter_rank}')
-    print(f'note, genome lineage is {sourmash.lca.display_lineage(lineage)}')
+    if not lineage:
+        if filter_rank != 'none':
+            print(f'no genome lineage for {genome_name}; cannot clean.')
+            print(f"please set filter rank to 'none' rather than {filter_rank}")
+            sys.exit(-1)
+
+    lineage = make_lineage(lineage)
 
     # load contigs JSON file
     with open(args.contigs_json, 'rt') as fp:
@@ -92,8 +96,11 @@ def main(args):
             clean_fp.write(f'>{record.name}\n{record.sequence}\n')
             total_bp += len(record.sequence)
 
-        print(f'wrote {total_bp} to {args.clean}')
+        print(f'wrote {total_bp} clean bp to {args.clean}')
         sys.exit(0)
+
+    print(f'filtering {genome_name} contigs at {filter_rank}')
+    print(f'note, genome lineage is {sourmash.lca.display_lineage(lineage)}')
 
     bp_dirty = 0
     bp_clean = 0
@@ -111,8 +118,8 @@ def main(args):
             clean_fp.write(f'>{record.name}\n{record.sequence}\n')
             bp_clean += len(record.sequence)
 
-    print(f'wrote {bp_clean} to {args.clean}')
-    print(f'wrote {bp_dirty} to {args.dirty}')
+    print(f'wrote {bp_clean} clean bp to {args.clean}')
+    print(f'wrote {bp_dirty} dirty bp to {args.dirty}')
 
 def cmdline(sys_args):
     "Command line entry point w/argparse action."

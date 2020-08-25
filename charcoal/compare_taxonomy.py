@@ -118,7 +118,7 @@ def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
 
 
 def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
-                          f_ident, f_major, report):
+                          f_ident, f_major, min_f_ident, min_f_major, report):
 
     comment = ""
     genome_lineage = None
@@ -134,12 +134,12 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
         genome_lineage = utils.pop_to_rank(provided_lineage, match_rank)
         report(f'\nUsing provided lineage as genome lineage.')
     else:
-        if f_ident < F_IDENT_THRESHOLD:
-            report(f'** ERROR: fraction of total identified hashes (f_ident) < {F_IDENT_THRESHOLD*100:.0f}%.')
-            comment = f"too few identifiable hashes; f_ident < {F_IDENT_THRESHOLD*100:.0f}%. provide a lineage for this genome."
-        elif f_major < F_MAJOR_THRESHOLD:
-            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {F_MAJOR_THRESHOLD*100:.0f}%.')
-            comment = f"too few hashes in major lineage; f_major < {F_MAJOR_THRESHOLD*100:.0f}%. provide a lineage for this genome."
+        if f_ident < min_f_ident:
+            report(f'** ERROR: fraction of total identified hashes (f_ident) < {min_f_ident*100:.0f}%.')
+            comment = f"too few identifiable hashes; f_ident < {min_f_ident*100:.0f}%. provide a lineage for this genome."
+        elif f_major < min_f_major:
+            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {min_f_major*100:.0f}%.')
+            comment = f"too few hashes in major lineage; f_major < {min_f_major*100:.0f}%. provide a lineage for this genome."
         else:
             genome_lineage = utils.pop_to_rank(guessed_genome_lineage, match_rank)
             report(f'Using majority gather lineage as genome lineage.')
@@ -148,7 +148,7 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
 
 
 def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
-                        tax_assign, match_rank):
+                        tax_assign, match_rank, min_f_ident, min_f_major):
     with open(matches_filename, 'rt') as fp:
         try:
             siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
@@ -223,6 +223,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                                                     provided_lin,
                                                     match_rank,
                                                     f_ident, f_major,
+                                                    min_f_ident, min_f_major,
                                                     print)
 
     return genome_lineage, comment, f_major, f_ident
@@ -267,7 +268,9 @@ def main(args):
         genome_lineage, comment, f_major, f_ident = get_genome_taxonomy(matches_filename,
                                                       genome_sig,
                                                       lineage,
-                                                      tax_assign, match_rank)
+                                                      tax_assign, match_rank,
+                                                      args.min_f_ident,
+                                                      args.min_f_major)
         if genome_lineage:
             filter_at = match_rank
         else:
@@ -324,19 +327,11 @@ def cmdline(sys_args):
     p.add_argument('--input-directory', required=True)
     p.add_argument('--genome-list-file', required=True)
     p.add_argument('-o', '--output', required=True)
-    #p.add_argument('--genome_sig', help='genome signature', required=True)
     p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided_lineages', help='provided lineages', required=True)
-    #p.add_argument('--matches_sig', help='all relevant matches', required=True)
-    #p.add_argument('--contigs_json', help='output of contigs_search', required=True)
-    #p.add_argument('--summary', help='CSV one line output')
-    #p.add_argument('--force', help='continue past survivable errors',
-    #               action='store_true')
-
-    #p.add_argument('--lineage', help=';-separated lineage down to genus level',
-    #               default='NA')        # default is str NA
     p.add_argument('--match-rank', help='rank below which matches are _not_ contaminants', default='genus')
-    #p.add_argument('--contig-report', help='contig report (CSV)')
+    p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
+    p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
     args = p.parse_args()
 
     main(args)

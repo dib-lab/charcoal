@@ -108,6 +108,12 @@ if match_rank not in allowed_match_ranks:
     print(f'** allowed values are {",".join(allowed_match_ranks)}')
     sys.exit(-1)
 
+min_f_ident = config['min_f_ident']
+min_f_ident = float(min_f_ident)
+
+min_f_major = config['min_f_major']
+min_f_major = float(min_f_major)
+
 print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
 
@@ -304,6 +310,8 @@ rule make_hit_list:
     params:
         match_rank = match_rank,
         output_dir = output_dir,
+        min_f_major = min_f_major,
+        min_f_ident = min_f_ident,
     shell: """
         python -m charcoal.compare_taxonomy \
             --input-directory {params.output_dir} \
@@ -311,7 +319,9 @@ rule make_hit_list:
             --lineages_csv {input.lineages} \
             --match-rank {params.match_rank} \
             --provided_lineages {input.provided_lineages} \
-            --output {output}
+            --output {output} \
+            --min_f_ident={params.min_f_ident} \
+            --min_f_major={params.min_f_major}
     """
 
 rule clean_contigs:
