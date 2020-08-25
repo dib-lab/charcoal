@@ -81,7 +81,7 @@ def test_make_contigs_json(request, genome_file):
 
 
 @pytest.mark.dependency()
-def test_make_output_dna(request):
+def test_make_hit_list_dna(request):
     depends(request, [f"test_make_contigs_json[{g}]" for g in demo_genomes])
 
     target = 'hit_list_for_filtering.csv'
@@ -89,6 +89,16 @@ def test_make_output_dna(request):
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
+
+@pytest.mark.dependency(['test_make_hit_list_dna'])
+@pytest.mark.parametrize("genome_file", demo_genomes)
+def test_make_clean_dna(genome_file):
+    target = f'{genome_file}.clean.fa.gz'
+    status = _run_snakemake_test('demo/demo.conf', target, ['-j', '4'])
+
+    assert status == 0
+    assert os.path.exists(os.path.join(_tempdir, target))
+
 
 @pytest.mark.dependency()
 def test_make_output_prot(request):
