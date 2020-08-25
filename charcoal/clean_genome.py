@@ -4,7 +4,6 @@ Clean a genome based on hit list & contigs taxonomy.
 import sys
 import argparse
 import gzip
-from collections import Counter, defaultdict
 import csv
 import os.path
 import json
@@ -15,11 +14,8 @@ import sourmash
 from sourmash.lca import LineagePair, taxlist
 
 from . import utils
-from .lineage_db import LineageDB
 from .version import version
-from .utils import (get_idents_for_hashval, gather_lca_assignments,
-    count_lca_for_assignments, pretty_print_lineage, pretty_print_lineage2,
-    WriteAndTrackFasta, gather_at_rank, get_ident, summarize_at_rank)
+from .utils import (summarize_at_rank)
 
 
 def make_lineage(lineage):
