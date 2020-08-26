@@ -326,7 +326,7 @@ def cmdline(sys_args):
     p.add_argument('--genome-list-file', required=True)
     p.add_argument('-o', '--output', required=True)
     p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
-    p.add_argument('--provided-lineages', help='provided lineages', required=True)
+    p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
     args = p.parse_args()
