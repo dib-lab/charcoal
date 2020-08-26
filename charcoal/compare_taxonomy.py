@@ -325,10 +325,10 @@ def cmdline(sys_args):
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
     args = p.parse_args()
 
-    main(args)
+    return main(args)
 
 
 # execute this, when run with `python -m`.
 if __name__ == '__main__':
     returncode = cmdline(sys.argv[1:])
-    sys.exit(0)
+    sys.exit(returncode)

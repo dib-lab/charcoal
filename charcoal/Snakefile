@@ -322,7 +322,7 @@ rule clean_contigs:
     shell: """
         python -m charcoal.clean_genome \
             --genome {input.genome} \
-            --hit_list {input.hit_list} \
-            --contigs_json {input.json} \
+            --hit-list {input.hit_list} \
+            --contigs-json {input.json} \
             --clean {output.clean} --dirty {output.dirty}
     """

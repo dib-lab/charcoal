@@ -108,20 +108,23 @@ def main(args):
     print(f'wrote {bp_clean} clean bp to {args.clean}')
     print(f'wrote {bp_dirty} dirty bp to {args.dirty}')
 
+    return 0
+
+
 def cmdline(sys_args):
     "Command line entry point w/argparse action."
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--genome', help='genome file', required=True)
-    p.add_argument('--hit_list', help='hit list spreadsheet', required=True)
-    p.add_argument('--contigs_json', help='JSON-format contigs classification output by contigs_search', required=True)
+    p.add_argument('--hit-list', help='hit list spreadsheet', required=True)
+    p.add_argument('--contigs-json', help='JSON-format contigs classification output by contigs_search', required=True)
     p.add_argument('--clean', help='cleaned contigs', required=True)
     p.add_argument('--dirty', help='dirty contigs', required=True)
     args = p.parse_args()
 
-    main(args)
+    return main(args)
 
 
 # execute this, when run with `python -m`.
 if __name__ == '__main__':
     returncode = cmdline(sys.argv[1:])
-    sys.exit(0)
+    sys.exit(returncode)
