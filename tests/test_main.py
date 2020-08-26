@@ -61,7 +61,7 @@ def build_args_with_tmpdir(tmpdir, **kwargs):
     return args
 
 
-def test_main_1():
+def xxx_test_main_1():
     # basic test - run it!
     genome = get_test_data('genomes/2.fa.gz')
     matches_sig = get_test_data('2.fa.gz.gather-matches.sig.gz')
@@ -86,7 +86,7 @@ def test_main_1():
             assert 'All genome hashes belong to one lineage! Nothing to do.' in data
 
 
-def test_main_2_unknown_lineage():
+def xxx_test_main_2_unknown_lineage():
     # no matches
     genome = get_test_data('genomes/2.fa.gz')
     lineages_csv = get_test_data('test-match-lineages.csv')
@@ -115,7 +115,7 @@ def test_main_2_unknown_lineage():
             assert 'no matches to this genome were found in the database; nothing to do' in data
 
 
-def test_main_3_unknown_lineage():
+def xxx_test_main_3_unknown_lineage():
     # ???
     chunk = load_first_chunk(get_test_data('genomes/2.fa.gz'))[0]
     matches_sig = get_test_data('2.fa.gz.gather-matches.sig.gz')
@@ -154,7 +154,7 @@ def test_main_3_unknown_lineage():
             assert 'ERROR: fraction of total identified hashes (f_ident) < 10%.' in data
 
 
-def test_main_4_unknown_lineage():
+def xxx_test_main_4_unknown_lineage():
     # ???
     chunk = load_first_chunk(get_test_data('genomes/2.fa.gz'))[0]
     matches_sig = get_test_data('2.fa.gz.gather-matches.sig.gz')

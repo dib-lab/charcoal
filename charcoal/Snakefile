@@ -86,12 +86,12 @@ if provided_lineages_file:
         r = csv.reader(fp)
         for row in r:
             genome_filename = row[0]
-            if genome_filename not in genome_list:
-                print(f'** WARNING: lineage was provided for unknown genome {genome_filename}')
-                print(f'** in provided lineages file {provided_lineages_file}')
-                print(f'** ({genome_filename} not in {genome_list_file})')
-                if strict_mode:
-                    sys.exit(-1)
+#            if genome_filename not in genome_list:
+#                print(f'** WARNING: lineage was provided for unknown genome {genome_filename}')
+#                print(f'** in provided lineages file {provided_lineages_file}')
+#                print(f'** ({genome_filename} not in {genome_list_file})')
+#                if strict_mode:
+#                    sys.exit(-1)
             if not row[1:]:
                 print(f'** cannot parse provided lineage for {genome_filename}')
                 print(f'** ; is it comma separated?')
@@ -100,13 +100,11 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
-match_rank = config['match_rank']
-allowed_match_ranks = ['superkingdom', 'phylum', 'class', 'order', 'family',
-                      'genus']
-if match_rank not in allowed_match_ranks:
-    print(f'** ERROR: unknown match_rank {match_rank}.')
-    print(f'** allowed values are {",".join(allowed_match_ranks)}')
-    sys.exit(-1)
+min_f_ident = config['min_f_ident']
+min_f_ident = float(min_f_ident)
+
+min_f_major = config['min_f_major']
+min_f_major = float(min_f_major)
 
 print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
@@ -132,11 +130,15 @@ def get_provided_lineage(w):
 wildcard_constraints:
     size="\d+"
 
-# default rule - produce *.clean.fa.gz, and the summary
-rule all:
+# default rule - produce hit list
+rule inspect:
     input:
-        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list),
-        output_dir + '/combined_summary.csv',
+        output_dir + '/hit_list_for_filtering.csv'
+
+# clean rule - clean the contigs
+rule clean:
+    input:
+        expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
 
 # check config files only
 rule check:
@@ -178,57 +180,76 @@ rule contigs_sig:
             {params.moltype} {input} -o {output}
     """
 
-# run a gather against the database.
-# this should be the most time-consuming and memory-intensive step.
-rule gather_all:
+# run a search against the database.
+# this should be the most time-consuming and memory-intensive step...
+rule search_all:
     input:
         query = output_dir + '/{filename}.sig',
         databases = config['gather_db']
     output:
-        csv = output_dir + '/{filename}.gather-matches.csv',
-        matches = output_dir + '/{filename}.gather-matches.sig',
-        txt = output_dir + '/{filename}.gather-matches.txt'
+        csv = output_dir + '/{filename}.matches.csv',
+        matches = output_dir + '/{filename}.matches.sig',
+        txt = output_dir + '/{filename}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
         gather_scaled = config['gather_scaled']
     conda: 'conf/env-sourmash.yml'
     shell: """
-        sourmash gather {input.query} {input.databases} -o {output.csv} \
+        sourmash search {input.query} {input.databases} -o {output.csv} \
+            --containment \
             {params.moltype} --scaled {params.gather_scaled} \
-            --save-matches {output.matches} --threshold-bp=0 >& {output.txt}
+            --save-matches {output.matches} --threshold=0.001 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
     """
 
-# actually do cleaning
-rule contigs_clean_just_taxonomy:
+# generate contigs taxonomy
+rule make_contigs_taxonomy_json:
     input:
-#        script = srcdir('just_taxonomy.py'),
         genome = genome_dir + '/{f}',
-        matches = output_dir + '/{f}.gather-matches.sig',
+        genome_sig = output_dir + '/{f}.sig',
+        matches = output_dir + '/{f}.matches.sig',
         lineages = config['lineages_csv']
     output:
-        clean=output_dir + '/{f}.clean.fa.gz',
-        dirty=output_dir + '/{f}.dirty.fa.gz',
-        report=output_dir + '/{f}.report.txt',
-        contig_report=output_dir + '/{f}.contigs.csv',
-        csv=output_dir + '/{f}.summary.csv'
+        json=output_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
-    params:
-        lineage = get_provided_lineage,
-        force = force_param,
-        match_rank = match_rank,
-        moltype = config['moltype']
     shell: """
-        python -m charcoal.just_taxonomy \
-            --genome {input.genome} --lineages_csv {input.lineages} \
-            --matches_sig {input.matches} \
-            --clean {output.clean} --dirty {output.dirty} \
-            --report {output.report} --summary {output.csv} \
-            --lineage {params.lineage:q} {params.force} \
-            --match-rank {params.match_rank} \
-            --contig-report {output.contig_report}
+        python -m charcoal.contigs_search \
+            --genome {input.genome} --lineages-csv {input.lineages} \
+            --genome-sig {input.genome_sig} \
+            --matches-sig {input.matches} \
+            --json-out {output.json}
     """
+
+# actually do cleaning
+#rule contigs_clean_just_taxonomy:
+#    input:
+##        script = srcdir('just_taxonomy.py'),
+#        genome = genome_dir + '/{f}',
+#        matches = output_dir + '/{f}.matches.sig',
+#        lineages = config['lineages_csv']
+#    output:
+#        clean=output_dir + '/{f}.clean.fa.gz',
+#        dirty=output_dir + '/{f}.dirty.fa.gz',
+#        report=output_dir + '/{f}.report.txt',
+#        contig_report=output_dir + '/{f}.contigs.csv',
+#        csv=output_dir + '/{f}.summary.csv'
+#    conda: 'conf/env-sourmash.yml'
+#    params:
+#        lineage = get_provided_lineage,
+#        force = force_param,
+#        match_rank = match_rank,
+#        moltype = config['moltype']
+#    shell: """
+#        python -m charcoal.just_taxonomy \
+#            --genome {input.genome} --lineages_csv {input.lineages} \
+#            --matches_sig {input.matches} \
+#            --clean {output.clean} --dirty {output.dirty} \
+#            --report {output.report} --summary {output.csv} \
+#            --lineage {params.lineage:q} {params.force} \
+#            --match-rank {params.match_rank} \
+#            --contig-report {output.contig_report}
+#    """
 
 # build the combined summary
 rule combined_summary:
@@ -262,3 +283,46 @@ rule combined_summary:
                    assert len(row) == len(header), (len(row), len(header), i)
 
                    w.writerow(row)
+
+
+# generate a hit list
+rule make_hit_list:
+    input:
+        all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+        all_sig=expand(output_dir + '/{g}.matches.sig', g=genome_list),
+        lineages = config['lineages_csv'],
+        provided_lineages = provided_lineages_file,
+        genome_list = genome_list_file
+    output:
+        output_dir + '/hit_list_for_filtering.csv'
+    conda: 'conf/env-sourmash.yml'
+    params:
+        output_dir = output_dir,
+        min_f_major = min_f_major,
+        min_f_ident = min_f_ident,
+    shell: """
+        python -m charcoal.compare_taxonomy \
+            --input-directory {params.output_dir} \
+            --genome-list-file {input.genome_list} \
+            --lineages-csv {input.lineages} \
+            --provided-lineages {input.provided_lineages} \
+            --output {output} \
+            --min_f_ident={params.min_f_ident} \
+            --min_f_major={params.min_f_major}
+    """
+
+rule clean_contigs:
+    input:
+        genome = genome_dir + '/{f}',
+        json = output_dir + '/{f}.contigs-tax.json',
+        hit_list = output_dir + '/hit_list_for_filtering.csv',
+    output:
+        clean = output_dir + '/{f}.clean.fa.gz',
+        dirty = output_dir + '/{f}.dirty.fa.gz',
+    shell: """
+        python -m charcoal.clean_genome \
+            --genome {input.genome} \
+            --hit-list {input.hit_list} \
+            --contigs-json {input.json} \
+            --clean {output.clean} --dirty {output.dirty}
+    """

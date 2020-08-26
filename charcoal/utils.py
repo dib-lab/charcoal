@@ -1,12 +1,11 @@
 """
 utility functions for charcoal.
 """
-import math
+import json
 from collections import defaultdict, Counter
-import screed
 
 import sourmash
-from sourmash.lca import lca_utils
+from sourmash.lca import lca_utils, LineagePair
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -62,7 +61,6 @@ def gather_lca_assignments(hashvals, rank, dblist, ldb):
     assignments = defaultdict(set)
     for hashval in hashvals:
         for lca_db in dblist:
-            lineages = set()
             for ident in get_idents_for_hashval(lca_db, hashval):
                 lineage = ldb.ident_to_lineage[ident]
 
@@ -123,11 +121,75 @@ class WriteAndTrackFasta(object):
         self.n = 0
         self.bp = 0
 
-    def write(self, record):
-        self.outfp.write(f'>{record.name}\n{record.sequence}\n')
+    def write(self, record, no_write=False):
+        if not no_write:
+            self.outfp.write(f'>{record.name}\n{record.sequence}\n')
         self.minhash.add_sequence(record.sequence, force=True)
         self.n += 1
         self.bp += len(record.sequence)
 
     def close(self):
         self.outfp.close()
+
+
+def gather_at_rank(mh, lca_db, lin_db, match_rank):
+    "Run gather, and aggregate at given rank."
+    import copy
+    minhash = copy.copy(mh)
+    query_sig = sourmash.SourmashSignature(minhash)
+
+    # do the gather:
+    counts = Counter()
+    while 1:
+        results = lca_db.gather(query_sig, threshold_bp=0)
+        if not results:
+            break
+
+        (match, match_sig, _) = results[0]
+
+        # retrieve lineage & pop to match_rank
+        match_ident = get_ident(match_sig)
+        match_lineage = lin_db.ident_to_lineage[match_ident]
+        match_lineage = pop_to_rank(match_lineage, match_rank)
+
+        # count at match_rank
+        common = match_sig.minhash.count_common(query_sig.minhash)
+        counts[match_lineage] += common
+
+        # finish out gather algorithm!
+        minhash.remove_many(match_sig.minhash.hashes)
+        query_sig = sourmash.SourmashSignature(minhash)
+
+    # return!
+    for lin, count in counts.most_common():
+        yield lin, count
+
+
+def summarize_at_rank(lincounts, rank):
+    newcounts = Counter()
+    for lin, count in lincounts:
+        lin = pop_to_rank(lin, rank)
+        newcounts[lin] += count
+
+    return newcounts.most_common()
+
+
+def get_ident(sig):
+    "Hack and slash identifiers."
+    ident = sig.name()
+    ident = ident.split()[0]
+    ident = ident.split('.')[0]
+    return ident
+
+def load_contigs_gather_json(filename):
+    # load contigs JSON file - @CTB
+    with open(filename, 'rt') as fp:
+        contigs_d = json.load(fp)
+        for k in contigs_d:
+            (size, v) = contigs_d[k]
+            vv = []
+            for (lin, count) in v:
+                vv.append(([ LineagePair(*x) for x in lin ], count))
+            contigs_d[k] = (size, vv)
+
+    return contigs_d

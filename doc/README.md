@@ -48,28 +48,12 @@ filing issues, writing documentation, and engaging in the project.
 charcoal assigns a lineage to each input genome based on the search
 database(s), as well as any lineages that are provided.
 
-charcoal then uses three heuristics to determine if a contig is a
-contaminant.  Below, the term "match rank" is a configurable parameter
-that defaults to `order`; this corresponds roughly to the notion that
-if a contig matches to two genomes that belong to different orders, it's
-probably a contaminant.
-
-* First, charcoal searches 25,000 GTDB genomes using `sourmash gather`
-  to see where the contig matches best against known genomes. If the
-  contig places within a lineage that has a different match rank than
-  the genome, it is removed as a contaminant.
-
-* Second, charcoal computes the lowest common ancestor (LCA) for all
-  the hashes in the contig. If the most common LCA is **higher than**
-  the configured match rank, the contig is removed as a contaminant.
-
-* Third, charcoal asks if the LCA of the contig is a **different
-  lineage** (differs at match rank) than the rest of the genome. If it
-  is, it's removed as a contaminant.
-
-The per-genome report details contig removal in terms of these reasons
-(numbered from 1-3). The specific parameters for genome and contig
-classifications are currently being evaluated (May 2020).
+charcoal then uses a relatively straightforward heuristic to determine
+if a contig is a contaminant: it searches 25,000 GTDB genomes using
+`sourmash search --containment` to see where the contig matches best
+against known genomes. If the contig places within a lineage that has
+a different lineage than the containing genome, it is flagged as a
+contaminant.
 
 Importantly, charcoal defaults to assuming that a contig is "clean" -
 if it has no information on a contig, it does not remove it.
@@ -154,39 +138,11 @@ multiple processes.  You can do this with `charcoal run <config file>
 
 ### Output files
 
-All output files will be placed in the output directory specified in
-the config file.
+(UNDER DEVELOPMENT - FIX ME)
 
-A summary across all genomes will be in `combined_summary.csv`.
-The columns are explained below.
-
-
-For each genome, there are three key output files:
-* `<filename>.report.txt` - a detailed report of the decontamination process.
-* `<filename>.clean.fa.gz` - all of the kept ("clean") contigs.
-* `<filename>.dirty.fa.gz` - all of the removed ("dirty") contigs.
-
-The columns in the combined summary are:
-
-1. `genomefile` - the genome file name
-2. `brieftax` - a brief form of the lineage used (provided lineage if given; or guessed taxonomy, if not)
-3. `f_major` - the fraction of k-mers belonging to the majority lineage in the genome
-4. `f_ident` - the fraction of k-mers for which a match in the database was found
-5. `f_removed` - the fraction of total base pairs removed as contaminated (in contigs) and put in the `.dirty.fa.gz` file
-6. `n_reason_1` - see report.txt
-7. `n_reason_2` - see report.txt
-8. `n_reason_3` - see report.txt
-9. `refsize` - the approximate size of the nearest match genome in the database, if any
-10. `ratio` - the ratio between the size of this genome and the refsize
-11. `clean_bp` - total bp in "clean" contigs in the `.clean.fa.gz` file
-12. `clean_n` - total number of "clean" contigs
-13. `dirty_n` - total number of "dirty" contigs
-14. `dirty_bp` - total bp in "dirty" contigs in the `.clean.fa.gz` file
-15. `missed_n` - total number of contigs for which no hash values were found (these are ignored by charcoal, and placed in the clean contigs file)
-16. `missed_bp` - total number of bp in contigs for which no hash values were found
-17. `taxguessed` - the lineage guessed by charcoal based on majority taxonomy (see `f_ident` and `f_match`)
-18. `taxprovided` - the lineage given in the provided-lineages file, if any.
-19. `comment` - a comment explaining why this genome was not processed.
+* discuss hit list
+* discuss editing hit list
+* output files etc
 
 ### Needed resources
 
@@ -238,7 +194,6 @@ The project-specific settings are as follows:
 * `genome_dir`: the directory in which all of the input genomes lie. Note, soft linked (`ln -s`) genome files are permitted. This parameter is required.
 * `genome_list`: the basenames (e.g. `ls -1`) of the genome files to run decontamination on. They must all be located in `genome_dir`. FASTA, gzipped FASTA, or bzip2'ed FASTA are all supported, with no particular naming format required. This parameter is required.
 * `provided_lineages`: an optional spreadsheet of `genome_filename,superkingdom,phylum,...` lines used to provide lineages for the input genomes. Here `genome_filename` must exactly match a filename in `genome_list`.  The provided lineage overrides the automatic lineage detection done by charcoal, and can be used to label genomes as lineages that do not belong to the sourmash databases specified in `gather_db`. For example, if you specify `genome.fa.gz,d__Eukaryota,` for a genome in this file while using the GTDB database for gather, then charcoal will remove bacterial and archaeal contaminants but not Eukaryotal.
-* `match_rank`: rank at or below which a contigs are **not** removed as contaminants. For example, if `match_rank` is genus, then contigs in a genome file belonging to different families than the genome will be removed as contaminants. Defaults to order.
 
 Database parameters (for intermediate users):
 

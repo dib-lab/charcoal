@@ -12,13 +12,10 @@ CTB:
 from __future__ import print_function, division
 import json
 import gzip
-from collections import OrderedDict, defaultdict, Counter
+from collections import OrderedDict, defaultdict
 import functools
 import pytest
 
-import sourmash
-from sourmash import lca
-from sourmash.logging import notify, error, debug
 from sourmash.lca import LineagePair
 
 
@@ -198,7 +195,7 @@ def test_lineage_db_1():
                 LineagePair('rank2', 'name2')))
 
     ldb = LineageDB()
-    lid = ldb.insert('uniq', lineage)
+    ldb.insert('uniq', lineage)
 
     assert 'uniq' in ldb.lineage_to_idents[lineage]
     assert ldb.ident_to_lineage['uniq'] == lineage

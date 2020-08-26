@@ -19,7 +19,7 @@ def get_package_configfile(filename):
 
 
 def run_snakemake(configfile, no_use_conda=False, verbose=False,
-                  snakefile_name='Snakefile', extra_args=[]):
+                  snakefile_name='Snakefile', outdir=None, extra_args=[]):
     # find the Snakefile relative to package path
     snakefile = get_snakefile_path(snakefile_name)
 
@@ -29,6 +29,10 @@ def run_snakemake(configfile, no_use_conda=False, verbose=False,
     # add --use-conda
     if not no_use_conda:
         cmd += ["--use-conda"]
+
+    # add outdir override?
+    if outdir:
+        cmd += ["--config", f"output_dir={outdir}"]
 
     # snakemake sometimes seems to want a default -j; set it to 1 for now.
     # can overridden later on command line.
@@ -54,6 +58,8 @@ def run_snakemake(configfile, no_use_conda=False, verbose=False,
         print(f'Error in snakemake invocation: {e}', file=sys.stderr)
         return e.returncode
 
+    return 0
+
 #
 # actual command line functions
 #
@@ -68,12 +74,13 @@ def cli():
 @click.argument('configfile')
 @click.option('--no-use-conda', is_flag=True, default=False)
 @click.option('--verbose', is_flag=True)
+@click.option('--outdir', nargs=1)
 @click.argument('snakemake_args', nargs=-1)
-def run(configfile, snakemake_args, no_use_conda, verbose):
+def run(configfile, snakemake_args, no_use_conda, verbose, outdir):
     "execute charcoal workflow (using snakemake underneath)"
     run_snakemake(configfile, snakefile_name='Snakefile',
                   no_use_conda=no_use_conda, verbose=verbose,
-                  extra_args=snakemake_args)
+                  outdir=outdir, extra_args=snakemake_args)
 
 # download databases using a special Snakefile
 @click.command()
@@ -163,13 +170,6 @@ genome_dir: {genome_dir}
 # (optional) list of lineages for input genomes. comment out or leave
 # blank if none.
 provided_lineages: {lineages}
-
-# match_rank is the rank _above_ which cross-lineage matches are considered
-# contamination. e.g. if set to 'superkingdom', then Archaeal matches in
-# Bacterial genomes will be contamination, but nothing else.
-#
-# values can be superkingdom, phylum, class, order, family, or genus.
-match_rank: order
 """)
 
 cli.add_command(run)
