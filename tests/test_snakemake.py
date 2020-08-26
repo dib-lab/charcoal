@@ -60,7 +60,7 @@ def test_make_sig(genome_file):
 @pytest.mark.parametrize("genome_file", demo_genomes)
 def test_make_gather_matches(request, genome_file):
     depends(request, [f"test_make_sig[{g}]" for g in demo_genomes])
-    target = f'{genome_file}.gather-matches.sig'
+    target = f'{genome_file}.matches.sig'
     status = _run_snakemake_test('demo/demo.conf', target)
 
     assert status == 0

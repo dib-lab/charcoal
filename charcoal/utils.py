@@ -157,7 +157,7 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
         counts[match_lineage] += common
 
         # finish out gather algorithm!
-        minhash.remove_many(match_sig.minhash.get_mins())
+        minhash.remove_many(match_sig.minhash.hashes)
         query_sig = sourmash.SourmashSignature(minhash)
 
     # return!
