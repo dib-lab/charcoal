@@ -32,7 +32,7 @@ def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
 
     genome_name = os.path.basename(args.genome)
-    found = True
+    found = False
     with open(args.hit_list, 'rt') as fp:
         r = csv.DictReader(fp)
         for row in r:
