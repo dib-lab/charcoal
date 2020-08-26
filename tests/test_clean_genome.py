@@ -1,6 +1,5 @@
 import os.path
 from . import pytest_utils as utils
-import json
 
 from charcoal import clean_genome
 

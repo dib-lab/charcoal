@@ -1,7 +1,6 @@
 import os.path
 import shutil
 from . import pytest_utils as utils
-import json
 
 from charcoal import compare_taxonomy
 
