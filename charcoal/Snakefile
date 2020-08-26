@@ -180,16 +180,16 @@ rule contigs_sig:
             {params.moltype} {input} -o {output}
     """
 
-# run a gather against the database.
-# this should be the most time-consuming and memory-intensive step.
-rule gather_all:
+# run a search against the database.
+# this should be the most time-consuming and memory-intensive step...
+rule search_all:
     input:
         query = output_dir + '/{filename}.sig',
         databases = config['gather_db']
     output:
-        csv = output_dir + '/{filename}.gather-matches.csv',
-        matches = output_dir + '/{filename}.gather-matches.sig',
-        txt = output_dir + '/{filename}.gather-matches.txt'
+        csv = output_dir + '/{filename}.matches.csv',
+        matches = output_dir + '/{filename}.matches.sig',
+        txt = output_dir + '/{filename}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
         gather_scaled = config['gather_scaled']
@@ -208,16 +208,16 @@ rule make_contigs_taxonomy_json:
     input:
         genome = genome_dir + '/{f}',
         genome_sig = output_dir + '/{f}.sig',
-        matches = output_dir + '/{f}.gather-matches.sig',
+        matches = output_dir + '/{f}.matches.sig',
         lineages = config['lineages_csv']
     output:
         json=output_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.contigs_search \
-            --genome {input.genome} --lineages_csv {input.lineages} \
-            --genome_sig {input.genome_sig} \
-            --matches_sig {input.matches} \
+            --genome {input.genome} --lineages-csv {input.lineages} \
+            --genome-sig {input.genome_sig} \
+            --matches-sig {input.matches} \
             --json-out {output.json}
     """
 
@@ -226,7 +226,7 @@ rule make_contigs_taxonomy_json:
 #    input:
 ##        script = srcdir('just_taxonomy.py'),
 #        genome = genome_dir + '/{f}',
-#        matches = output_dir + '/{f}.gather-matches.sig',
+#        matches = output_dir + '/{f}.matches.sig',
 #        lineages = config['lineages_csv']
 #    output:
 #        clean=output_dir + '/{f}.clean.fa.gz',
@@ -289,7 +289,7 @@ rule combined_summary:
 rule make_hit_list:
     input:
         all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
-        all_sig=expand(output_dir + '/{g}.gather-matches.sig', g=genome_list),
+        all_sig=expand(output_dir + '/{g}.matches.sig', g=genome_list),
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
@@ -304,8 +304,8 @@ rule make_hit_list:
         python -m charcoal.compare_taxonomy \
             --input-directory {params.output_dir} \
             --genome-list-file {input.genome_list} \
-            --lineages_csv {input.lineages} \
-            --provided_lineages {input.provided_lineages} \
+            --lineages-csv {input.lineages} \
+            --provided-lineages {input.provided_lineages} \
             --output {output} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major}

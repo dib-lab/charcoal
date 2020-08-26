@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-Do gather matches on contigs.
+Do gather matches on contigs, and save to JSON
 """
 import sys
 import argparse
@@ -23,23 +23,35 @@ def main(args):
     genomebase = os.path.basename(args.genome)
     match_rank = 'genus'
 
+    # load taxonomy CSV
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
                                               start_column=3)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
-    with open(args.matches_sig, 'rt') as fp:
-        siglist = list(sourmash.load_signatures(fp))
-
+    # load the genome signature
     genome_sig = sourmash.load_one_signature(args.genome_sig)
+
+    # load all of the matches from search --containment in the database
+    with open(args.matches_sig, 'rt') as fp:
+        try:
+            siglist = list(sourmash.load_signatures(fp, do_raise=True,
+                                                    quiet=False))
+        except sourmash.exceptions.SourmashError:
+            siglist = []
+    print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
     for ss in siglist:
-        if genome_sig.similarity(ss) < 1.0:
+        if genome_sig.similarity(ss) == 1.0:
+            print(f'removing an identical match: {ss.name()}')
+        else:
             new_siglist.append(ss)
-
     siglist = new_siglist
 
+    # if, after removing exact match(es), there is nothing left, quit.
+    # (but write an empty JSON file so that snakemake workflows don't
+    # complain.)
     if not siglist:
         print('no non-identical matches for this genome, exiting.')
         contigs_tax = {}
@@ -73,16 +85,20 @@ def main(args):
     screed_iter = screed.open(args.genome)
     contigs_tax = {}
     for n, record in enumerate(screed_iter):
-        # look at each contig
+        # look at each contig individually
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
 
+        # collect all the gather results at genus level, together w/counts;
+        # here, results is a list of (lineage, count) tuples.
         results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
 
+        # store together with size of sequence.
         contigs_tax[record.name] = (len(record.sequence), results)
 
     print(f"Processed {len(contigs_tax)} contigs.")
 
+    # save!
     with open(args.json_out, 'wt') as fp:
         fp.write(json.dumps(contigs_tax))
 
@@ -93,13 +109,15 @@ def cmdline(sys_args):
     "Command line entry point w/argparse action."
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--genome', help='genome file', required=True)
-    p.add_argument('--genome_sig', help='genome sig', required=True)
-    p.add_argument('--matches_sig', help='all relevant matches', required=True)
-    p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
+    p.add_argument('--genome-sig', help='genome sig', required=True)
+    p.add_argument('--matches-sig', help='all relevant matches', required=True)
+    p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')
 
-    p.add_argument('--json-out', help='JSON-format output file of all tax results')
+    p.add_argument('--json-out',
+                   help='JSON-format output file of all tax results',
+                   required=True)
     args = p.parse_args()
 
     main(args)

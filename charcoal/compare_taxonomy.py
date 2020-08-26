@@ -227,7 +227,7 @@ def main(args):
     # process every genome individually.
     summary_d = {}
     for genome_name in genome_names:
-        matches_filename = os.path.join(dirname, genome_name + '.gather-matches.sig')
+        matches_filename = os.path.join(dirname, genome_name + '.matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
         lineage = provided_lineages.get(genome_name, '')
         contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
@@ -239,6 +239,7 @@ def main(args):
                                 args.min_f_ident,
                                 args.min_f_major)
         genome_lineage, comment, f_major, f_ident = x
+
         # did we get a lineage for this genome? if so, propose filtering at
         # default rank 'match_rank', otherwise ...do not filter.
         if genome_lineage:
@@ -324,8 +325,8 @@ def cmdline(sys_args):
     p.add_argument('--input-directory', required=True)
     p.add_argument('--genome-list-file', required=True)
     p.add_argument('-o', '--output', required=True)
-    p.add_argument('--lineages_csv', help='lineage spreadsheet', required=True)
-    p.add_argument('--provided_lineages', help='provided lineages', required=True)
+    p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
+    p.add_argument('--provided-lineages', help='provided lineages', required=True)
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
     args = p.parse_args()
