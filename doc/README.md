@@ -140,6 +140,10 @@ multiple processes.  You can do this with `charcoal run <config file>
 
 (UNDER DEVELOPMENT - FIX ME)
 
+* discuss hit list
+* discuss editing hit list
+* output files etc
+
 ### Needed resources
 
 In general, each charcoal job needs less than 5 GB of memory, and
