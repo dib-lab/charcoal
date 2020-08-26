@@ -28,11 +28,7 @@ def kb(bp):
 
 def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
     good_names = dict()
-    good_n = 0
-    good_bp = 0
     bad_names = dict()
-    bad_n = 0
-    bad_bp = 0
 
     for contig_name, (contig_len, contig_taxlist) in contigs_d.items():
         if filter_names and contig_name in filter_names:
@@ -138,14 +134,12 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
-    removed_exact_match = False
     for ss in siglist:
         if entire_mh.similarity(ss.minhash) < 1.0:
             new_siglist.append(ss)
         else:
             if provided_lineage and provided_lineage != 'NA':
                 print(f'found exact match: {ss.name()}. removing.')
-                removed_exact_match = True
             else:
                 print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
                 return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.', 1.0, 1.0

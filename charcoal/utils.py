@@ -1,10 +1,8 @@
 """
 utility functions for charcoal.
 """
-import math
 import json
 from collections import defaultdict, Counter
-import screed
 
 import sourmash
 from sourmash.lca import lca_utils, LineagePair
@@ -63,7 +61,6 @@ def gather_lca_assignments(hashvals, rank, dblist, ldb):
     assignments = defaultdict(set)
     for hashval in hashvals:
         for lca_db in dblist:
-            lineages = set()
             for ident in get_idents_for_hashval(lca_db, hashval):
                 lineage = ldb.ident_to_lineage[ident]
 

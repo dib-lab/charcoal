@@ -6,7 +6,6 @@ import argparse
 import gzip
 import csv
 import os.path
-import json
 
 import screed
 
