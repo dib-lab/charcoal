@@ -95,6 +95,7 @@ def test_1_loomba_family(location):
     assert os.path.exists(dirty_out)
 
     out = new_out.getvalue()
+    print(out)
 #    assert 'wrote 2658801 clean bp' in out
     assert 'wrote 9347 dirty bp' in out
 
@@ -136,6 +137,7 @@ def test_1_loomba_order(location):
     assert os.path.exists(dirty_out)
 
     out = new_out.getvalue()
+    print(out)
 #    assert 'wrote 2658801 clean bp' in out
     assert 'wrote 7286 dirty bp' in out
 
@@ -172,10 +174,12 @@ def test_1_loomba_class(location):
         sys.stdout, new_out = old_out, sys.stdout
         sys.stderr, new_err = old_err, sys.stderr
 
+    print(new_out.getvalue())
+
     assert status == 0
     assert os.path.exists(clean_out)
     assert os.path.exists(dirty_out)
 
     out = new_out.getvalue()
-#    assert 'wrote 2658801 clean bp' in out
+#    assert 'wrote 2740278 clean bp' in out
     assert 'wrote 0 dirty bp' in out
