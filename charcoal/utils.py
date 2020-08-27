@@ -193,3 +193,24 @@ def load_contigs_gather_json(filename):
             contigs_d[k] = (size, vv)
 
     return contigs_d
+
+
+def is_contig_contaminated(genome_lineage, contig_taxlist, rank, match_count_threshold):
+    taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
+
+    top_hit = None
+    if contig_taxlist:
+        top_hit, count = contig_taxlist[0]
+        if count < match_count_threshold:
+            top_hit = None
+
+    is_bad = False
+    if genome_lineage and top_hit and not is_lineage_match(genome_lineage, top_hit, rank):
+        is_bad = True
+
+        # rescue?
+        for hit, count in contig_taxlist[1:]:
+            if is_lineage_match(genome_lineage, hit, rank):
+                is_bad = False
+
+    return is_bad

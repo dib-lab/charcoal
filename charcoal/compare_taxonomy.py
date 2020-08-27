@@ -14,7 +14,8 @@ from sourmash.lca import LCA_Database, LineagePair
 from . import utils
 from .lineage_db import LineageDB
 from .utils import (gather_at_rank, get_ident, summarize_at_rank,
-                    pretty_print_lineage, load_contigs_gather_json)
+                    pretty_print_lineage, load_contigs_gather_json,
+                    is_contig_contaminated)
 
 
 GATHER_MIN_MATCHES=3
@@ -34,23 +35,7 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
         if filter_names and contig_name in filter_names:
             continue
 
-        contig_taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
-        top_hit = None
-        if contig_taxlist_at_rank:
-            top_hit, count = contig_taxlist_at_rank[0]
-            if count < GATHER_MIN_MATCHES:
-                top_hit = None
-
-        is_bad = False
-        if genome_lin and top_hit and not utils.is_lineage_match(genome_lin, top_hit, rank):
-            is_bad = True
-
-            # rescue?
-            for hit, count in contig_taxlist_at_rank[1:]:
-                if utils.is_lineage_match(genome_lin, hit, rank):
-                    is_bad = False
-
-        if is_bad:
+        if is_contig_contaminated(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
             bad_names[contig_name] = contig_len
         else:
             good_names[contig_name] = contig_len
@@ -309,6 +294,7 @@ def main(args):
     ####
 
     print(f"processed {len(genome_names)} genomes.")
+    print('XXX', list(genome_names))
 
     return 0
 

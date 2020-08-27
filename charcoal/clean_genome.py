@@ -14,7 +14,14 @@ from sourmash.lca import LineagePair, taxlist
 
 from . import utils
 from .version import version
-from .utils import (summarize_at_rank, load_contigs_gather_json)
+from .utils import (summarize_at_rank, load_contigs_gather_json,
+                    is_contig_contaminated)
+
+
+def yield_names_in_records(d):
+    for k in d:
+        r = screed.screedRecord.Record(name=k)
+        yield r
 
 
 def make_lineage(lineage):
@@ -79,31 +86,41 @@ def main(args):
 
         print(f'filter rank is {filter_rank}; not doing any cleaning.')
         total_bp = 0
-        for record in screed.open(args.genome):
-            clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            total_bp += len(record.sequence)
+        if not args.do_nothing:
+            for record in screed.open(args.genome):
+                clean_fp.write(f'>{record.name}\n{record.sequence}\n')
+                total_bp += len(record.sequence)
+        else:
+            total_bp = sum([ x[0] for x in contigs_d.values() ])
 
         print(f'wrote {total_bp} clean bp to {args.clean}')
-        sys.exit(0)
+        return 0
 
     print(f'filtering {genome_name} contigs at {filter_rank}')
     print(f'note, genome lineage is {sourmash.lca.display_lineage(lineage)}')
 
     bp_dirty = 0
     bp_clean = 0
-    for record in screed.open(args.genome):
-        contig_len, contig_taxlist = contigs_d[record.name]
-        contig_taxlist_at_rank = summarize_at_rank(contig_taxlist, filter_rank)
-        top_hit = None
-        if contig_taxlist_at_rank:
-            top_hit = contig_taxlist_at_rank[0][0]
 
-        if top_hit and not utils.is_lineage_match(lineage, top_hit, filter_rank):
-            dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_dirty += len(record.sequence)
+    if not args.do_nothing:
+        screed_iter = screed.open(args.genome)
+    if args.do_nothing:
+        screed_iter = yield_names_in_records(contigs_d)
+
+    for record in screed_iter:
+        contig_len, contig_taxlist = contigs_d[record.name]
+
+        if is_contig_contaminated(lineage, contig_taxlist, filter_rank,
+                                  3):
+            if not args.do_nothing:
+                assert len(record.sequence) == contig_len
+                dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
+            bp_dirty += contig_len
         else:
-            clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_clean += len(record.sequence)
+            if not args.do_nothing:
+                assert len(record.sequence) == contig_len
+                clean_fp.write(f'>{record.name}\n{record.sequence}\n')
+            bp_clean += contig_len
 
     print(f'wrote {bp_clean} clean bp to {args.clean}')
     print(f'wrote {bp_dirty} dirty bp to {args.dirty}')
@@ -119,6 +136,7 @@ def cmdline(sys_args):
     p.add_argument('--contigs-json', help='JSON-format contigs classification output by contigs_search', required=True)
     p.add_argument('--clean', help='cleaned contigs', required=True)
     p.add_argument('--dirty', help='dirty contigs', required=True)
+    p.add_argument('-n', '--do-nothing', help='do not read or write FASTA')
     args = p.parse_args()
 
     return main(args)
