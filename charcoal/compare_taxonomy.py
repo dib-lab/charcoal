@@ -294,6 +294,7 @@ def main(args):
     ####
 
     print(f"processed {len(genome_names)} genomes.")
+    print('XXX', list(genome_names))
 
     return 0
 
