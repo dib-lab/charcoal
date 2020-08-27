@@ -86,12 +86,15 @@ def main(args):
 
         print(f'filter rank is {filter_rank}; not doing any cleaning.')
         total_bp = 0
-        for record in screed.open(args.genome):
-            clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            total_bp += len(record.sequence)
+        if not args.do_nothing:
+            for record in screed.open(args.genome):
+                clean_fp.write(f'>{record.name}\n{record.sequence}\n')
+                total_bp += len(record.sequence)
+        else:
+            total_bp = sum([ x[0] for x in contigs_d.values() ])
 
         print(f'wrote {total_bp} clean bp to {args.clean}')
-        sys.exit(0)
+        return 0
 
     print(f'filtering {genome_name} contigs at {filter_rank}')
     print(f'note, genome lineage is {sourmash.lca.display_lineage(lineage)}')
