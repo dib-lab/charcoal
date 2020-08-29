@@ -39,10 +39,15 @@ def main(args):
     genome_name = os.path.basename(args.genome)
 
     hit_list = HitList(args.hit_list)
-    row = hit_list[genome_name]
-    filter_at = row['filter_at']
-    override_filter_at = row['override_filter_at']
-    lineage = row['lineage']
+
+    try:
+        row = hit_list[genome_name]
+        filter_at = row['filter_at']
+        override_filter_at = row['override_filter_at']
+        lineage = row['lineage']
+    except KeyError:
+        print(f'genome {genome_name} not found in hit list spreadsheet {args.hit_list}; exiting')
+        return -1
 
     filter_rank = filter_at
     if override_filter_at:
@@ -52,7 +57,7 @@ def main(args):
         if filter_rank != 'none':
             print(f'no genome lineage for {genome_name}; cannot clean.')
             print(f"please set filter rank to 'none' rather than {filter_rank}")
-            sys.exit(-1)
+            return -1
 
     lineage = make_lineage(lineage)
 

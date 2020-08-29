@@ -4,6 +4,8 @@ import tempfile
 import shutil
 import os
 from pytest_dependency import depends
+import io
+import sys
 
 from charcoal.__main__ import run_snakemake
 from . import pytest_utils as utils
@@ -31,9 +33,17 @@ def _run_snakemake_test(conf, target, extra_args=[]):
     conf = utils.relative_file(conf)
     target = os.path.join(_tempdir, target)
 
-    status = run_snakemake(conf, no_use_conda=True, verbose=True,
-                           outdir=_tempdir, extra_args=[target] + extra_args)
-    return status
+    sys.stdout, old_out = io.StringIO(), sys.stdout
+    sys.stderr, old_err = io.StringIO(), sys.stderr
+    try:
+        status = run_snakemake(conf, no_use_conda=True, verbose=True,
+                               outdir=_tempdir,
+                               extra_args=[target] + extra_args)
+    finally:
+        sys.stdout, new_out = old_out, sys.stdout
+        sys.stderr, new_err = old_err, sys.stderr
+
+    return status, new_out.getvalue(), new_err.getvalue()
 
 
 demo_genomes = ['GCF_000005845-subset.fa.gz',
@@ -49,7 +59,7 @@ demo_genomes = ['GCF_000005845-subset.fa.gz',
 @pytest.mark.parametrize("genome_file", demo_genomes)
 def test_make_sig(genome_file):
     target = f'{genome_file}.sig'
-    status = _run_snakemake_test('demo/demo.conf', target)
+    status, out, err = _run_snakemake_test('demo/demo.conf', target)
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
@@ -61,7 +71,7 @@ def test_make_sig(genome_file):
 def test_make_gather_matches(request, genome_file):
     depends(request, [f"test_make_sig[{g}]" for g in demo_genomes])
     target = f'{genome_file}.matches.sig'
-    status = _run_snakemake_test('demo/demo.conf', target)
+    status, out, err = _run_snakemake_test('demo/demo.conf', target)
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
@@ -75,7 +85,7 @@ def test_make_contigs_json(request, genome_file):
     depends(request, [f"test_make_gather_matches[{genome_file}]"])
 
     target = f'{genome_file}.contigs-tax.json'
-    status = _run_snakemake_test('demo/demo.conf', target)
+    status, out, err = _run_snakemake_test('demo/demo.conf', target)
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
 
@@ -85,7 +95,7 @@ def test_make_hit_list_dna(request):
     depends(request, [f"test_make_contigs_json[{g}]" for g in demo_genomes])
 
     target = 'hit_list_for_filtering.csv'
-    status = _run_snakemake_test('demo/demo.conf', target, ['-j', '4'])
+    status, out, err = _run_snakemake_test('demo/demo.conf', target, ['-j', '4'])
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
@@ -94,7 +104,10 @@ def test_make_hit_list_dna(request):
 @pytest.mark.parametrize("genome_file", demo_genomes)
 def test_make_clean_dna(genome_file):
     target = f'{genome_file}.clean.fa.gz'
-    status = _run_snakemake_test('demo/demo.conf', target, ['-j', '4'])
+    status, out, err = _run_snakemake_test('demo/demo.conf', target, ['-j', '4'])
+
+    print(out)
+    print(err)
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
@@ -105,7 +118,7 @@ def test_make_output_prot(request):
 #    depends(request, [f"test_make_report[{g}]" for g in demo_genomes])
 
     target = 'hit_list_for_filtering.csv'
-    status = _run_snakemake_test('demo/demo.prot.conf', target, ['-j', '4'])
+    status, out, err = _run_snakemake_test('demo/demo.prot.conf', target, ['-j', '4'])
 
     assert status == 0
     assert os.path.exists(os.path.join(_tempdir, target))
