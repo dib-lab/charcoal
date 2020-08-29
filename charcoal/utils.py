@@ -3,6 +3,7 @@ utility functions for charcoal.
 """
 import json
 from collections import defaultdict, Counter
+import csv
 
 import sourmash
 from sourmash.lca import lca_utils, LineagePair
@@ -114,7 +115,7 @@ def pretty_print_lineage2(lin, rank):
     return sourmash.lca.display_lineage(lin)
 
 
-class WriteAndTrackFasta(object):
+class WriteAndTrackFasta:
     def __init__(self, outfp, mh_ex):
         self.minhash = mh_ex.copy_and_clear()
         self.outfp = outfp
@@ -214,3 +215,16 @@ def is_contig_contaminated(genome_lineage, contig_taxlist, rank, match_count_thr
                 is_bad = False
 
     return is_bad
+
+
+class HitList:
+    def __init__(self, filename):
+        self.rows = {}
+        with open(filename, 'rt') as fp:
+            r = csv.DictReader(fp)
+            for row in r:
+                genome = row['genome']
+                self.rows[genome] = row
+
+    def __getitem__(self, g):
+        return self.rows[g]

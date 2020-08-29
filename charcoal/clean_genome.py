@@ -4,7 +4,6 @@ Clean a genome based on hit list & contigs taxonomy.
 import sys
 import argparse
 import gzip
-import csv
 import os.path
 
 import screed
@@ -15,7 +14,7 @@ from sourmash.lca import LineagePair, taxlist
 from . import utils
 from .version import version
 from .utils import (summarize_at_rank, load_contigs_gather_json,
-                    is_contig_contaminated)
+                    is_contig_contaminated, HitList)
 
 
 def yield_names_in_records(d):
@@ -38,22 +37,12 @@ def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
 
     genome_name = os.path.basename(args.genome)
-    found = False
-    with open(args.hit_list, 'rt') as fp:
-        r = csv.DictReader(fp)
-        for row in r:
-            genome = row['genome']
-            filter_at = row['filter_at']
-            override_filter_at = row['override_filter_at']
-            lineage = row['lineage']
 
-            if genome == genome_name:
-                found = True
-                break
-
-    if not found:
-        print(f'genome {genome_name} not found in hit list spreadsheet {args.hit_list}; exiting')
-        sys.exit(-1)
+    hit_list = HitList(args.hit_list)
+    row = hit_list[genome_name]
+    filter_at = row['filter_at']
+    override_filter_at = row['override_filter_at']
+    lineage = row['lineage']
 
     filter_rank = filter_at
     if override_filter_at:
