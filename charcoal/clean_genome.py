@@ -91,19 +91,19 @@ def main(args):
         screed_iter = yield_names_in_records(contigs_d)
 
     for record in screed_iter:
-        contig_len, contig_taxlist = contigs_d[record.name]
+        gather_info = contigs_d[record.name]
 
-        if is_contig_contaminated(lineage, contig_taxlist, filter_rank,
-                                  3): # @CTB configurable?!
+        if is_contig_contaminated(lineage, gather_info.gather_tax,
+                                  filter_rank, 3): # @CTB configurable?!
             if not args.do_nothing:
-                assert len(record.sequence) == contig_len
+                assert len(record.sequence) == gather_info.length
                 dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_dirty += contig_len
+            bp_dirty += gather_info.length
         else:
             if not args.do_nothing:
-                assert len(record.sequence) == contig_len
+                assert len(record.sequence) == gather_info.length
                 clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_clean += contig_len
+            bp_clean += gather_info.length
 
     print(f'wrote {bp_clean} clean bp to {args.clean}')
     print(f'wrote {bp_dirty} dirty bp to {args.dirty}')

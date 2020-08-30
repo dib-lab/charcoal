@@ -31,14 +31,15 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
     good_names = dict()
     bad_names = dict()
 
-    for contig_name, (contig_len, contig_taxlist) in contigs_d.items():
+    for contig_name, gather_info in contigs_d.items():
+        contig_taxlist = gather_info.gather_tax
         if filter_names and contig_name in filter_names:
             continue
 
         if is_contig_contaminated(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
-            bad_names[contig_name] = contig_len
+            bad_names[contig_name] = gather_info.length
         else:
-            good_names[contig_name] = contig_len
+            good_names[contig_name] = gather_info.length
 
     return (good_names, bad_names)
 

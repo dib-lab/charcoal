@@ -2,7 +2,7 @@
 utility functions for charcoal.
 """
 import json
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, namedtuple
 import csv
 
 import sourmash
@@ -182,16 +182,21 @@ def get_ident(sig):
     ident = ident.split('.')[0]
     return ident
 
+
+ContigGatherInfo = namedtuple('ContigGatherInfo',
+                              ['length', 'num_hashes', 'gather_tax'])
+
 def load_contigs_gather_json(filename):
     # load contigs JSON file - @CTB
     with open(filename, 'rt') as fp:
         contigs_d = json.load(fp)
         for k in contigs_d:
-            (size, v) = contigs_d[k]
+            (size, num_hashes, v) = contigs_d[k]
             vv = []
             for (lin, count) in v:
                 vv.append(([ LineagePair(*x) for x in lin ], count))
-            contigs_d[k] = (size, vv)
+            info = ContigGatherInfo(size, num_hashes, vv)
+            contigs_d[k] = info
 
     return contigs_d
 
