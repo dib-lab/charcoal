@@ -6,7 +6,7 @@ from collections import defaultdict, Counter
 import csv
 
 import sourmash
-from sourmash.lca import lca_utils, LineagePair
+from sourmash.lca import lca_utils, LineagePair, taxlist
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -228,3 +228,13 @@ class HitList:
 
     def __getitem__(self, g):
         return self.rows[g]
+
+
+def make_lineage(lineage):
+    "Turn a ; or ,-separated set of lineages into a tuple of LineagePair objs."
+    lin = lineage.split(';')
+    if len(lin) == 1:
+        lin = lineage.split(',')
+    lin = [ LineagePair(rank, n) for (rank, n) in zip(taxlist(), lin) ]
+
+    return lin
