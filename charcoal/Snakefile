@@ -295,7 +295,7 @@ rule make_hit_list:
         genome_list = genome_list_file
     output:
         hit_list = output_dir + '/hit_list_for_filtering.csv',
-        contig_details = output_dir + '/contig_summary.csv',
+        contig_details = output_dir + '/genome_summary.csv',
     conda: 'conf/env-sourmash.yml'
     params:
         output_dir = output_dir,
