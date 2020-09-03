@@ -13,7 +13,7 @@ import sourmash
 from . import utils
 from .version import version
 from .utils import (summarize_at_rank, load_contigs_gather_json,
-                    is_contig_contaminated, HitList, make_lineage)
+                    is_contig_contaminated, CSV_DictHelper, make_lineage)
 
 
 def yield_names_in_records(d):
@@ -27,7 +27,7 @@ def main(args):
 
     genome_name = os.path.basename(args.genome)
 
-    hit_list = HitList(args.hit_list)
+    hit_list = CSV_DictHelper(args.hit_list, 'genome')
 
     try:
         row = hit_list[genome_name]

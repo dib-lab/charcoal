@@ -234,17 +234,17 @@ def is_contig_clean(genome_lineage, contig_taxlist, rank, match_count_threshold)
     return False
 
 
-class HitList:
-    def __init__(self, filename):
+class CSV_DictHelper:
+    def __init__(self, filename, key):
         self.rows = {}
         with open(filename, 'rt') as fp:
             r = csv.DictReader(fp)
             for row in r:
-                genome = row['genome']
-                self.rows[genome] = row
+                k = row[key]
+                self.rows[k] = row
 
-    def __getitem__(self, g):
-        return self.rows[g]
+    def __getitem__(self, k):
+        return self.rows[k]
 
 
 def make_lineage(lineage):
