@@ -15,7 +15,7 @@ from . import utils
 from .lineage_db import LineageDB
 from .utils import (gather_at_rank, get_ident, summarize_at_rank,
                     pretty_print_lineage, load_contigs_gather_json,
-                    is_contig_contaminated)
+                    is_contig_contaminated, is_contig_clean)
 
 
 GATHER_MIN_MATCHES=3
@@ -28,6 +28,7 @@ def kb(bp):
 
 
 def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
+    "Calculate not-bad bp at each rank. Be conservative."
     good_names = dict()
     bad_names = dict()
 
@@ -37,9 +38,25 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
             continue
 
         if is_contig_contaminated(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
-            bad_names[contig_name] = gather_info.length
+            bad_names[contig_name] = gather_info
         else:
-            good_names[contig_name] = gather_info.length
+            good_names[contig_name] = gather_info
+
+    return (good_names, bad_names)
+
+
+def calculate_clean(genome_lin, contigs_d, rank):
+    "Calculate definitely-clean bp, as opposed to not-bad bp."
+    good_names = dict()
+    bad_names = dict()
+
+    for contig_name, gather_info in contigs_d.items():
+        contig_taxlist = gather_info.gather_tax
+
+        if is_contig_clean(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
+            good_names[contig_name] = gather_info
+        else:
+            bad_names[contig_name] = gather_info
 
     return (good_names, bad_names)
 
@@ -231,17 +248,18 @@ def main(args):
         # load contigs tax
         contigs_d = load_contigs_gather_json(contigs_json)
 
-        # track contigs that have been eliminated at various ranks
-        eliminate = set()
         print(f'examining {genome_name} for contamination:')
 
-        summary_d[genome_name] = {}
-        summary_d[genome_name]['f_ident'] = f_ident
-        summary_d[genome_name]['f_major'] = f_major
-        summary_d[genome_name]['comment'] = comment
-        summary_d[genome_name]['lineage'] = genome_lineage
-        summary_d[genome_name]['filter_at'] = filter_at
+        vals = {}
+        vals['genome'] = genome_name
+        vals['f_ident'] = f_ident
+        vals['f_major'] = f_major
+        vals['comment'] = comment
+        vals['lineage'] = sourmash.lca.display_lineage(genome_lineage)
+        vals['filter_at'] = filter_at
 
+        # track contigs that have been eliminated at various ranks
+        eliminate = set()
         total_bad_n = 0
         total_bad_bp = 0
         for rank in sourmash.lca.taxlist():
@@ -251,21 +269,47 @@ def main(args):
                                                        filter_names=eliminate)
             eliminate.update(bad_names)
             bad_n = len(bad_names)
-            bad_bp = sum(bad_names.values())
+            bad_bp = sum([ x.length for x in bad_names.values() ])
             total_bad_n += bad_n
             total_bad_bp += bad_bp
 
             print(f'   {rank}: {len(bad_names)} contigs w/ {kb(bad_bp)}kb')
-            summary_d[genome_name][rank] = total_bad_bp
+            vals[f'bad_{rank}_bp'] = total_bad_bp
+            vals[f'bad_{rank}_n'] = total_bad_n
+
+            (good_names, bad_names) = calculate_clean(genome_lineage,
+                                                      contigs_d,
+                                                      rank)
+            good_n = len(good_names)
+            good_bp = sum([ x.length for x in good_names.values() ])
+            vals[f'good_{rank}_bp'] = good_bp
+            vals[f'good_{rank}_n'] = good_n
+
             if rank == match_rank:
                 break
 
-        summary_d[genome_name]['total_bad_bp'] = total_bad_bp
+        vals['total_bad_bp'] = total_bad_bp
 
         print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
 
-    # output a sorted summary CSV
-    fp = open(args.output, 'wt')
+        nohash_bp = 0
+        nohash_count = 0
+        noident_bp = 0
+        noident_count = 0
+        for contig_name, gather_info in contigs_d.items():
+            if not gather_info.num_hashes:
+                nohash_bp += gather_info.length
+                nohash_count += 1
+            elif not gather_info.gather_tax:
+                noident_bp += gather_info.length
+                noident_count += 1
+
+        summary_d[genome_name] = vals
+
+        ###
+
+    # output a sorted hit list CSV
+    fp = open(args.hit_list, 'wt')
     summary_w = csv.writer(fp)
     
     summary_w.writerow(['genome', 'filter_at', 'override_filter_at',
@@ -277,25 +321,43 @@ def main(args):
     summary_items.sort(key=lambda x: -x[1]["total_bad_bp"])
 
     for genome_name, vals in summary_items:
-        vals = summary_d[genome_name]
         summary_w.writerow([genome_name,
                             vals['filter_at'], '',
                             vals["total_bad_bp"],
-                            vals['superkingdom'],
-                            vals['phylum'],
-                            vals['class'],
-                            vals['order'],
-                            vals['family'],
-                            vals['genus'],
+                            vals['bad_superkingdom_bp'],
+                            vals['bad_phylum_bp'],
+                            vals['bad_class_bp'],
+                            vals['bad_order_bp'],
+                            vals['bad_family_bp'],
+                            vals['bad_genus_bp'],
                             f'{vals["f_ident"]:.03}',
                             f'{vals["f_major"]:.03}',
-                            sourmash.lca.display_lineage(vals["lineage"]),
+                            vals["lineage"],
                             vals["comment"]])
+
+    fp.close()
+
+    # output a sorted summary CSV with a lot more information!
+    fp = open(args.contig_details_summary, 'wt')
+
+    # build column list; put genome first
+    vals = summary_items[0][1]
+    all_columns = set(vals.keys())
+    all_columns.remove('genome')
+    all_columns = list(sorted(all_columns))
+    all_columns = ['genome'] + all_columns
+
+    w = csv.DictWriter(fp, fieldnames=all_columns)
+    w.writeheader()
+
+    for genome, vals in summary_items:
+        w.writerow(vals)
+
+    fp.close()
 
     ####
 
     print(f"processed {len(genome_names)} genomes.")
-    print('XXX', list(genome_names))
 
     return 0
 
@@ -305,7 +367,8 @@ def cmdline(sys_args):
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--input-directory', required=True)
     p.add_argument('--genome-list-file', required=True)
-    p.add_argument('-o', '--output', required=True)
+    p.add_argument('--hit-list', required=True)
+    p.add_argument('--contig-details-summary', required=True)
     p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)

@@ -294,7 +294,8 @@ rule make_hit_list:
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
     output:
-        output_dir + '/hit_list_for_filtering.csv'
+        hit_list = output_dir + '/hit_list_for_filtering.csv',
+        contig_details = output_dir + '/contig_summary.csv',
     conda: 'conf/env-sourmash.yml'
     params:
         output_dir = output_dir,
@@ -306,7 +307,8 @@ rule make_hit_list:
             --genome-list-file {input.genome_list} \
             --lineages-csv {input.lineages} \
             --provided-lineages {input.provided_lineages} \
-            --output {output} \
+            --hit-list {output.hit_list} \
+            --contig-details-summary {output.contig_details} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major}
     """

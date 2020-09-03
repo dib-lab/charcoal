@@ -222,6 +222,18 @@ def is_contig_contaminated(genome_lineage, contig_taxlist, rank, match_count_thr
     return is_bad
 
 
+def is_contig_clean(genome_lineage, contig_taxlist, rank, match_count_threshold):
+    taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
+
+    if contig_taxlist:
+        top_hit, count = contig_taxlist[0]
+        if count >= match_count_threshold:
+            if genome_lineage and is_lineage_match(genome_lineage, top_hit, rank):
+                return True
+
+    return False
+
+
 class HitList:
     def __init__(self, filename):
         self.rows = {}
