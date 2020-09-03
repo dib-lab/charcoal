@@ -223,7 +223,7 @@ def main(args):
 
     # process every genome individually.
     summary_d = {}
-    for genome_name in genome_names:
+    for n, genome_name in enumerate(genome_names):
         matches_filename = os.path.join(dirname, genome_name + '.matches.sig')
         genome_sig = os.path.join(dirname, genome_name + '.sig')
         lineage = provided_lineages.get(genome_name, '')
@@ -248,7 +248,7 @@ def main(args):
         # load contigs tax
         contigs_d = load_contigs_gather_json(contigs_json)
 
-        print(f'examining {genome_name} for contamination:')
+        print(f'examining {genome_name} for contamination ({n+1} of {len(genome_names)})')
 
         vals = {}
         vals['genome'] = genome_name
