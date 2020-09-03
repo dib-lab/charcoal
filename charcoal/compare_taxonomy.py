@@ -296,7 +296,12 @@ def main(args):
         nohash_count = 0
         noident_bp = 0
         noident_count = 0
+        contigs_n = 0
+        contigs_bp = 0
         for contig_name, gather_info in contigs_d.items():
+            contigs_n += 1
+            contigs_bp += gather_info.length
+
             if not gather_info.num_hashes:
                 nohash_bp += gather_info.length
                 nohash_count += 1
@@ -308,6 +313,8 @@ def main(args):
         vals['ignored_contigs_bp'] = nohash_bp
         vals['noident_contigs_n'] = noident_count
         vals['noident_contigs_bp'] = noident_bp
+        vals['total_contigs_n'] = contigs_n
+        vals['total_contigs_bp'] = contigs_bp
 
         summary_d[genome_name] = vals
 
