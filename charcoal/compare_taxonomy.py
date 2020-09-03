@@ -304,6 +304,11 @@ def main(args):
                 noident_bp += gather_info.length
                 noident_count += 1
 
+        vals['ignored_contigs_n'] = nohash_count
+        vals['ignored_contigs_bp'] = nohash_bp
+        vals['noident_contigs_n'] = noident_count
+        vals['noident_contigs_bp'] = noident_bp
+
         summary_d[genome_name] = vals
 
         ###
