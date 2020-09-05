@@ -13,3 +13,4 @@ ibd-metagenome-sigs
 db/
 bak
 output.*
+.DS_Store
