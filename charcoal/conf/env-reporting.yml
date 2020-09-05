@@ -7,3 +7,4 @@ dependencies:
     - sourmash>=3.5,<4
     - papermill>=2.1.2,<3
     - notebook>=6,<7
+    - plotly>=4.9.0,<5
