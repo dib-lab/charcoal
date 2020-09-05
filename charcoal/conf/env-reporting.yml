@@ -4,7 +4,6 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - python>=3.6
     - sourmash>=3.5,<4
-    - pytest>6,<7
-    - pytest-dependency>=0.5.1
+    - papermill>=2.1.2,<3
+    - notebook>=6,<7

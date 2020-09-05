@@ -332,6 +332,7 @@ rule clean_contigs:
     output:
         clean = output_dir + '/{f}.clean.fa.gz',
         dirty = output_dir + '/{f}.dirty.fa.gz',
+    conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.clean_genome \
             --genome {input.genome} \
@@ -348,6 +349,7 @@ rule make_notebook:
     params:
         summary_csv = f'{output_dir}/genome_summary.csv',
         name = '{g}',
+    conda: 'conf/env-reporting.yml'
     shell: """
         papermill {input} - \
               -p summary_csv {params.summary_csv:q} \
@@ -360,6 +362,7 @@ rule make_html:
         report_dir + '/{g}.fig.ipynb',
     output:
         report_dir + '/{g}.fig.html',
+    conda: 'conf/env-reporting.yml'
     shell: """
         python -m nbconvert {input} --stdout --no-input > {output}
     """
@@ -370,8 +373,7 @@ rule make_index:
         'charcoal/notebooks/report_index.ipynb',
     output:
         f'{report_dir}/index.html',
-    params:
-        
+    conda: 'conf/env-reporting.yml'
     shell: """
         papermill {input} - -p directory {output_dir:q} | \
             python -m nbconvert --stdin --stdout --no-input > {output}
