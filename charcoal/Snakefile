@@ -359,22 +359,26 @@ rule make_notebook:
 
 rule make_html:
     input:
-        report_dir + '/{g}.fig.ipynb',
+        notebook=report_dir + '/{g}.fig.ipynb',
+        summary=f'{output_dir}/genome_summary.csv',
+        hitlist=f'{output_dir}/hit_list_for_filtering.csv',
+        contigs_json=f'{output_dir}/{{g}}.contigs-tax.json',
     output:
         report_dir + '/{g}.fig.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        python -m nbconvert {input} --stdout --no-input > {output}
+        python -m nbconvert {input.notebook} --stdout --no-input > {output}
     """
      
 
 rule make_index:
     input:
-        'charcoal/notebooks/report_index.ipynb',
+        notebook='charcoal/notebooks/report_index.ipynb',
+        summary=f'{output_dir}/genome_summary.csv',
     output:
         f'{report_dir}/index.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        papermill {input} - -p directory {output_dir:q} | \
+        papermill {input.notebook} - -p directory {output_dir:q} | \
             python -m nbconvert --stdin --stdout --no-input > {output}
     """
