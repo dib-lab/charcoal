@@ -351,7 +351,8 @@ rule make_notebook:
         name = '{g}',
     conda: 'conf/env-reporting.yml'
     shell: """
-        papermill {input} - -k python3 \
+        python -m ipykernel install --user --name charcoal
+        papermill {input} - -k charcoal \
               -p summary_csv {params.summary_csv:q} \
               -p name {params.name:q} \
               > {output}
@@ -367,7 +368,8 @@ rule make_html:
         report_dir + '/{g}.fig.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        python -m nbconvert {input.notebook} --stdout --no-input --ExecutePreprocessor.kernel_name=python3 > {output}
+        python -m ipykernel install --user --name charcoal
+        python -m nbconvert {input.notebook} --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
      
 
@@ -379,6 +381,7 @@ rule make_index:
         f'{report_dir}/index.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        papermill {input.notebook} - -p directory {output_dir:q} -k python3 | \
+        python -m ipykernel install --user --name charcoal
+        papermill {input.notebook} - -p directory {output_dir:q} -k charcoal | \
             python -m nbconvert --stdin --stdout --no-input > {output}
     """
