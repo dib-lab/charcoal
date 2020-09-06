@@ -346,15 +346,12 @@ rule make_notebook:
         'charcoal/notebooks/genome-report.ipynb',
     output:
         report_dir + '/{g}.fig.ipynb'
-    params:
-        summary_csv = f'{output_dir}/genome_summary.csv',
-        name = '{g}',
     conda: 'conf/env-reporting.yml'
     shell: """
         python -m ipykernel install --user --name charcoal
         papermill {input} - -k charcoal \
-              -p summary_csv {params.summary_csv:q} \
-              -p name {params.name:q} -p render '' \
+              -p directory {output_dir:q} \
+              -p name {wildcards.g:q} -p render '' \
               > {output}
     """
 

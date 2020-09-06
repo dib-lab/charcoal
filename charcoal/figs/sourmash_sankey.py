@@ -132,32 +132,4 @@ class GenomeSankeyFlow:
                 idx += 1
                 
         return src_l, dest_l, cnt_l, color_l, label_l
-    
-    def make_plotly_fig(self, title):
-        "Build a plotly figure/sankey diagram."
-        # make the data to go into the sankey figure.
-        labels = self.make_labels()
-        src_l, dest_l, cnt_l, color_l, label_l = self.make_lists()
 
-        # build figure
-        fig = go.Figure(data=[go.Sankey(
-            node = dict(
-              pad = 15,
-              thickness = 20,
-              line = dict(color = "black", width = 0.5),
-              label = labels,
-              color = "blue"
-            ),
-            link = dict(
-              source = src_l,
-              target = dest_l,
-              value = cnt_l,
-              color = color_l,
-              label = label_l,
-          ))])
-
-        if title:
-            fig.update_layout(title_text=title, font_size=10)
-
-        return fig
-    

@@ -145,7 +145,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                 print(f'found exact match: {ss.name()}. removing.')
             else:
                 print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
-                return None, f'found exact match: {ss.name()}. but no provided lineage! exiting.', 1.0, 1.0
+                return None, f'found exact match: {ss.name()}. but no provided lineage! cannot analyze.', 1.0, 1.0
 
     # ...but leave exact matches in if they're the only matches, I guess!
     if new_siglist:
