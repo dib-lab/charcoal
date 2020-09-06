@@ -341,15 +341,25 @@ rule clean_contigs:
             --clean {output.clean} --dirty {output.dirty}
     """
 
+rule set_kernel:
+    output:
+        f"{output_dir}/.kernel.set"
+    shell: """
+        python -m ipykernel install --user --name charcoal
+        touch {output}
+    """
+
 rule make_notebook:
     input:
-        'charcoal/notebooks/genome-report.ipynb',
+        nb='charcoal/notebooks/genome-report.ipynb',
+        summary=f'{output_dir}/genome_summary.csv',
+        hitlist=f'{output_dir}/hit_list_for_filtering.csv',
+        kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.fig.ipynb'
     conda: 'conf/env-reporting.yml'
     shell: """
-        python -m ipykernel install --user --name charcoal
-        papermill {input} - -k charcoal \
+        papermill {input.nb} - -k charcoal \
               -p directory {output_dir:q} \
               -p name {wildcards.g:q} -p render '' \
               > {output}
@@ -365,7 +375,6 @@ rule make_html:
         report_dir + '/{g}.fig.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        python -m ipykernel install --user --name charcoal
         python -m nbconvert {input.notebook} --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
      
@@ -374,11 +383,11 @@ rule make_index:
     input:
         notebook='charcoal/notebooks/report_index.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
+        kernel_set = rules.set_kernel.output
     output:
         f'{report_dir}/index.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        python -m ipykernel install --user --name charcoal
         papermill {input.notebook} - -p directory {output_dir:q} -p render '' -k charcoal | \
             python -m nbconvert --stdin --stdout --no-input > {output}
     """
