@@ -233,6 +233,11 @@ def is_contig_clean(genome_lineage, contig_taxlist, rank, match_count_threshold)
 
     return False
 
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
 
 class CSV_DictHelper:
     def __init__(self, filename, key):
@@ -244,7 +249,13 @@ class CSV_DictHelper:
                 self.rows[k] = row
 
     def __getitem__(self, k):
-        return self.rows[k]
+        return AttrDict(self.rows[k])
+
+    def __iter__(self):
+        return iter(self.rows)
+
+    def __len__(self):
+        return len(self.rows)
 
 
 def make_lineage(lineage):
