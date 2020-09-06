@@ -138,7 +138,8 @@ wildcard_constraints:
 # default rule - produce hit list
 rule inspect:
     input:
-        output_dir + '/hit_list_for_filtering.csv'
+        output_dir + '/hit_list_for_filtering.csv',
+        output_dir + '/genome_summary.csv'
 
 # clean rule - clean the contigs
 rule clean:
