@@ -2,10 +2,11 @@
 utility functions for charcoal.
 """
 import json
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, namedtuple
+import csv
 
 import sourmash
-from sourmash.lca import lca_utils, LineagePair
+from sourmash.lca import lca_utils, LineagePair, taxlist
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -114,7 +115,7 @@ def pretty_print_lineage2(lin, rank):
     return sourmash.lca.display_lineage(lin)
 
 
-class WriteAndTrackFasta(object):
+class WriteAndTrackFasta:
     def __init__(self, outfp, mh_ex):
         self.minhash = mh_ex.copy_and_clear()
         self.outfp = outfp
@@ -181,16 +182,21 @@ def get_ident(sig):
     ident = ident.split('.')[0]
     return ident
 
+
+ContigGatherInfo = namedtuple('ContigGatherInfo',
+                              ['length', 'num_hashes', 'gather_tax'])
+
 def load_contigs_gather_json(filename):
     # load contigs JSON file - @CTB
     with open(filename, 'rt') as fp:
         contigs_d = json.load(fp)
         for k in contigs_d:
-            (size, v) = contigs_d[k]
+            (size, num_hashes, v) = contigs_d[k]
             vv = []
             for (lin, count) in v:
-                vv.append(([ LineagePair(*x) for x in lin ], count))
-            contigs_d[k] = (size, vv)
+                vv.append((tuple([ LineagePair(*x) for x in lin ]), count))
+            info = ContigGatherInfo(size, num_hashes, vv)
+            contigs_d[k] = info
 
     return contigs_d
 
@@ -214,3 +220,49 @@ def is_contig_contaminated(genome_lineage, contig_taxlist, rank, match_count_thr
                 is_bad = False
 
     return is_bad
+
+
+def is_contig_clean(genome_lineage, contig_taxlist, rank, match_count_threshold):
+    taxlist_at_rank = summarize_at_rank(contig_taxlist, rank)
+
+    if contig_taxlist:
+        top_hit, count = contig_taxlist[0]
+        if count >= match_count_threshold:
+            if genome_lineage and is_lineage_match(genome_lineage, top_hit, rank):
+                return True
+
+    return False
+
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+class CSV_DictHelper:
+    def __init__(self, filename, key):
+        self.rows = {}
+        with open(filename, 'rt') as fp:
+            r = csv.DictReader(fp)
+            for row in r:
+                k = row[key]
+                self.rows[k] = row
+
+    def __getitem__(self, k):
+        return AttrDict(self.rows[k])
+
+    def __iter__(self):
+        return iter(self.rows)
+
+    def __len__(self):
+        return len(self.rows)
+
+
+def make_lineage(lineage):
+    "Turn a ; or ,-separated set of lineages into a tuple of LineagePair objs."
+    lin = lineage.split(';')
+    if len(lin) == 1:
+        lin = lineage.split(',')
+    lin = [ LineagePair(rank, n) for (rank, n) in zip(taxlist(), lin) ]
+
+    return lin

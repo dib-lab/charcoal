@@ -4,18 +4,16 @@ Clean a genome based on hit list & contigs taxonomy.
 import sys
 import argparse
 import gzip
-import csv
 import os.path
 
 import screed
 
 import sourmash
-from sourmash.lca import LineagePair, taxlist
 
 from . import utils
 from .version import version
 from .utils import (summarize_at_rank, load_contigs_gather_json,
-                    is_contig_contaminated)
+                    is_contig_contaminated, CSV_DictHelper, make_lineage)
 
 
 def yield_names_in_records(d):
@@ -24,36 +22,21 @@ def yield_names_in_records(d):
         yield r
 
 
-def make_lineage(lineage):
-    "Turn a ; or ,-separated set of lineages into a tuple of LineagePair objs."
-    lin = lineage.split(';')
-    if len(lin) == 1:
-        lin = lineage.split(',')
-    lin = [ LineagePair(rank, n) for (rank, n) in zip(taxlist(), lin) ]
-
-    return lin
-
-
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
 
     genome_name = os.path.basename(args.genome)
-    found = False
-    with open(args.hit_list, 'rt') as fp:
-        r = csv.DictReader(fp)
-        for row in r:
-            genome = row['genome']
-            filter_at = row['filter_at']
-            override_filter_at = row['override_filter_at']
-            lineage = row['lineage']
 
-            if genome == genome_name:
-                found = True
-                break
+    hit_list = CSV_DictHelper(args.hit_list, 'genome')
 
-    if not found:
+    try:
+        row = hit_list[genome_name]
+        filter_at = row['filter_at']
+        override_filter_at = row['override_filter_at']
+        lineage = row['lineage']
+    except KeyError:
         print(f'genome {genome_name} not found in hit list spreadsheet {args.hit_list}; exiting')
-        sys.exit(-1)
+        return -1
 
     filter_rank = filter_at
     if override_filter_at:
@@ -63,7 +46,7 @@ def main(args):
         if filter_rank != 'none':
             print(f'no genome lineage for {genome_name}; cannot clean.')
             print(f"please set filter rank to 'none' rather than {filter_rank}")
-            sys.exit(-1)
+            return -1
 
     lineage = make_lineage(lineage)
 
@@ -108,19 +91,19 @@ def main(args):
         screed_iter = yield_names_in_records(contigs_d)
 
     for record in screed_iter:
-        contig_len, contig_taxlist = contigs_d[record.name]
+        gather_info = contigs_d[record.name]
 
-        if is_contig_contaminated(lineage, contig_taxlist, filter_rank,
-                                  3):
+        if is_contig_contaminated(lineage, gather_info.gather_tax,
+                                  filter_rank, 3): # @CTB configurable?!
             if not args.do_nothing:
-                assert len(record.sequence) == contig_len
+                assert len(record.sequence) == gather_info.length
                 dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_dirty += contig_len
+            bp_dirty += gather_info.length
         else:
             if not args.do_nothing:
-                assert len(record.sequence) == contig_len
+                assert len(record.sequence) == gather_info.length
                 clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_clean += contig_len
+            bp_clean += gather_info.length
 
     print(f'wrote {bp_clean} clean bp to {args.clean}')
     print(f'wrote {bp_dirty} dirty bp to {args.dirty}')
