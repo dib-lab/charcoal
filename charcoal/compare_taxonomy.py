@@ -6,6 +6,7 @@ import sys
 import argparse
 import csv
 import os.path
+from collections import Counter
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
@@ -221,6 +222,10 @@ def main(args):
 
     print(f"loaded {len(provided_lineages)} provided lineages")
 
+    ### XXX CTB
+
+    detected_contam = {}
+
     # process every genome individually.
     summary_d = {}
     for n, genome_name in enumerate(genome_names):
@@ -320,6 +325,29 @@ def main(args):
 
         ###
 
+        if genome_lineage:
+            eliminate = set()
+            for rank in sourmash.lca.taxlist():
+                for contig_name, gather_info in contigs_d.items():
+                    if contig_name in eliminate:
+                        continue
+
+                    contig_taxlist = gather_info.gather_tax
+
+                    for hit, count in contig_taxlist:
+                        if not utils.is_lineage_match(genome_lineage, hit, rank):
+                            source_lin = utils.pop_to_rank(genome_lineage, rank)
+                            target_lin = utils.pop_to_rank(hit, rank)
+
+                            target = detected_contam.get(source_lin, Counter())
+                            target[target_lin] += count
+                            detected_contam[source_lin] = target
+                            eliminate.add(contig_name)
+
+            if rank == match_rank: break
+
+        ###
+
     # output a sorted hit list CSV
     fp = open(args.hit_list, 'wt')
     summary_w = csv.writer(fp)
@@ -370,6 +398,13 @@ def main(args):
     ####
 
     print(f"processed {len(genome_names)} genomes.")
+
+    source_contam = list(detected_contam.items())
+
+    for k, values in source_contam:
+        print(sourmash.lca.display_lineage(k))
+        for j, cnt in values.most_common():
+            print('    ', cnt, sourmash.lca.display_lineage(j))
 
     return 0
 
