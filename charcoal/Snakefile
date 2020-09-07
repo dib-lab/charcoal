@@ -53,6 +53,7 @@ except ValueError:
 
 # verify that all genome files exist -
 for filename in genome_list:
+    break
     fullpath = os.path.join(genome_dir, filename)
     if not os.path.exists(fullpath):
         print(f'** ERROR: genome file {filename} does not exist in {genome_dir}')
@@ -360,9 +361,9 @@ rule make_notebook:
         report_dir + '/{g}.fig.ipynb'
     conda: 'conf/env-reporting.yml'
     shell: """
-        papermill {input.nb} - -k charcoal \
-              -p directory {output_dir:q} \
-              -p name {wildcards.g:q} -p render '' \
+        papermill {input.nb} - -k charcoal --cwd {report_dir} \
+              -p directory .. -p render '' \
+              -p name {wildcards.g:q} \
               > {output}
     """
 
@@ -386,9 +387,11 @@ rule make_index:
         summary=f'{output_dir}/genome_summary.csv',
         kernel_set = rules.set_kernel.output
     output:
-        f'{report_dir}/index.html',
+        nb=f'{report_dir}/index.ipynb',
+        html=f'{report_dir}/index.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        papermill {input.notebook} - -p directory {output_dir:q} -p render '' -k charcoal | \
-            python -m nbconvert --stdin --stdout --no-input > {output}
+        papermill {input.notebook} - -p name {output_dir:q} -p render '' \
+            -p directory .. -k charcoal --cwd {report_dir} > {output.nb}
+        python -m nbconvert {output.nb} --stdout --no-input > {output.html}
     """
