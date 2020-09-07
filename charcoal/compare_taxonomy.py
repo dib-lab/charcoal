@@ -53,7 +53,7 @@ def calculate_clean(genome_lin, contigs_d, rank):
     for contig_name, gather_info in contigs_d.items():
         contig_taxlist = gather_info.gather_tax
 
-        if is_contig_clean(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
+        if not is_contig_contaminated(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
             good_names[contig_name] = gather_info
         else:
             bad_names[contig_name] = gather_info
@@ -258,40 +258,7 @@ def main(args):
         vals['lineage'] = sourmash.lca.display_lineage(genome_lineage)
         vals['filter_at'] = filter_at
 
-        # track contigs that have been eliminated at various ranks
-        eliminate = set()
-        total_bad_n = 0
-        total_bad_bp = 0
-        for rank in sourmash.lca.taxlist():
-            (good_names, bad_names) = calculate_contam(genome_lineage,
-                                                       contigs_d,
-                                                       rank,
-                                                       filter_names=eliminate)
-            eliminate.update(bad_names)
-            bad_n = len(bad_names)
-            bad_bp = sum([ x.length for x in bad_names.values() ])
-            total_bad_n += bad_n
-            total_bad_bp += bad_bp
-
-            print(f'   {rank}: {len(bad_names)} contigs w/ {kb(bad_bp)}kb')
-            vals[f'bad_{rank}_bp'] = total_bad_bp
-            vals[f'bad_{rank}_n'] = total_bad_n
-
-            (good_names, bad_names) = calculate_clean(genome_lineage,
-                                                      contigs_d,
-                                                      rank)
-            good_n = len(good_names)
-            good_bp = sum([ x.length for x in good_names.values() ])
-            vals[f'good_{rank}_bp'] = good_bp
-            vals[f'good_{rank}_n'] = good_n
-
-            if rank == match_rank:
-                break
-
-        vals['total_bad_bp'] = total_bad_bp
-
-        print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
-
+        # calculate summary stats for contigs
         nohash_bp = 0
         nohash_count = 0
         noident_bp = 0
@@ -305,7 +272,7 @@ def main(args):
             if not gather_info.num_hashes:
                 nohash_bp += gather_info.length
                 nohash_count += 1
-            elif not gather_info.gather_tax:
+            elif not gather_info.gather_tax or not genome_lineage:
                 noident_bp += gather_info.length
                 noident_count += 1
 
@@ -316,15 +283,50 @@ def main(args):
         vals['total_contigs_n'] = contigs_n
         vals['total_contigs_bp'] = contigs_bp
 
+        # track contigs that have been eliminated at various ranks
+        total_bad_n = 0
+        total_bad_bp = 0
+        for rank in sourmash.lca.taxlist():
+            (good_names, bad_names) = calculate_contam(genome_lineage,
+                                                       contigs_d,
+                                                       rank)
+
+            #eliminate.update(bad_names)
+            bad_n = len(bad_names)
+            bad_bp = sum([ x.length for x in bad_names.values() ])
+            total_bad_n += bad_n
+            total_bad_bp += bad_bp
+
+            print(f'   {rank}: {len(bad_names)} contigs w/ {kb(bad_bp)}kb')
+            vals[f'bad_{rank}_bp'] = bad_bp
+            vals[f'bad_{rank}_n'] = bad_n
+
+            (good_names, bad_names) = calculate_clean(genome_lineage,
+                                                      contigs_d,
+                                                      rank)
+            good_n = len(good_names)
+            good_bp = sum([ x.length for x in good_names.values() ])
+            vals[f'good_{rank}_bp'] = good_bp
+            vals[f'good_{rank}_n'] = good_n
+
+            assert bad_bp + good_bp == contigs_bp
+
+            if rank == match_rank:
+                break
+
+        vals['total_bad_bp'] = total_bad_bp
+
+        print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
+
         summary_d[genome_name] = vals
 
         ###
 
     # output a sorted hit list CSV
     fp = open(args.hit_list, 'wt')
-    summary_w = csv.writer(fp)
+    hitlist_w = csv.writer(fp)
     
-    summary_w.writerow(['genome', 'filter_at', 'override_filter_at',
+    hitlist_w.writerow(['genome', 'filter_at', 'override_filter_at',
         'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp',
         'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp',
         'f_ident', 'f_major', 'lineage', 'comment'])
@@ -333,7 +335,7 @@ def main(args):
     summary_items.sort(key=lambda x: -x[1]["total_bad_bp"])
 
     for genome_name, vals in summary_items:
-        summary_w.writerow([genome_name,
+        hitlist_w.writerow([genome_name,
                             vals['filter_at'], '',
                             vals["total_bad_bp"],
                             vals['bad_superkingdom_bp'],
