@@ -5,6 +5,7 @@
 #
 import csv, sys
 from snakemake.workflow import srcdir
+from charcoal.utils import CSV_DictHelper
 
 strict_val = config.get('strict', '1')
 strict_mode = int(strict_val)
@@ -24,6 +25,7 @@ genome_list = [ line for line in genome_list if line ]   # remove empty lines
 
 genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
+report_dir = f'{output_dir}/report'
 
 ### verification / strict mode
 
@@ -51,6 +53,7 @@ except ValueError:
 
 # verify that all genome files exist -
 for filename in genome_list:
+    break
     fullpath = os.path.join(genome_dir, filename)
     if not os.path.exists(fullpath):
         print(f'** ERROR: genome file {filename} does not exist in {genome_dir}')
@@ -61,7 +64,8 @@ for filename in genome_list:
 # verify that all query databases exist --
 if not config['gather_db']:
     print('** ERROR: must define gather_db')
-    sys.exit(-1)
+    if strict_mode:
+       sys.exit(-1)
 
 for filename in config['gather_db']:
     if not os.path.exists(filename):
@@ -95,7 +99,7 @@ if provided_lineages_file:
             if not row[1:]:
                 print(f'** cannot parse provided lineage for {genome_filename}')
                 print(f'** ; is it comma separated?')
-                sys.exit(-1)
+                if strict_mode: sys.exit(-1)
             provided_lineages[genome_filename] = row[1:]
 
     print(f'** read {len(provided_lineages)} provided lineages')
@@ -128,17 +132,26 @@ def get_provided_lineage(w):
 ###
 
 wildcard_constraints:
-    size="\d+"
+    size="\d+",
+    g='[a-zA-Z0-9._-]+'                   # should be everything but /
+
 
 # default rule - produce hit list
 rule inspect:
     input:
-        output_dir + '/hit_list_for_filtering.csv'
+        output_dir + '/hit_list_for_filtering.csv',
+        output_dir + '/genome_summary.csv'
 
 # clean rule - clean the contigs
 rule clean:
     input:
         expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
+
+# report - make HTML output
+rule report:
+    input:
+        expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
+        f'{report_dir}/index.html'
 
 # check config files only
 rule check:
@@ -294,7 +307,8 @@ rule make_hit_list:
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
     output:
-        output_dir + '/hit_list_for_filtering.csv'
+        hit_list = output_dir + '/hit_list_for_filtering.csv',
+        contig_details = output_dir + '/genome_summary.csv',
     conda: 'conf/env-sourmash.yml'
     params:
         output_dir = output_dir,
@@ -306,7 +320,8 @@ rule make_hit_list:
             --genome-list-file {input.genome_list} \
             --lineages-csv {input.lineages} \
             --provided-lineages {input.provided_lineages} \
-            --output {output} \
+            --hit-list {output.hit_list} \
+            --contig-details-summary {output.contig_details} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major}
     """
@@ -319,10 +334,64 @@ rule clean_contigs:
     output:
         clean = output_dir + '/{f}.clean.fa.gz',
         dirty = output_dir + '/{f}.dirty.fa.gz',
+    conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.clean_genome \
             --genome {input.genome} \
             --hit-list {input.hit_list} \
             --contigs-json {input.json} \
             --clean {output.clean} --dirty {output.dirty}
+    """
+
+rule set_kernel:
+    output:
+        f"{output_dir}/.kernel.set"
+    shell: """
+        python -m ipykernel install --user --name charcoal
+        touch {output}
+    """
+
+rule make_notebook:
+    input:
+        nb='charcoal/notebooks/genome-report.ipynb',
+        summary=f'{output_dir}/genome_summary.csv',
+        hitlist=f'{output_dir}/hit_list_for_filtering.csv',
+        kernel_set = rules.set_kernel.output
+    output:
+        report_dir + '/{g}.fig.ipynb'
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        papermill {input.nb} - -k charcoal --cwd {report_dir} \
+              -p directory .. -p render '' \
+              -p name {wildcards.g:q} \
+              > {output}
+    """
+
+rule make_html:
+    input:
+        notebook=report_dir + '/{g}.fig.ipynb',
+        summary=f'{output_dir}/genome_summary.csv',
+        hitlist=f'{output_dir}/hit_list_for_filtering.csv',
+        contigs_json=f'{output_dir}/{{g}}.contigs-tax.json',
+    output:
+        report_dir + '/{g}.fig.html',
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        python -m nbconvert {input.notebook} --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
+    """
+     
+
+rule make_index:
+    input:
+        notebook='charcoal/notebooks/report_index.ipynb',
+        summary=f'{output_dir}/genome_summary.csv',
+        kernel_set = rules.set_kernel.output
+    output:
+        nb=f'{report_dir}/index.ipynb',
+        html=f'{report_dir}/index.html',
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        papermill {input.notebook} - -p name {output_dir:q} -p render '' \
+            -p directory .. -k charcoal --cwd {report_dir} > {output.nb}
+        python -m nbconvert {output.nb} --stdout --no-input > {output.html}
     """

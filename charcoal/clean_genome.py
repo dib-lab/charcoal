@@ -9,12 +9,11 @@ import os.path
 import screed
 
 import sourmash
-from sourmash.lca import LineagePair, taxlist
 
 from . import utils
 from .version import version
 from .utils import (summarize_at_rank, load_contigs_gather_json,
-                    is_contig_contaminated, HitList)
+                    is_contig_contaminated, CSV_DictHelper, make_lineage)
 
 
 def yield_names_in_records(d):
@@ -23,22 +22,12 @@ def yield_names_in_records(d):
         yield r
 
 
-def make_lineage(lineage):
-    "Turn a ; or ,-separated set of lineages into a tuple of LineagePair objs."
-    lin = lineage.split(';')
-    if len(lin) == 1:
-        lin = lineage.split(',')
-    lin = [ LineagePair(rank, n) for (rank, n) in zip(taxlist(), lin) ]
-
-    return lin
-
-
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
 
     genome_name = os.path.basename(args.genome)
 
-    hit_list = HitList(args.hit_list)
+    hit_list = CSV_DictHelper(args.hit_list, 'genome')
 
     try:
         row = hit_list[genome_name]
@@ -102,19 +91,19 @@ def main(args):
         screed_iter = yield_names_in_records(contigs_d)
 
     for record in screed_iter:
-        contig_len, contig_taxlist = contigs_d[record.name]
+        gather_info = contigs_d[record.name]
 
-        if is_contig_contaminated(lineage, contig_taxlist, filter_rank,
-                                  3):
+        if is_contig_contaminated(lineage, gather_info.gather_tax,
+                                  filter_rank, 3): # @CTB configurable?!
             if not args.do_nothing:
-                assert len(record.sequence) == contig_len
+                assert len(record.sequence) == gather_info.length
                 dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_dirty += contig_len
+            bp_dirty += gather_info.length
         else:
             if not args.do_nothing:
-                assert len(record.sequence) == contig_len
+                assert len(record.sequence) == gather_info.length
                 clean_fp.write(f'>{record.name}\n{record.sequence}\n')
-            bp_clean += contig_len
+            bp_clean += gather_info.length
 
     print(f'wrote {bp_clean} clean bp to {args.clean}')
     print(f'wrote {bp_dirty} dirty bp to {args.dirty}')

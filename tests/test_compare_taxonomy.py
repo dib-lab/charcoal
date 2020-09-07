@@ -11,12 +11,14 @@ def test_basic(location):
     with open(genome_list_file, 'wt') as fp:
         fp.write("loomba\n")
 
-    output = os.path.join(location, 'hitlist.csv')
+    hitlist = os.path.join(location, 'hitlist.csv')
+    summary_csv = os.path.join(location, 'summary.csv')
 
     args = utils.Args()
     args.input_directory = location
     args.genome_list_file = genome_list_file
-    args.output = output
+    args.hit_list = hitlist
+    args.contig_details_summary = summary_csv
     args.lineages_csv = utils.relative_file("tests/test-data/test-match-lineages.csv")
     args.provided_lineages = None
     args.min_f_ident = compare_taxonomy.F_IDENT_THRESHOLD
@@ -29,12 +31,12 @@ def test_basic(location):
     status = compare_taxonomy.main(args)
 
     assert status == 0
-    assert os.path.exists(output)
+    assert os.path.exists(hitlist)
 
-    with open(output, 'rt') as fp:
-        output_csv = fp.read()
+    with open(hitlist, 'rt') as fp:
+        hitlist_csv = fp.read()
 
-    assert 'loomba,genus,,12351,0,0,0,7286,9347,12351,0.959,0.764,d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Acutalibacteraceae;g__Anaeromassilibacillus,' in output_csv
+    assert 'loomba,genus,,12351,0,0,0,7286,9347,12351,0.959,0.764,d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Acutalibacteraceae;g__Anaeromassilibacillus,' in hitlist_csv
 
     # this next bit is a bit off-topic for this test, but I want to
     # make sure that the saved hit-list matches used in clean_genome

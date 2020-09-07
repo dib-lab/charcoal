@@ -4,7 +4,7 @@
 #SBATCH -N 1                   # one "node", or computer
 #SBATCH -n 1                   # one task for this node
 #SBATCH -c 32                  # cores per task
-#SBATCH -t 1-0                 # ask for a full day
+#SBATCH -t 2                 # ask for an hour
 #SBATCH --mem=60000             # memory (30,000 mb = 30gb)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=titus@idyll.org
@@ -32,6 +32,9 @@ cd ~/charcoal
 #charcoal run eval/tara-delmont-strict.conf -p -j 32 -k --no-use-conda --unlock
 #charcoal run eval/tara-delmont-strict.conf -p -j 32 -k --no-use-conda
 charcoal run conf/ibd2.conf -j 32 -k -p
+charcoal run conf/gtdb-contam-dna.conf -j 32 -k -p
+charcoal run conf/tara-delmont.conf -j 32 -k -p
+#charcoal run conf/gtdb-random-dna.conf -j 32 -k -p
 
 # print out various information about the job
 env | grep SLURM            # Print out values of the current jobs SLURM environment variables
