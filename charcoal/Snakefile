@@ -346,6 +346,7 @@ rule clean_contigs:
 rule set_kernel:
     output:
         f"{output_dir}/.kernel.set"
+    conda: 'conf/env-reporting.yml'
     shell: """
         python -m ipykernel install --user --name charcoal
         touch {output}
