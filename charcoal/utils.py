@@ -245,11 +245,8 @@ class CSV_DictHelper:
         with open(filename, 'rt') as fp:
             r = csv.DictReader(fp)
             for row in r:
-                genome = row['genome']
-                self.rows[genome] = row
-
-    def __getitem__(self, g):
-        return self.rows[g]
+                k = row[key]
+                self.rows[k] = row
 
     def __getitem__(self, k):
         return AttrDict(self.rows[k])
