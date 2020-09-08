@@ -284,8 +284,6 @@ def main(args):
         vals['total_contigs_bp'] = contigs_bp
 
         # track contigs that have been eliminated at various ranks
-        total_bad_n = 0
-        total_bad_bp = 0
         for rank in sourmash.lca.taxlist():
             (good_names, bad_names) = calculate_contam(genome_lineage,
                                                        contigs_d,
@@ -294,8 +292,6 @@ def main(args):
             #eliminate.update(bad_names)
             bad_n = len(bad_names)
             bad_bp = sum([ x.length for x in bad_names.values() ])
-            total_bad_n += bad_n
-            total_bad_bp += bad_bp
 
             print(f'   {rank}: {len(bad_names)} contigs w/ {kb(bad_bp)}kb')
             vals[f'bad_{rank}_bp'] = bad_bp
@@ -314,9 +310,9 @@ def main(args):
             if rank == match_rank:
                 break
 
-        vals['total_bad_bp'] = total_bad_bp
+        vals['total_bad_bp'] = vals['bad_genus_bp']
 
-        print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
+        print(f"   (total): {vals['bad_genus_n']} contigs w/ {kb(vals['bad_genus_bp'])}kb")
 
         summary_d[genome_name] = vals
 
