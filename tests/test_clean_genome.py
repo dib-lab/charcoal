@@ -282,7 +282,7 @@ def test_2_gca_empty(location):
     dirty_out = os.path.join(location, 'dirty.fa.gz')
     args.clean = clean_out
     args.dirty = dirty_out
-    
+
     status = clean_genome.main(args)
 
     assert status == 0
