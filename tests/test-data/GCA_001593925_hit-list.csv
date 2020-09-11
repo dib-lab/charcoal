@@ -1,0 +1,2 @@
+genome,filter_at,override_filter_at,total_bad_bp,superkingdom_bad_bp,phylum_bad_bp,class_bad_bp,order_bad_bp,family_bad_bp,genus_bad_bp,f_ident,f_major,lineage,comment
+GCA_001593925.1_ASM159392v1_genomic.fna.gz,none,,0,0,0,0,0,0,0,1.0,1.0,p__Crenarchaeota;c__Bathyarchaeia;o__B26-1;f__B26-1;g__B26-1;s__B26-1 sp001593925,All genome hashes belong to one lineage! Nothing to do.
