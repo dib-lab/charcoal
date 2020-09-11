@@ -124,7 +124,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
             siglist = None
 
     if not siglist:
-        comment = 'no matches for this genome, exiting.'
+        comment = 'no matches for this genome.'
         print(comment)
         return None, comment, False, 0.0, 0.0
 
@@ -148,7 +148,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
             if provided_lineage and provided_lineage != 'NA':
                 print(f'found exact match: {ss.name()}. removing.')
             else:
-                print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
+                print(f'found exact match: {ss.name()}. but no provided lineage!')
                 comment = f'found exact match: {ss.name()}. but no provided lineage! cannot analyze.'
                 return None, comment, True, 1.0, 1.0
 
@@ -245,7 +245,7 @@ def main(args):
 
         # did we get a lineage for this genome? if so, propose filtering at
         # default rank 'match_rank', otherwise ...do not filter.
-        if genome_lineage:
+        if genome_lineage and not comment:
             filter_at = match_rank
         else:
             genome_lineage = []
