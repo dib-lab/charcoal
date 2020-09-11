@@ -31,13 +31,13 @@ cd ~/charcoal
 #charcoal run eval/tara-delmont-relaxed.conf -p -j 32 -k --no-use-conda
 #charcoal run eval/tara-delmont-strict.conf -p -j 32 -k --no-use-conda --unlock
 #charcoal run eval/tara-delmont-strict.conf -p -j 32 -k --no-use-conda
-charcoal run conf/ibd2.conf -j 32 -k -p --unlock
-charcoal run conf/gtdb-contam-dna.conf -j 32 -k -p --unlock
-charcoal run conf/tara-delmont.conf -j 32 -k -p --unlock
+python -m charcoal run conf/ibd2.conf -j 32 -k -p --unlock
+python -m charcoal run conf/gtdb-contam-dna.conf -j 32 -k -p --unlock
+python -m charcoal run conf/tara-delmont.conf -j 32 -k -p --unlock
 
-charcoal run conf/ibd2.conf -j 32 -k -p report
-charcoal run conf/gtdb-contam-dna.conf -j 32 -k -p report
-charcoal run conf/tara-delmont.conf -j 32 -k -p report
+python -m charcoal run conf/ibd2.conf -j 32 -k -p
+python -m charcoal run conf/gtdb-contam-dna.conf -j 32 -k -p
+python -m charcoal run conf/tara-delmont.conf -j 32 -k -p
 #charcoal run conf/gtdb-random-dna.conf -j 32 -k -p
 
 # print out various information about the job
