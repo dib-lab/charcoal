@@ -332,6 +332,7 @@ def main(args):
 
         ###
 
+        # sumamrize contamination between genomes (source) and contig (target).
         if genome_lineage:
             eliminate = set()
             for rank in sourmash.lca.taxlist():
@@ -406,18 +407,9 @@ def main(args):
 
     print(f"processed {len(genome_names)} genomes.")
 
-    source_contam = list(detected_contam.items())
-
-    contam_l = []
-    for k, values in source_contam:
-        print(sourmash.lca.display_lineage(k))
-
-        for j, cnt in values.most_common():
-            print('    ', cnt, sourmash.lca.display_lineage(j))
-            contam_l.append((k, j, cnt))
-
+    print(f"saving contamination summary to {args.contam_summary_json}")
     with open(args.contam_summary_json, 'wt') as fp:
-        json.dump(contam_l, fp)
+        utils.save_contamination_summary(detected_contam, fp)
 
     return 0
 

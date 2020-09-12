@@ -264,5 +264,33 @@ def make_lineage(lineage):
     if len(lin) == 1:
         lin = lineage.split(',')
     lin = [ LineagePair(rank, n) for (rank, n) in zip(taxlist(), lin) ]
+    lin = tuple(lin)
 
     return lin
+
+
+def save_contamination_summary(detected_contam, fp):
+    source_contam = list(detected_contam.items())
+
+    contam_l = []
+    for k, values in source_contam:
+        for j, cnt in values.most_common():
+            contam_l.append((k, j, cnt))
+
+    json.dump(contam_l, fp)
+
+
+def load_contamination_summary(fp):
+    x = json.load(fp)
+
+    source_d = defaultdict(int)
+    for source, target, count in x:
+        source = tuple([ LineagePair(rank, name) for rank, name in source ])
+        target = tuple([ LineagePair(rank, name) for rank, name in target ])
+        target_d = source_d.get(source)
+        if not target_d:
+            target_d = defaultdict(int)
+        target_d[target] = count
+        source_d[source] = target_d
+
+    return source_d
