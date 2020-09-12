@@ -13,6 +13,7 @@ def test_basic(location):
 
     hitlist = os.path.join(location, 'hitlist.csv')
     summary_csv = os.path.join(location, 'summary.csv')
+    contam_json = os.path.join(location, 'contam.json')
 
     args = utils.Args()
     args.input_directory = location
@@ -21,6 +22,7 @@ def test_basic(location):
     args.contig_details_summary = summary_csv
     args.lineages_csv = utils.relative_file("tests/test-data/test-match-lineages.csv")
     args.provided_lineages = None
+    args.contam_summary_json = contam_json
     args.min_f_ident = compare_taxonomy.F_IDENT_THRESHOLD
     args.min_f_major = compare_taxonomy.F_MAJOR_THRESHOLD
     
@@ -32,6 +34,7 @@ def test_basic(location):
 
     assert status == 0
     assert os.path.exists(hitlist)
+    assert os.path.exists(contam_json)
 
     with open(hitlist, 'rt') as fp:
         hitlist_csv = fp.read()

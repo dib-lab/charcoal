@@ -298,8 +298,8 @@ rule combined_summary:
                    w.writerow(row)
 
 
-# generate a hit list
-rule make_hit_list:
+# compare all the genomes.
+rule compare_taxonomy:
     input:
         all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
         all_sig=expand(output_dir + '/{g}.matches.sig', g=genome_list),
@@ -309,6 +309,7 @@ rule make_hit_list:
     output:
         hit_list = output_dir + '/hit_list_for_filtering.csv',
         contig_details = output_dir + '/genome_summary.csv',
+        contam_json = output_dir + '/contam_summary.json',
     conda: 'conf/env-sourmash.yml'
     params:
         output_dir = output_dir,
@@ -322,6 +323,7 @@ rule make_hit_list:
             --provided-lineages {input.provided_lineages} \
             --hit-list {output.hit_list} \
             --contig-details-summary {output.contig_details} \
+            --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major}
     """

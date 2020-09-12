@@ -7,6 +7,7 @@ import argparse
 import csv
 import os.path
 from collections import Counter
+import json
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
@@ -407,10 +408,16 @@ def main(args):
 
     source_contam = list(detected_contam.items())
 
+    contam_l = []
     for k, values in source_contam:
         print(sourmash.lca.display_lineage(k))
+
         for j, cnt in values.most_common():
             print('    ', cnt, sourmash.lca.display_lineage(j))
+            contam_l.append((k, j, cnt))
+
+    with open(args.contam_summary_json, 'wt') as fp:
+        json.dump(contam_l, fp)
 
     return 0
 
@@ -422,6 +429,7 @@ def cmdline(sys_args):
     p.add_argument('--genome-list-file', required=True)
     p.add_argument('--hit-list', required=True)
     p.add_argument('--contig-details-summary', required=True)
+    p.add_argument('--contam-summary-json', required=True)
     p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
