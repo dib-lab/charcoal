@@ -20,6 +20,12 @@ def get_package_configfile(filename):
 
 def run_snakemake(configfile, no_use_conda=False, verbose=False,
                   snakefile_name='Snakefile', outdir=None, extra_args=[]):
+    if configfile:
+        if not os.path.exists(configfile) or not os.path.isfile(configfile):
+            print(f"Error: config file '{configfile}' does not exist!",
+                  file=sys.stderr)
+            sys.exit(-1)
+
     # find the Snakefile relative to package path
     snakefile = get_snakefile_path(snakefile_name)
 
