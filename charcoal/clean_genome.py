@@ -54,6 +54,7 @@ def main(args):
     contigs_d = load_contigs_gather_json(args.contigs_json)
     print(f'loaded {len(contigs_d)} contig assignments.')
 
+    # open gzip/whatever files as needed for output
     xopen = open
     if args.clean.endswith('.gz'):
         xopen = gzip.open
@@ -91,6 +92,9 @@ def main(args):
         screed_iter = yield_names_in_records(contigs_d)
 
     for record in screed_iter:
+        # note: if record.name is not in the contigs dictionary, that
+        # means that the code that output the hitlist did something
+        # wrong!
         gather_info = contigs_d[record.name]
 
         if is_contig_contaminated(lineage, gather_info.gather_tax,

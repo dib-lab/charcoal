@@ -9,6 +9,7 @@ loomba = 'LoombaR_2017__SID1050_bax__bin.11.fa.gz'
 
 
 def replace_in_hit_list(src, dest, match, replace):
+    "Adjust the hit list CSV with a quick search/replace."
     with open(src, 'rt') as fp:
         data = fp.read()
         data = data.replace(match, replace)
@@ -260,3 +261,30 @@ def test_1_loomba_order_override(location):
     print(out)
     assert 'wrote 2732992 clean bp' in out
     assert 'wrote 7286 dirty bp' in out
+
+
+@utils.in_tempdir
+def test_2_gca_empty(location):
+    # regression test/check for same results on Loomba
+    args = utils.Args()
+    args.genome = utils.relative_file(f"demo/genomes/GCA_001593925.1_ASM159392v1_genomic.fna.gz")
+    args.hit_list = utils.relative_file("tests/test-data/GCA_001593925_hit-list.csv")
+
+    # create and use empty JSON file
+    empty_json = os.path.join(location, 'empty.json')
+    with open(empty_json, 'wt') as fp:
+        fp.write('{}')
+
+    args.contigs_json = empty_json
+    args.do_nothing = False
+
+    clean_out = os.path.join(location, 'clean.fa.gz')
+    dirty_out = os.path.join(location, 'dirty.fa.gz')
+    args.clean = clean_out
+    args.dirty = dirty_out
+
+    status = clean_genome.main(args)
+
+    assert status == 0
+    assert os.path.exists(clean_out)
+    assert os.path.exists(dirty_out)

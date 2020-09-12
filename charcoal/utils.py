@@ -248,9 +248,6 @@ class CSV_DictHelper:
                 genome = row['genome']
                 self.rows[genome] = row
 
-    def __getitem__(self, g):
-        return self.rows[g]
-
     def __getitem__(self, k):
         return AttrDict(self.rows[k])
 

@@ -84,33 +84,36 @@ def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
 
 
 def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
-                          f_ident, f_major, min_f_ident, min_f_major, report):
+                          f_ident, f_major, min_f_ident, min_f_major):
 
     comment = ""
     genome_lineage = None
+    needs_lineage = False
 
     if provided_lineage:
         if utils.is_lineage_match(provided_lineage, guessed_genome_lineage, match_rank):
-            report(f'(provided lineage agrees with k-mer classification at {match_rank} level)')
+            print(f'(provided lineage agrees with k-mer classification at {match_rank} level)')
         elif guessed_genome_lineage:
-            report(f'(provided lineage disagrees with k-mer classification at or above {match_rank} level)')
+            print(f'(provided lineage disagrees with k-mer classification at or above {match_rank} level)')
         else:
             pass
 
         genome_lineage = utils.pop_to_rank(provided_lineage, match_rank)
-        report(f'\nUsing provided lineage as genome lineage.')
+        print(f'\nUsing provided lineage as genome lineage.')
     else:
         if f_ident < min_f_ident:
-            report(f'** ERROR: fraction of total identified hashes (f_ident) < {min_f_ident*100:.0f}%.')
+            print(f'** ERROR: fraction of total identified hashes (f_ident) < {min_f_ident*100:.0f}%.')
             comment = f"too few identifiable hashes; f_ident < {min_f_ident*100:.0f}%. provide a lineage for this genome."
+            needs_lineage = True
         elif f_major < min_f_major:
-            report(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {min_f_major*100:.0f}%.')
+            print(f'** ERROR: fraction of identified hashes in major lineage (f_major) < {min_f_major*100:.0f}%.')
             comment = f"too few hashes in major lineage; f_major < {min_f_major*100:.0f}%. provide a lineage for this genome."
+            needs_lineage = True
         else:
             genome_lineage = utils.pop_to_rank(guessed_genome_lineage, match_rank)
-            report(f'Using majority gather lineage as genome lineage.')
+            print(f'Using majority gather lineage as genome lineage.')
 
-    return genome_lineage, comment
+    return genome_lineage, comment, needs_lineage
 
 
 def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
@@ -122,8 +125,9 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
             siglist = None
 
     if not siglist:
-        print('no matches for this genome, exiting.')
-        return None, 'no matches for this genome, exiting.', 0.0, 0.0
+        comment = 'no matches for this genome.'
+        print(comment)
+        return None, comment, False, 0.0, 0.0
 
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
@@ -145,8 +149,9 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
             if provided_lineage and provided_lineage != 'NA':
                 print(f'found exact match: {ss.name()}. removing.')
             else:
-                print(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
-                return None, f'found exact match: {ss.name()}. but no provided lineage! cannot analyze.', 1.0, 1.0
+                print(f'found exact match: {ss.name()}. but no provided lineage!')
+                comment = f'found exact match: {ss.name()}. but no provided lineage! cannot analyze.'
+                return None, comment, True, 1.0, 1.0
 
     # ...but leave exact matches in if they're the only matches, I guess!
     if new_siglist:
@@ -174,7 +179,8 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
     if f_major == 1.0 and f_ident == 1.0:
         comment = "All genome hashes belong to one lineage! Nothing to do."
-        return None, comment, f_major, f_ident
+        print(comment)
+        return guessed_genome_lineage, comment, False, f_major, f_ident
 
     # did we get a passed-in lineage assignment?
     provided_lin = ""
@@ -183,14 +189,14 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
         print(f'Provided lineage from command line:\n   {sourmash.lca.display_lineage(provided_lin)}')
 
     # choose between the lineages
-    genome_lineage, comment = choose_genome_lineage(guessed_genome_lineage,
+    genome_lineage, comment, needs_lineage = \
+                              choose_genome_lineage(guessed_genome_lineage,
                                                     provided_lin,
                                                     match_rank,
                                                     f_ident, f_major,
-                                                    min_f_ident, min_f_major,
-                                                    print)
+                                                    min_f_ident, min_f_major)
 
-    return genome_lineage, comment, f_major, f_ident
+    return genome_lineage, comment, needs_lineage, f_major, f_ident
 
 ###
 
@@ -240,11 +246,11 @@ def main(args):
                                 tax_assign, match_rank,
                                 args.min_f_ident,
                                 args.min_f_major)
-        genome_lineage, comment, f_major, f_ident = x
+        genome_lineage, comment, needs_lineage, f_major, f_ident = x
 
         # did we get a lineage for this genome? if so, propose filtering at
         # default rank 'match_rank', otherwise ...do not filter.
-        if genome_lineage:
+        if genome_lineage and not comment:
             filter_at = match_rank
         else:
             genome_lineage = []
@@ -260,6 +266,7 @@ def main(args):
         vals['f_ident'] = f_ident
         vals['f_major'] = f_major
         vals['comment'] = comment
+        vals['needs_lineage_flag'] = 1 if needs_lineage else 0
         vals['lineage'] = sourmash.lca.display_lineage(genome_lineage)
         vals['filter_at'] = filter_at
 
@@ -289,9 +296,6 @@ def main(args):
         vals['total_contigs_bp'] = contigs_bp
 
         # track contigs that have been eliminated at various ranks
-
-        total_bad_n = 0
-        total_bad_bp = 0
         for rank in sourmash.lca.taxlist():
             (good_names, bad_names) = calculate_contam(genome_lineage,
                                                        contigs_d,
@@ -300,8 +304,6 @@ def main(args):
             #eliminate.update(bad_names)
             bad_n = len(bad_names)
             bad_bp = sum([ x.length for x in bad_names.values() ])
-            total_bad_n += bad_n
-            total_bad_bp += bad_bp
 
             print(f'   {rank}: {len(bad_names)} contigs w/ {kb(bad_bp)}kb')
             vals[f'bad_{rank}_bp'] = bad_bp
@@ -320,9 +322,10 @@ def main(args):
             if rank == match_rank:
                 break
 
-        vals['total_bad_bp'] = total_bad_bp
 
-        print(f'   (total): {total_bad_n} contigs w/ {kb(total_bad_bp)}kb')
+        vals['total_bad_bp'] = vals['bad_genus_bp']
+
+        print(f"   (total): {vals['bad_genus_n']} contigs w/ {kb(vals['bad_genus_bp'])}kb")
 
         summary_d[genome_name] = vals
 
