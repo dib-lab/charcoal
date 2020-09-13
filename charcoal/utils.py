@@ -271,6 +271,7 @@ def make_lineage(lineage):
 
 
 def save_contamination_summary(detected_contam, fp):
+    "Save a contamination summary to JSON."
     source_contam = list(detected_contam.items())
 
     contam_l = []
@@ -282,6 +283,7 @@ def save_contamination_summary(detected_contam, fp):
 
 
 def load_contamination_summary(fp):
+    "Load a contamination summary saved by save_contamination_summary."
     x = json.load(fp)
 
     source_d = defaultdict(int)
@@ -298,6 +300,7 @@ def load_contamination_summary(fp):
 
 
 def filter_contam(contam_d, threshold_f, filter_ranks_at=None):
+    "Filter a contamination dictionary down to a list of counts/src/target."
 
     if not filter_ranks_at:
         filter_ranks_at = set(['superkingdom', 'phylum'])
@@ -333,6 +336,7 @@ def filter_contam(contam_d, threshold_f, filter_ranks_at=None):
 
 
 class NextIndex:
+    "A class to do counting for defaultdict indices."
     def __init__(self):
         self.idx = -1
         
@@ -344,6 +348,7 @@ class NextIndex:
         return self.idx + 1
     
 def build_contamination_matrix(contam_list):
+    "Build a matrix that can be used for a heatmap viz."
     source_idx = NextIndex()
     source_indices = defaultdict(source_idx)
 
