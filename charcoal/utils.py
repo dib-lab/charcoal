@@ -299,21 +299,15 @@ def load_contamination_summary(fp):
     return source_d
 
 
-def filter_contam(contam_d, threshold_f, filter_ranks_at=None):
+def filter_contam(contam_d, threshold_f, display_at_rank='phylum'):
     "Filter a contamination dictionary down to a list of counts/src/target."
-
-    if not filter_ranks_at:
-        filter_ranks_at = set(['superkingdom', 'phylum'])
-    else:
-        filter_ranks_at = set(filter_ranks_at)
 
     pairtup_list = []
     for k, target_d in contam_d.items():
-        if filter_ranks_at and k[-1].rank not in filter_ranks_at: continue
+        source_lin = pop_to_rank(k, display_at_rank)
         for lin, count in target_d.items():
-            if filter_ranks_at and lin[-1].rank not in filter_ranks_at: continue
-
-            keytup = (k, lin)
+            target_lin = pop_to_rank(lin, display_at_rank)
+            keytup = (source_lin, target_lin)
             pairtup_list.append((count, keytup))
 
     pairtup_list.sort(reverse=True)
