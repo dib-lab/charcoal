@@ -302,7 +302,6 @@ def main(args):
                                                        contigs_d,
                                                        rank)
 
-            #eliminate.update(bad_names)
             bad_n = len(bad_names)
             bad_bp = sum([ x.length for x in bad_names.values() ])
 
@@ -320,6 +319,21 @@ def main(args):
 
             assert bad_bp + good_bp == contigs_bp
 
+            # track contamination between source (genome) / target (contig)
+            for contig_name in bad_names:
+                contig_taxlist = contigs_d[contig_name].gather_tax
+                for hit, count in contig_taxlist:
+                    if utils.is_lineage_match(genome_lineage, hit, rank):
+                        continue
+
+                    # contam!
+                    source_lin = utils.pop_to_rank(genome_lineage, rank)
+                    target_lin = utils.pop_to_rank(hit, rank)
+
+                    target = detected_contam.get(source_lin, Counter())
+                    target[target_lin] += count
+                    detected_contam[source_lin] = target
+
             if rank == match_rank:
                 break
 
@@ -329,30 +343,6 @@ def main(args):
         print(f"   (total): {vals['bad_genus_n']} contigs w/ {kb(vals['bad_genus_bp'])}kb")
 
         summary_d[genome_name] = vals
-
-        ###
-
-        # sumamrize contamination between genomes (source) and contig (target).
-        if genome_lineage:
-            eliminate = set()
-            for rank in sourmash.lca.taxlist():
-                for contig_name, gather_info in contigs_d.items():
-                    if contig_name in eliminate:
-                        continue
-
-                    contig_taxlist = gather_info.gather_tax
-
-                    for hit, count in contig_taxlist:
-                        if not utils.is_lineage_match(genome_lineage, hit, rank):
-                            source_lin = utils.pop_to_rank(genome_lineage, rank)
-                            target_lin = utils.pop_to_rank(hit, rank)
-
-                            target = detected_contam.get(source_lin, Counter())
-                            target[target_lin] += count
-                            detected_contam[source_lin] = target
-                            eliminate.add(contig_name)
-
-            if rank == match_rank: break
 
         ###
 
