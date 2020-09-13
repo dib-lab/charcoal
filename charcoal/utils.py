@@ -4,9 +4,10 @@ utility functions for charcoal.
 import json
 from collections import defaultdict, Counter, namedtuple
 import csv
+import numpy
 
 import sourmash
-from sourmash.lca import lca_utils, LineagePair, taxlist
+from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -294,3 +295,87 @@ def load_contamination_summary(fp):
         source_d[source] = target_d
 
     return source_d
+
+
+def filter_contam(contam_d, threshold_f, filter_ranks_at=None):
+
+    if not filter_ranks_at:
+        filter_ranks_at = set(['superkingdom', 'phylum'])
+    else:
+        filter_ranks_at = set(filter_ranks_at)
+
+    pairtup_list = []
+    for k, target_d in contam_d.items():
+        if filter_ranks_at and k[-1].rank not in filter_ranks_at: continue
+        for lin, count in target_d.items():
+            if filter_ranks_at and lin[-1].rank not in filter_ranks_at: continue
+
+            keytup = (k, lin)
+            pairtup_list.append((count, keytup))
+
+    pairtup_list.sort(reverse=True)
+
+    total_counts = 0
+    for count, (k, lin) in pairtup_list:
+        total_counts += count
+
+    # grab % of the total counts
+    threshold = threshold_f * total_counts
+    sub_list = []
+    sofar = 0
+    for count, v in pairtup_list:
+        sofar += count
+        if sofar > threshold:
+            break
+        sub_list.append((count, v))
+        
+    return sub_list
+
+
+class NextIndex:
+    def __init__(self):
+        self.idx = -1
+        
+    def __call__(self):
+        self.idx += 1
+        return self.idx
+    
+    def __len__(self):
+        return self.idx + 1
+    
+def build_contamination_matrix(contam_list):
+    source_idx = NextIndex()
+    source_indices = defaultdict(source_idx)
+
+    target_idx = NextIndex()
+    target_indices = defaultdict(target_idx)
+
+    for count, (source, target) in contam_list:
+        _ = source_indices[source]
+        _ = target_indices[target]
+
+    mat = numpy.zeros((len(source_idx), len(target_idx)))
+
+    for count, (source, target) in contam_list:
+        i = source_indices[source]
+        j = target_indices[target]
+
+        mat[i,j] += count
+
+    source_labels = [""] * len(source_idx)
+    for k, idx in source_indices.items():
+        source_labels[idx] = display_lineage(k)
+
+    target_labels = [""] * len(target_idx)
+    for k, idx in target_indices.items():
+        target_labels[idx] = display_lineage(k)
+
+
+    mat_l = []
+    for j in range(len(target_idx)):
+        x = []
+        for i in range(len(source_idx)):
+            x.append(mat[i, j])
+        mat_l.append(x)
+        
+    return source_labels, target_labels, mat_l
