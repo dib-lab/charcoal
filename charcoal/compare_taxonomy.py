@@ -320,6 +320,7 @@ def main(args):
             assert bad_bp + good_bp == contigs_bp
 
             # track contamination between source (genome) / target (contig)
+            x = []
             for contig_name in bad_names:
                 contig_taxlist = contigs_d[contig_name].gather_tax
                 for hit, count in contig_taxlist:
@@ -330,9 +331,13 @@ def main(args):
                     source_lin = utils.pop_to_rank(genome_lineage, rank)
                     target_lin = utils.pop_to_rank(hit, rank)
 
-                    target = detected_contam.get(source_lin, Counter())
-                    target[target_lin] += count
-                    detected_contam[source_lin] = target
+                    x.append((source_lin, target_lin, count))
+
+#                    target = detected_contam.get(source_lin, Counter())
+#                    target[target_lin] += count
+#                    detected_contam[source_lin] = target
+            detected_contam[genome_name] = x
+
 
             if rank == match_rank:
                 break
