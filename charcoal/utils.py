@@ -5,8 +5,11 @@ import json
 from collections import defaultdict, Counter, namedtuple
 import csv
 
-import sourmash
-from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+try:
+    import sourmash
+    from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+except ImportError:
+    pass
 
 
 def is_lineage_match(lin_a, lin_b, rank):
