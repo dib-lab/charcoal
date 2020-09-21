@@ -4,7 +4,6 @@ utility functions for charcoal.
 import json
 from collections import defaultdict, Counter, namedtuple
 import csv
-import numpy
 
 import sourmash
 from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
@@ -335,6 +334,8 @@ class NextIndex:
     
 def build_contamination_matrix(contam_list):
     "Build a matrix that can be used for a heatmap viz."
+    import numpy
+
     source_idx = NextIndex()
     source_indices = defaultdict(source_idx)
 
