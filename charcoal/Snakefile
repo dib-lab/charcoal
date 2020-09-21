@@ -356,7 +356,7 @@ rule set_kernel:
 
 rule make_notebook:
     input:
-        nb='charcoal/notebooks/genome-report.ipynb',
+        nb='charcoal/notebooks/report-genome.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
         hitlist=f'{output_dir}/hit_list_for_filtering.csv',
         kernel_set = rules.set_kernel.output
@@ -386,7 +386,7 @@ rule make_html:
 
 rule make_index:
     input:
-        notebook='charcoal/notebooks/report_index.ipynb',
+        notebook='charcoal/notebooks/report-index.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
         kernel_set = rules.set_kernel.output
     output:
