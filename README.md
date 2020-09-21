@@ -24,16 +24,34 @@ conda activate charcoal
 pip install -e .
 ```
 
-### Run the demo! (~1 minute)
+### Run the demo! (~2 minutes)
 
 To run, execute (in the top-level directory):
 
 ```
-charcoal run demo/demo.conf -j 4
+python -m charcoal run demo/demo.conf -j 4
 ```
 
-You will end up with clean genomes in `output.demo/*.clean.fa.gz`, and
-a summary of the demo genomes in `output.demo/combined_summary.csv`.
+This will create two summary files in `output.demo/`,
+`genome_summary.csv` and `hit_list_for_filtering.csv`. You can open
+these in your favorite spreadsheet program.
+
+For a friendlier summary, run:
+```
+python -m charcoal run demo/demo.conf -j 4 report
+```
+
+This will create a directory `output.demo/report/` that contains an
+index page, `index.html`, that summarizes the charcoal run. This directory
+also contain individual genome reports that you can reach through links
+in the index.
+
+Finally, you can run
+```
+python -m charcoal run demo/demo.conf -j 4 clean
+```
+and this will produce "cleaned" genomes based on the information in
+`output.demo/hit_list_for_filtering.csv`.
 
 ### Do a full configure & run! (~10 minutes)
 
@@ -90,18 +108,20 @@ configuration options for charcoal.
 To do a "dry run" of charcoal, which lists out the jobs that will be
 run, execute:
 ```
-charcoal run newproject.conf -n
+python -m charcoal run newproject.conf -n
 ```
 
 #### Decontaminate!
 
-And, finally, run the decontamination routine. This will run four
+And, finally, run the first round of analysis! This will run four
 processes in parallel (`-j 4`)
 ```
-charcoal run newproject.conf -j 4
+python -m charcoal run newproject.conf -j 4
 ```
 
 #### Examine the results
+
+**out of date**
 
 The results will be in `output.newproject/`; see the file
 `combined_summary.csv`, as well as the `*.clean.fa.gz` files, which
