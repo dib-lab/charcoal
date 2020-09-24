@@ -217,21 +217,23 @@ rule search_all:
     """
 
 # generate contigs taxonomy
-rule make_contigs_taxonomy_json:
+rule make_taxonomy_json:
     input:
         genome = genome_dir + '/{f}',
         genome_sig = output_dir + '/{f}.sig',
         matches = output_dir + '/{f}.matches.sig',
         lineages = config['lineages_csv']
     output:
-        json=output_dir + '/{f}.contigs-tax.json',
+        contig_json=output_dir + '/{f}.contigs-tax.json',
+        genome_json=output_dir + '/{f}.genome-tax.json',
     conda: 'conf/env-sourmash.yml'
     shell: """
-        python -m charcoal.contigs_search \
+        python -m charcoal.gather_taxonomy \
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
-            --json-out {output.json}
+            --contigs-json-out {output.contig_json} \
+            --genome-json-out {output.genome_json}
     """
 
 # actually do cleaning
@@ -301,8 +303,8 @@ rule combined_summary:
 # compare all the genomes.
 rule compare_taxonomy:
     input:
-        all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
-        all_sig=expand(output_dir + '/{g}.matches.sig', g=genome_list),
+        all_contigs_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
+        all_genome_json=expand(output_dir + '/{g}.genome-tax.json', g=genome_list),
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file

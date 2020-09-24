@@ -63,14 +63,15 @@ def calculate_clean(genome_lin, contigs_d, rank):
     return (good_names, bad_names)
 
 
-def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
+def guess_tax_by_gather(gather_results, num_hashes, match_rank, report_fp, minimum_matches=GATHER_MIN_MATCHES):
     "Guess likely taxonomy using gather."
     sum_ident = 0
     first_lin = ()
     first_count = 0
-
-    for lin, count in gather_at_rank(entire_mh, lca_db, lin_db, match_rank):
-        if count >= GATHER_MIN_MATCHES:
+    # if match_rank is genus, this should be same as using gather_results
+    rank_gather = summarize_at_rank(gather_results, match_rank)
+    for lin, count in rank_gather:
+        if count >= minimum_matches:
             # record the first lineage we come across as likely lineage.
             if not first_lin:
                 first_lin = lin
@@ -78,7 +79,7 @@ def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
 
         sum_ident += count
 
-    f_ident = sum_ident / len(entire_mh)
+    f_ident = sum_ident / num_hashes
     f_major = first_count / sum_ident
 
     return first_lin, f_ident, f_major
@@ -117,71 +118,28 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
     return genome_lineage, comment, needs_lineage
 
 
-def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
+def get_genome_taxonomy(genome_name, genome_gather_json_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
-    with open(matches_filename, 'rt') as fp:
-        try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
-        except sourmash.exceptions.SourmashError:
-            siglist = None
 
-    if not siglist:
-        comment = 'no matches for this genome.'
-        print(comment)
-        return None, comment, False, 0.0, 0.0
+    guessed_genome_lineage, f_major, f_ident = "", 0.0, 0.0
+    # did we get gather results?
+    genome_info = utils.load_contigs_gather_json(genome_gather_json_filename)
 
-    # construct a template minhash object that we can use to create new 'uns
-    empty_mh = siglist[0].minhash.copy_and_clear()
-    ksize = empty_mh.ksize
-    scaled = empty_mh.scaled
-    moltype = empty_mh.moltype
+    if genome_info:
+        gather_results = genome_info[genome_name].gather_tax
+        genome_len = genome_info[genome_name].length
+        genome_hashes = genome_info[genome_name].num_hashes
 
-    genome_sig = sourmash.load_one_signature(genome_sig_filename)
-    entire_mh = genome_sig.minhash
 
-    assert entire_mh.scaled == scaled
+        # calculate lineage from majority vote on LCA
+        guessed_genome_lineage, f_major, f_ident = guess_tax_by_gather(gather_results, genome_hashes, match_rank, sys.stdout)
 
-    # Hack for examining members of our search database: remove exact matches.
-    new_siglist = []
-    for ss in siglist:
-        if entire_mh.similarity(ss.minhash) < 1.0:
-            new_siglist.append(ss)
-        else:
-            if provided_lineage and provided_lineage != 'NA':
-                print(f'found exact match: {ss.name()}. removing.')
-            else:
-                print(f'found exact match: {ss.name()}. but no provided lineage!')
-                comment = f'found exact match: {ss.name()}. but no provided lineage! cannot analyze.'
-                return None, comment, True, 1.0, 1.0
+        print(f'Gather classification on this genome yields: {pretty_print_lineage(guessed_genome_lineage)}')
 
-    # ...but leave exact matches in if they're the only matches, I guess!
-    if new_siglist:
-        siglist = new_siglist
-
-    # create empty LCA database to populate...
-    lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
-    lin_db = LineageDB()
-
-    # ...with specific matches.
-    for ss in siglist:
-        ident = get_ident(ss)
-        lineage = tax_assign[ident]
-
-        lca_db.insert(ss, ident=ident)
-        lin_db.insert(ident, lineage)
-
-    print(f'loaded {len(siglist)} signatures & created LCA Database')
-
-    # calculate lineage from majority vote on LCA
-    guessed_genome_lineage, f_major, f_ident = \
-         guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, sys.stdout)
-
-    print(f'Gather classification on this genome yields: {pretty_print_lineage(guessed_genome_lineage)}')
-
-    if f_major == 1.0 and f_ident == 1.0:
-        comment = "All genome hashes belong to one lineage! Nothing to do."
-        print(comment)
-        return guessed_genome_lineage, comment, False, f_major, f_ident
+        if f_major == 1.0 and f_ident == 1.0:
+            comment = "All genome hashes belong to one lineage! Nothing to do."
+            print(comment)
+            return guessed_genome_lineage, comment, False, f_major, f_ident
 
     # did we get a passed-in lineage assignment?
     provided_lin = ""
@@ -236,13 +194,12 @@ def main(args):
     # process every genome individually.
     summary_d = {}
     for n, genome_name in enumerate(genome_names):
-        matches_filename = os.path.join(dirname, genome_name + '.matches.sig')
-        genome_sig = os.path.join(dirname, genome_name + '.sig')
         lineage = provided_lineages.get(genome_name, '')
+        genome_json = os.path.join(dirname, genome_name + '.genome-tax.json')
         contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
 
-        x = get_genome_taxonomy(matches_filename,
-                                genome_sig,
+        x = get_genome_taxonomy(genome_name,
+                                genome_json,
                                 lineage,
                                 tax_assign, match_rank,
                                 args.min_f_ident,
@@ -354,7 +311,7 @@ def main(args):
     # output a sorted hit list CSV
     fp = open(args.hit_list, 'wt')
     hitlist_w = csv.writer(fp)
-    
+
     hitlist_w.writerow(['genome', 'filter_at', 'override_filter_at',
         'total_bad_bp', 'superkingdom_bad_bp', 'phylum_bad_bp',
         'class_bad_bp', 'order_bad_bp', 'family_bad_bp', 'genus_bad_bp',
