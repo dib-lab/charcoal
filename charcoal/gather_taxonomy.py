@@ -54,9 +54,11 @@ def main(args):
     # complain.)
     if not siglist:
         print('no non-identical matches for this genome, exiting.')
-        contigs_tax = {}
-        with open(args.json_out, 'wt') as fp:
+        contigs_tax, genome_tax = {},{}
+        with open(args.contigs_json_out, 'wt') as fp:
             fp.write(json.dumps(contigs_tax))
+        with open(args.genome_json_out, 'wt') as fp:
+            fp.write(json.dumps(genome_tax))
         return 0
 
     # construct a template minhash object that we can use to create new 'uns
@@ -83,7 +85,8 @@ def main(args):
     print(f'reading contigs from {genomebase}')
 
     screed_iter = screed.open(args.genome)
-    contigs_tax = {}
+    contigs_tax, genome_tax = {},{}
+    # contigs search
     for n, record in enumerate(screed_iter):
         # look at each contig individually
         mh = empty_mh.copy_and_clear()
@@ -100,8 +103,24 @@ def main(args):
     print(f"Processed {len(contigs_tax)} contigs.")
 
     # save!
-    with open(args.json_out, 'wt') as fp:
+    with open(args.contigs_json_out, 'wt') as fp:
         fp.write(json.dumps(contigs_tax))
+
+
+    # genome search
+    genome_len=0
+    entire_mh = genome_sig.minhash
+    genome_name = os.path.basename(genome_sig.name())
+    num_hashes = len(entire_mh.hashes)
+    if not genome_len:
+        for record in screed_iter:
+            genome_len+=len(record.sequence)
+    gather_results = list(gather_at_rank(entire_mh, lca_db, lin_db, match_rank))
+    # currently treats genome as a giant contig, since we need the same info. Any reason to include addl info?
+    genome_gather_info = ContigGatherInfo(genome_len, len(entire_mh), gather_results)
+    genome_tax[genome_name] = genome_gather_info
+    with open(args.genome_json_out, 'wt') as fp:
+        fp.write(json.dumps(genome_tax))
 
     return 0
 
@@ -116,7 +135,10 @@ def cmdline(sys_args):
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')
 
-    p.add_argument('--json-out',
+    p.add_argument('--contigs-json-out',
+                   help='JSON-format output file of all contig tax results',
+                   required=True)
+    p.add_argument('--genome-json-out',
                    help='JSON-format output file of all tax results',
                    required=True)
     args = p.parse_args()
