@@ -217,6 +217,8 @@ def main(args):
 
     print(f"loaded list of {len(genome_names)} genomes.")
 
+    genome_names = [args.genome]
+
     # load the provided lineages file
     provided_lineages = {}
     if args.provided_lineages:
@@ -421,6 +423,7 @@ def cmdline(sys_args):
     p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
+    p.add_argument('genome')
     args = p.parse_args()
 
     return main(args)

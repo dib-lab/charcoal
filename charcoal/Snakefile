@@ -291,7 +291,8 @@ rule compare_taxonomy_single:
             --contig-details-summary {output.contig_details} \
             --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
-            --min_f_major={params.min_f_major}
+            --min_f_major={params.min_f_major} \
+            {wildcards.g}
     """
 
 rule combine_hit_list:
@@ -299,9 +300,9 @@ rule combine_hit_list:
         expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
     output:
         output_dir + '/hit_list_for_filtering.csv'
-    #conda: csvtk
     shell: """
-        echo hello, world > {output}
+        python -m charcoal.combine_csvs --sort-by total_bad_bp --reverse \
+            {input} > {output}
     """
 
 rule combine_genome_summary:
@@ -309,9 +310,8 @@ rule combine_genome_summary:
         expand(output_dir + '/{g}.genome_summary.csv', g=genome_list),
     output:
         output_dir + '/genome_summary.csv'
-    #conda: csvtk
     shell: """
-        echo hello, world > {output}
+        python -m charcoal.combine_csvs --sort-by genome {input} > {output}
     """
 
 rule clean_contigs:
