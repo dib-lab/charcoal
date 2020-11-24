@@ -110,7 +110,7 @@ def main(args):
     # genome search
     genome_len=0
     entire_mh = genome_sig.minhash
-    genome_name = os.path.basename(genome_sig.name())
+    genome_name = os.path.basename(genome_sig.name)
     num_hashes = len(entire_mh.hashes)
     if not genome_len:
         for record in screed_iter:

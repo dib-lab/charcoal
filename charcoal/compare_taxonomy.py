@@ -120,46 +120,6 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
 
 def get_genome_taxonomy(genome_name, genome_gather_json_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
-    with open(matches_filename, 'rt') as fp:
-        try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
-        except sourmash.exceptions.SourmashError:
-            siglist = None
-
-    if not siglist:
-        comment = 'no matches for this genome.'
-        print(comment)
-        return None, comment, False, 0.0, 0.0
-
-    # construct a template minhash object that we can use to create new 'uns
-    empty_mh = siglist[0].minhash.copy_and_clear()
-    ksize = empty_mh.ksize
-    scaled = empty_mh.scaled
-    moltype = empty_mh.moltype
-
-    genome_sig = sourmash.load_one_signature(genome_sig_filename)
-    entire_mh = genome_sig.minhash
-
-    assert entire_mh.scaled == scaled
-
-    # Hack for examining members of our search database: remove exact matches.
-    new_siglist = []
-    for ss in siglist:
-        if entire_mh.similarity(ss.minhash) < 1.0:
-            new_siglist.append(ss)
-        else:
-            if provided_lineage and provided_lineage != 'NA':
-                print(f'found exact match: {ss.name}. removing.')
-            else:
-                print(f'found exact match: {ss.name}. but no provided lineage!')
-                comment = f'found exact match: {ss.name}. but no provided lineage! cannot analyze.'
-                return None, comment, True, 1.0, 1.0
-
-    # ...but leave exact matches in if they're the only matches, I guess!
-    if new_siglist:
-        siglist = new_siglist
->>>>>>> 71265a92a2c77b2cc2430eaafa424ec5619b2b6a
-
     guessed_genome_lineage, f_major, f_ident = "", 0.0, 0.0
     # did we get gather results?
     genome_info = utils.load_contigs_gather_json(genome_gather_json_filename)
