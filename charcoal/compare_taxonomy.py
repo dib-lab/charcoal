@@ -148,10 +148,10 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
             new_siglist.append(ss)
         else:
             if provided_lineage and provided_lineage != 'NA':
-                print(f'found exact match: {ss.name()}. removing.')
+                print(f'found exact match: {ss.name}. removing.')
             else:
-                print(f'found exact match: {ss.name()}. but no provided lineage!')
-                comment = f'found exact match: {ss.name()}. but no provided lineage! cannot analyze.'
+                print(f'found exact match: {ss.name}. but no provided lineage!')
+                comment = f'found exact match: {ss.name}. but no provided lineage! cannot analyze.'
                 return None, comment, True, 1.0, 1.0
 
     # ...but leave exact matches in if they're the only matches, I guess!
