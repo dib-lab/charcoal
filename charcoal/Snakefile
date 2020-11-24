@@ -356,7 +356,7 @@ rule set_kernel:
 
 rule make_notebook:
     input:
-        nb='charcoal/notebooks/genome-report.ipynb',
+        nb='charcoal/notebooks/report-genome.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
         hitlist=f'{output_dir}/hit_list_for_filtering.csv',
         kernel_set = rules.set_kernel.output
@@ -380,13 +380,13 @@ rule make_html:
         report_dir + '/{g}.fig.html',
     conda: 'conf/env-reporting.yml'
     shell: """
-        python -m nbconvert {input.notebook} --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
+        python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
      
 
 rule make_index:
     input:
-        notebook='charcoal/notebooks/report_index.ipynb',
+        notebook='charcoal/notebooks/report-index.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
         kernel_set = rules.set_kernel.output
     output:
@@ -396,5 +396,5 @@ rule make_index:
     shell: """
         papermill {input.notebook} - -p name {output_dir:q} -p render '' \
             -p directory .. -k charcoal --cwd {report_dir} > {output.nb}
-        python -m nbconvert {output.nb} --stdout --no-input > {output.html}
+        python -m nbconvert {output.nb} --to html --stdout --no-input > {output.html}
     """

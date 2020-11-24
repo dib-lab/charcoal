@@ -4,10 +4,12 @@ utility functions for charcoal.
 import json
 from collections import defaultdict, Counter, namedtuple
 import csv
-import numpy
 
-import sourmash
-from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+try:
+    import sourmash
+    from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+except ImportError:
+    pass
 
 
 def is_lineage_match(lin_a, lin_b, rank):
@@ -272,41 +274,33 @@ def make_lineage(lineage):
 
 def save_contamination_summary(detected_contam, fp):
     "Save a contamination summary to JSON."
-    source_contam = list(detected_contam.items())
-
-    contam_l = []
-    for k, values in source_contam:
-        for j, cnt in values.most_common():
-            contam_l.append((k, j, cnt))
-
-    json.dump(contam_l, fp)
+    json.dump(detected_contam, fp)
 
 
 def load_contamination_summary(fp):
     "Load a contamination summary saved by save_contamination_summary."
     x = json.load(fp)
 
-    source_d = defaultdict(int)
-    for source, target, count in x:
-        source = tuple([ LineagePair(rank, name) for rank, name in source ])
-        target = tuple([ LineagePair(rank, name) for rank, name in target ])
-        target_d = source_d.get(source)
-        if not target_d:
-            target_d = defaultdict(int)
-        target_d[target] = count
-        source_d[source] = target_d
+    contam_d = {}
+    for k, items in x.items():
+        z = []
+        for source, target, count in items:
+            source = tuple([ LineagePair(rank, name) for rank, name in source ])
+            target = tuple([ LineagePair(rank, name) for rank, name in target ])
+            z.append((source, target, count))
+        contam_d[k] = z
 
-    return source_d
+    return contam_d
 
 
 def filter_contam(contam_d, threshold_f, display_at_rank='phylum'):
     "Filter a contamination dictionary down to a list of counts/src/target."
 
     pairtup_list = []
-    for k, target_d in contam_d.items():
-        source_lin = pop_to_rank(k, display_at_rank)
-        for lin, count in target_d.items():
-            target_lin = pop_to_rank(lin, display_at_rank)
+    for genome_name, contam_list in contam_d.items():
+        for source_lin, target_lin, count in contam_list:
+            source_lin = pop_to_rank(source_lin, display_at_rank)
+            target_lin = pop_to_rank(target_lin, display_at_rank)
             keytup = (source_lin, target_lin)
             pairtup_list.append((count, keytup))
 
@@ -343,6 +337,8 @@ class NextIndex:
     
 def build_contamination_matrix(contam_list):
     "Build a matrix that can be used for a heatmap viz."
+    import numpy
+
     source_idx = NextIndex()
     source_indices = defaultdict(source_idx)
 
