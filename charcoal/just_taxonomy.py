@@ -386,10 +386,10 @@ def main(args):
             new_siglist.append(ss)
         else:
             if args.lineage and args.lineage != 'NA':
-                report(f'found exact match: {ss.name()}. removing.')
+                report(f'found exact match: {ss.name}. removing.')
                 identical_match_removed = True
             else:
-                report(f'found exact match: {ss.name()}. but no provided lineage! exiting.')
+                report(f'found exact match: {ss.name}. but no provided lineage! exiting.')
                 comment = "Exact match in matches, but no provided lineage."
                 create_empty_output(genomebase, comment, args.summary,
                                     None, args.contig_report,

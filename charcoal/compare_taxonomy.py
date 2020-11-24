@@ -120,7 +120,6 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
 
 def get_genome_taxonomy(genome_name, genome_gather_json_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
-
     guessed_genome_lineage, f_major, f_ident = "", 0.0, 0.0
     # did we get gather results?
     genome_info = utils.load_contigs_gather_json(genome_gather_json_filename)

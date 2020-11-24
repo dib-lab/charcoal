@@ -44,7 +44,7 @@ def main(args):
     new_siglist = []
     for ss in siglist:
         if genome_sig.similarity(ss) == 1.0:
-            print(f'removing an identical match: {ss.name()}')
+            print(f'removing an identical match: {ss.name}')
         else:
             new_siglist.append(ss)
     siglist = new_siglist
@@ -110,7 +110,7 @@ def main(args):
     # genome search
     genome_len=0
     entire_mh = genome_sig.minhash
-    genome_name = os.path.basename(genome_sig.name())
+    genome_name = os.path.basename(genome_sig.name)
     num_hashes = len(entire_mh.hashes)
     if not genome_len:
         for record in screed_iter:

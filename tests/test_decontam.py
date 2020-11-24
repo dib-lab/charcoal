@@ -70,7 +70,7 @@ def make_lca_and_lineages(match_files, lineages_csv, scaled, ksize,
 
     # build database of matches & lineages!
     for ss in siglist:
-        print(ss.name(), ss.minhash.scaled)
+        print(ss.name, ss.minhash.scaled)
         ident = just_taxonomy.get_ident(ss)
         lineage = tax_assign[ident]
 
