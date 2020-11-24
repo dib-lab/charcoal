@@ -44,7 +44,7 @@ def main(args):
     new_siglist = []
     for ss in siglist:
         if genome_sig.similarity(ss) == 1.0:
-            print(f'removing an identical match: {ss.name()}')
+            print(f'removing an identical match: {ss.name}')
         else:
             new_siglist.append(ss)
     siglist = new_siglist
