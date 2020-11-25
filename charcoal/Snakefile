@@ -234,37 +234,7 @@ rule make_contigs_taxonomy_json:
             --json-out {output.json}
     """
 
-# compare all the genomes.
-# rule compare_taxonomy:
-#     input:
-#         all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
-#         all_sig=expand(output_dir + '/{g}.matches.sig', g=genome_list),
-#         lineages = config['lineages_csv'],
-#         provided_lineages = provided_lineages_file,
-#         genome_list = genome_list_file
-#     output:
-#         hit_list = output_dir + '/hit_list_for_filtering.csv',
-#         contig_details = output_dir + '/genome_summary.csv',
-#         contam_json = output_dir + '/contam_summary.json',
-#     conda: 'conf/env-sourmash.yml'
-#     params:
-#         output_dir = output_dir,
-#         min_f_major = min_f_major,
-#         min_f_ident = min_f_ident,
-#     shell: """
-#         python -m charcoal.compare_taxonomy \
-#             --input-directory {params.output_dir} \
-#             --genome-list-file {input.genome_list} \
-#             --lineages-csv {input.lineages} \
-#             --provided-lineages {input.provided_lineages} \
-#             --hit-list {output.hit_list} \
-#             --contig-details-summary {output.contig_details} \
-#             --contam-summary-json {output.contam_json} \
-#             --min_f_ident={params.min_f_ident} \
-#             --min_f_major={params.min_f_major}
-#     """
-
-# compare all the genomes.
+# compare taxonomy for contigs in a genome
 rule compare_taxonomy_single:
     input:
         all_json = output_dir + '/{g}.contigs-tax.json',

@@ -42,7 +42,8 @@ def main():
                 print(f"error! disjoint fieldnames b/t {first_csv} and {csvfile}: {str(diff)}", file=sys.stderr)
                 sys.exit(-1)
 
-            rows.extend(list(r))
+            new_rows = list(r)
+            rows.extend(new_rows)
 
     print(f'loaded {len(rows)} total. now sorting!', file=sys.stderr)
 
