@@ -227,7 +227,7 @@ rule make_contigs_taxonomy_json:
         json=output_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
     shell: """
-        python -m charcoal.contigs_search \
+        python -m charcoal.contigs_search_taxonomy \
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
@@ -282,6 +282,36 @@ rule combine_genome_summary:
         output_dir + '/genome_summary.csv'
     shell: """
         python -m charcoal.combine_csvs --sort-by genome {input} > {output}
+    """
+
+# generate contigs genbank matches given hitlist match_rank
+rule make_contigs_matches_list:
+    input:
+        genome = genome_dir + '/{f}',
+        genome_sig = output_dir + '/{f}.sig',
+        matches = output_dir + '/{f}.matches.sig',
+    output:
+        accfile = output_dir + '/{f}.contam.acc.txt'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        python -m charcoal.contigs_search_matches \
+            --genome {input.genome} \
+            --genome-sig {input.genome_sig} \
+            --matches-sig {input.matches} \
+            --output {output.accfile}
+    """
+
+# download matching genbank genome details
+rule make_genbank_matches_csv:
+    input:
+        accfile = output_dir + '/{f}.contam.acc.txt'
+    output:
+        csvfile = output_dir + '/{f}.contam.acc.csv'
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        python -m charcoal.genbank_genomes \
+            {input.accfile} \
+            --output {output.csvfile}
     """
 
 rule clean_contigs:

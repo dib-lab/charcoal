@@ -15,3 +15,4 @@ bak
 output.*
 .DS_Store
 *.csv
+*.pyc

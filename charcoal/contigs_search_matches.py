@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-Do gather matches on contigs, and save to JSON
+Do gather matches on contigs => match names.
 """
 import sys
 import argparse
@@ -15,18 +15,39 @@ from sourmash.lca import LCA_Database
 
 from .lineage_db import LineageDB
 from .version import version
-from .utils import (gather_at_rank, get_ident, ContigGatherInfo)
+from .utils import (get_ident, CSV_DictHelper)
+from .compare_taxonomy import GATHER_MIN_MATCHES
+
+def get_matches(mh, lca_db, match_rank, threshold_bp):
+    import copy
+    minhash = copy.copy(mh)
+    query_sig = sourmash.SourmashSignature(minhash)
+
+    accs = set()
+
+    # do the gather:
+    while 1:
+        results = lca_db.gather(query_sig, threshold_bp=threshold_bp)
+        if not results:
+            break
+
+        (match, match_sig, _) = results[0]
+
+        # retrieve identity
+        match_ident = get_ident(match_sig)
+        accs.add(match_ident)
+        
+        # finish out gather algorithm!
+        minhash.remove_many(match_sig.minhash.hashes)
+        query_sig = sourmash.SourmashSignature(minhash)
+
+    return accs
 
 
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
     match_rank = 'genus'
-
-    # load taxonomy CSV
-    tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
-                                              start_column=3)
-    print(f'loaded {len(tax_assign)} tax assignments.')
 
     # load the genome signature
     genome_sig = sourmash.load_one_signature(args.genome_sig)
@@ -50,13 +71,12 @@ def main(args):
     siglist = new_siglist
 
     # if, after removing exact match(es), there is nothing left, quit.
-    # (but write an empty JSON file so that snakemake workflows don't
+    # (but write an empty output file so that snakemake workflows don't
     # complain.)
     if not siglist:
         print('no non-identical matches for this genome, exiting.')
-        contigs_tax = {}
-        with open(args.json_out, 'wt') as fp:
-            fp.write(json.dumps(contigs_tax))
+        with open(args.output, 'wt') as fp:
+            fp.write('')
         return 0
 
     # construct a template minhash object that we can use to create new 'uns
@@ -67,15 +87,11 @@ def main(args):
 
     # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
-    lin_db = LineageDB()
 
     # ...with specific matches.
     for ss in siglist:
         ident = get_ident(ss)
-        lineage = tax_assign[ident]
-
         lca_db.insert(ss, ident=ident)
-        lin_db.insert(ident, lineage)
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
@@ -83,25 +99,22 @@ def main(args):
     print(f'reading contigs from {genomebase}')
 
     screed_iter = screed.open(args.genome)
-    contigs_tax = {}
+    accs = set()
+    threshold_bp = GATHER_MIN_MATCHES * empty_mh.scaled
+    n = -1
     for n, record in enumerate(screed_iter):
         # look at each contig individually
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
 
-        # collect all the gather results at genus level, together w/counts;
-        # here, results is a list of (lineage, count) tuples.
-        results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
+        # collect all the accessions from gather
+        accs.update(get_matches(mh, lca_db, match_rank, threshold_bp))
 
-        # store together with size of sequence.
-        info = ContigGatherInfo(len(record.sequence), len(mh), results)
-        contigs_tax[record.name] = info
-
-    print(f"Processed {len(contigs_tax)} contigs.")
+    print(f"Processed {n+1} contigs.")
 
     # save!
-    with open(args.json_out, 'wt') as fp:
-        fp.write(json.dumps(contigs_tax))
+    with open(args.output, 'wt') as fp:
+        fp.write("\n".join(accs) + "\n")
 
     return 0
 
@@ -112,12 +125,11 @@ def cmdline(sys_args):
     p.add_argument('--genome', help='genome file', required=True)
     p.add_argument('--genome-sig', help='genome sig', required=True)
     p.add_argument('--matches-sig', help='all relevant matches', required=True)
-    p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')
 
-    p.add_argument('--json-out',
-                   help='JSON-format output file of all tax results',
+    p.add_argument('--output',
+                   help='list of match accessions',
                    required=True)
     args = p.parse_args()
 
