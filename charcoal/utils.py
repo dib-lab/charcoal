@@ -248,8 +248,10 @@ class CSV_DictHelper:
         with open(filename, 'rt') as fp:
             r = csv.DictReader(fp)
             for row in r:
-                genome = row['genome']
-                self.rows[genome] = row
+                keyval = row[key]
+                if keyval in self.rows:
+                    raise ValueError(f"duplicate key value {key}='{keyval}'")
+                self.rows[keyval] = row
 
     def __getitem__(self, k):
         return AttrDict(self.rows[k])

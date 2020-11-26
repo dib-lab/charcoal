@@ -26,6 +26,7 @@ def test_basic(location):
     args.contam_summary_json = contam_json
     args.min_f_ident = compare_taxonomy.F_IDENT_THRESHOLD
     args.min_f_major = compare_taxonomy.F_MAJOR_THRESHOLD
+    args.genome = 'loomba'
     
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.sig"), os.path.join(location, "loomba.sig"))
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.sig"), os.path.join(location, "loomba.matches.sig"))

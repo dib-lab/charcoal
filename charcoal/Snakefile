@@ -234,82 +234,18 @@ rule make_contigs_taxonomy_json:
             --json-out {output.json}
     """
 
-# actually do cleaning
-#rule contigs_clean_just_taxonomy:
-#    input:
-##        script = srcdir('just_taxonomy.py'),
-#        genome = genome_dir + '/{f}',
-#        matches = output_dir + '/{f}.matches.sig',
-#        lineages = config['lineages_csv']
-#    output:
-#        clean=output_dir + '/{f}.clean.fa.gz',
-#        dirty=output_dir + '/{f}.dirty.fa.gz',
-#        report=output_dir + '/{f}.report.txt',
-#        contig_report=output_dir + '/{f}.contigs.csv',
-#        csv=output_dir + '/{f}.summary.csv'
-#    conda: 'conf/env-sourmash.yml'
-#    params:
-#        lineage = get_provided_lineage,
-#        force = force_param,
-#        match_rank = match_rank,
-#        moltype = config['moltype']
-#    shell: """
-#        python -m charcoal.just_taxonomy \
-#            --genome {input.genome} --lineages_csv {input.lineages} \
-#            --matches_sig {input.matches} \
-#            --clean {output.clean} --dirty {output.dirty} \
-#            --report {output.report} --summary {output.csv} \
-#            --lineage {params.lineage:q} {params.force} \
-#            --match-rank {params.match_rank} \
-#            --contig-report {output.contig_report}
-#    """
-
-# build the combined summary
-rule combined_summary:
+# compare taxonomy for contigs in a genome
+rule compare_taxonomy_single:
     input:
-        expand(output_dir + '/{g}.summary.csv', g=genome_list),
-    output:
-        output_dir + '/combined_summary.csv',
-    run:
-        # combine all of the summary CSV files
-        import csv
-        with open(output[0], 'wt') as fp:
-            w = csv.writer(fp)
-
-            header = ["genomefile", "brieftax",
-                      "f_major", "f_ident", "f_removed",
-                      "n_reason_1", "n_reason_2", "n_reason_3",
-                      "refsize", "ratio",
-                      "clean_bp", "clean_n", "dirty_n", "dirty_bp", "missed_n",
-                      "missed_bp", "noident_n", "noident_bp",
-                      "taxguessed", "taxprovided",
-                      "comment"]
-
-            w.writerow(header)
-
-            for i in input:
-                with open(i, 'rt') as in_fp:
-                   r = csv.reader(in_fp)
-                   rows = list(r)
-                   assert len(rows) == 1
-                   row = rows[0]
-                   assert len(row) == len(header), (len(row), len(header), i)
-
-                   w.writerow(row)
-
-
-# compare all the genomes.
-rule compare_taxonomy:
-    input:
-        all_json=expand(output_dir + '/{g}.contigs-tax.json', g=genome_list),
-        all_sig=expand(output_dir + '/{g}.matches.sig', g=genome_list),
+        all_json = output_dir + '/{g}.contigs-tax.json',
+        all_sig = output_dir + '/{g}.matches.sig',
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
     output:
-        hit_list = output_dir + '/hit_list_for_filtering.csv',
-        contig_details = output_dir + '/genome_summary.csv',
-        contam_json = output_dir + '/contam_summary.json',
+        hit_list = output_dir + '/{g}.hit_list_for_filtering.csv',
+        contig_details = output_dir + '/{g}.genome_summary.csv',
+        contam_json = output_dir + '/{g}.contam_summary.json',
     conda: 'conf/env-sourmash.yml'
     params:
         output_dir = output_dir,
@@ -325,7 +261,27 @@ rule compare_taxonomy:
             --contig-details-summary {output.contig_details} \
             --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
-            --min_f_major={params.min_f_major}
+            --min_f_major={params.min_f_major} \
+            {wildcards.g}
+    """
+
+rule combine_hit_list:
+    input:
+        expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
+    output:
+        output_dir + '/hit_list_for_filtering.csv'
+    shell: """
+        python -m charcoal.combine_csvs --sort-by total_bad_bp --reverse \
+            {input} > {output}
+    """
+
+rule combine_genome_summary:
+    input:
+        expand(output_dir + '/{g}.genome_summary.csv', g=genome_list),
+    output:
+        output_dir + '/genome_summary.csv'
+    shell: """
+        python -m charcoal.combine_csvs --sort-by genome {input} > {output}
     """
 
 rule clean_contigs:
