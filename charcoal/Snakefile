@@ -335,27 +335,28 @@ rule make_genbank_matches_csv:
             --output {output.csvfile}
     """
 
-# NON-WILDCARD/gather-dependent rule for downloading actual genomes
-# rule download_matching_genomes_one_by_one:
-#     input:
-#         info_file = ancient(outdir + f"/genbank/{SAMPLE}.genomes.info.csv")
-#     output:
-#         genome = outdir + "/genomes/{acc}.fna.gz"
-#     run:
-#         with open(input.info_file, 'rt') as infp:
-#             r = csv.DictReader(infp)
-#             for row in r:
-#                 acc = row['acc']
-#                 if acc != wildcards.acc: continue
-#                 url = row['genome_url']
-#                 name = row['ncbi_tax_name']
+# hitlist-dependent rule for downloading actual genomes
+rule download_matching_genomes_one_by_one:
+     input:
+         info_file = ancient(output_dir + "/hitlist.acc.csv")
+     output:
+         genome = "genbank_genomes/{acc}.fna.gz"
+     run:
+         with open(input.info_file, 'rt') as infp:
+             r = csv.DictReader(infp)
+             for row in r:
+                 acc = row['acc']
+                 print('XXXX', acc, wildcards.acc)
+                 if not wildcards.acc.startswith(acc): continue
+                 url = row['genome_url']
+                 name = row['ncbi_tax_name']
 
-#                 print(f"downloading genome for acc {acc}/{name} from NCBI...")
-#                 with open(output.genome, 'wb') as outfp:
-#                     with urllib.request.urlopen(url) as response:
-#                         content = response.read()
-#                         outfp.write(content)
-#                         print(f"...wrote {len(content)} bytes to {output.genome}")
+                 print(f"downloading genome for acc {acc}/{name} from NCBI...")
+                 with open(output.genome, 'wb') as outfp:
+                     with urllib.request.urlopen(url) as response:
+                         content = response.read()
+                         outfp.write(content)
+                         print(f"...wrote {len(content)} bytes to {output.genome}")
 
 rule clean_contigs:
     input:
@@ -374,13 +375,22 @@ rule clean_contigs:
             --clean {output.clean} --dirty {output.dirty}
     """
 
+rule mash_compare:
+    input:
+        query = genome_dir + '/{f}',
+        target = 'genbank_genomes/{acc}.fna.gz',
+    output:
+        outfile = output_dir + '/{f}.x.{acc}.mashmap.out'
+    shell: """
+        mashmap -q {input.query} -r {input.target} -o {output.outfile} --pi 95
+    """
+
 rule set_kernel:
     output:
-        f"{output_dir}/.kernel.set"
+        touch(f"{output_dir}/.kernel.set")
     conda: 'conf/env-reporting.yml'
     shell: """
         python -m ipykernel install --user --name charcoal
-        touch {output}
     """
 
 rule make_notebook:
