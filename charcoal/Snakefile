@@ -36,6 +36,14 @@ if os.path.exists(hitlist_path):
                           if hitlist_d[hl].filter_at != 'none' ]
     print(f'got {len(hitlist_genomes)} genomes from the hitlist.')
 
+hitlist_pairs = []
+for g in hitlist_genomes:
+    g_accs = open(f'{output_dir}/{g}.matches.acc.txt').readlines()
+    g_accs = [ g_acc.strip() for g_acc in g_accs ]
+    for g_acc in g_accs:
+        hitlist_pairs.append((g, g_acc))
+
+print(hitlist_pairs)
 
 ### verification / strict mode
 
@@ -346,7 +354,6 @@ rule download_matching_genomes_one_by_one:
              r = csv.DictReader(infp)
              for row in r:
                  acc = row['acc']
-                 print('XXXX', acc, wildcards.acc)
                  if not wildcards.acc.startswith(acc): continue
                  url = row['genome_url']
                  name = row['ncbi_tax_name']
@@ -384,6 +391,10 @@ rule mash_compare:
     shell: """
         mashmap -q {input.query} -r {input.target} -o {output.outfile} --pi 95
     """
+
+rule do_hitlist_compare:
+    input:
+        [ output_dir + f'/{f}.x.{acc}.mashmap.out' for f, acc in hitlist_pairs ]
 
 rule set_kernel:
     output:
