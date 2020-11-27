@@ -377,8 +377,8 @@ rule post_hitlist_make_contigs_matches:
         genome = genome_dir + '/{f}',
         genome_sig = output_dir + '/{f}.sig',
         matches = output_dir + '/{f}.matches.sig',
-        lineages = config['lineages_csv'],
-        hitlist = output_dir + '/hit_list_for_filtering.csv'
+        lineages = ancient(config['lineages_csv']),
+        hitlist = ancient(output_dir + '/hit_list_for_filtering.csv')
     output:
         matches_yaml = output_dir + '/{f}.hitlist.matches.yaml',
     conda: 'conf/env-sourmash.yml'
@@ -390,6 +390,10 @@ rule post_hitlist_make_contigs_matches:
             --hitlist {input.hitlist} \
             --yaml-out {output.matches_yaml}
     """
+
+rule all_hitlist_matches:
+    input:
+        [ output_dir + f'/{f}.hitlist.matches.yaml' for f in hitlist_genomes ]
 
 rule clean_contigs:
     input:
