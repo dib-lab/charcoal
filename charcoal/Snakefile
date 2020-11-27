@@ -38,10 +38,15 @@ if os.path.exists(hitlist_path):
 
 hitlist_pairs = []
 for g in hitlist_genomes:
-    g_accs = open(f'{output_dir}/{g}.matches.acc.txt').readlines()
-    g_accs = [ g_acc.strip() for g_acc in g_accs ]
-    for g_acc in g_accs:
-        hitlist_pairs.append((g, g_acc))
+    try:
+        g_accs = open(f'{output_dir}/{g}.matches.acc.txt').readlines()
+        g_accs = [ g_acc.strip() for g_acc in g_accs ]
+        for g_acc in g_accs:
+            hitlist_pairs.append((g, g_acc))
+    except FileNotFoundError:
+        print(f'cannot find accession file for {g}; cancelling hitlist pairs')
+        hitlist_pairs = []
+        break
 
 print(hitlist_pairs)
 
@@ -158,7 +163,8 @@ wildcard_constraints:
 rule inspect:
     input:
         output_dir + '/hit_list_for_filtering.csv',
-        output_dir + '/genome_summary.csv'
+        output_dir + '/genome_summary.csv',
+        output_dir + '/hitlist.acc.txt'
 
 # clean rule - clean the contigs
 rule clean:
