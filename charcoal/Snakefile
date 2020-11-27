@@ -491,6 +491,9 @@ rule make_html_alignment:
         python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
      
+rule all_alignment_reports:
+    input:
+        [ report_dir + f'/{f}.align.html' for f in hitlist_genomes ]
 
 rule make_index:
     input:
