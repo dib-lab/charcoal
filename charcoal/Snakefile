@@ -394,6 +394,7 @@ rule mash_compare:
         target = 'genbank_genomes/{acc}.fna.gz',
     output:
         outfile = output_dir + '/{f}.x.{acc}.mashmap.out'
+    conda: 'conf/env-mashmap.yml'
     shell: """
         mashmap -q {input.query} -r {input.target} -o {output.outfile} --pi 95
     """
