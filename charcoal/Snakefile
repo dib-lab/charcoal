@@ -433,6 +433,7 @@ rule set_kernel:
     conda: 'conf/env-reporting.yml'
     shell: """
         python -m ipykernel install --user --name charcoal
+        python -m pip install pyinterval
     """
 
 rule make_notebook:
@@ -459,6 +460,32 @@ rule make_html:
         contigs_json=f'{output_dir}/{{g}}.contigs-tax.json',
     output:
         report_dir + '/{g}.fig.html',
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
+    """
+     
+
+rule make_notebook_alignment:
+    input:
+        nb='charcoal/notebooks/report-alignment.ipynb',
+        summary=f'{output_dir}/{g}.hitlist.matches.yaml',
+        kernel_set = rules.set_kernel.output
+    output:
+        report_dir + '/{g}.align.ipynb'
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        papermill {input.nb} - -k charcoal --cwd {report_dir} \
+              -p directory .. -p genome_dir ../../{genome_dir:q} -p render '' \
+              -p name {wildcards.g:q} \
+              > {output}
+    """
+
+rule make_html_alignment:
+    input:
+        notebook=report_dir + '/{g}.align.ipynb',
+    output:
+        report_dir + '/{g}.align.html',
     conda: 'conf/env-reporting.yml'
     shell: """
         python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
