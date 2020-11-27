@@ -371,6 +371,26 @@ rule download_matching_genomes_one_by_one:
                          outfp.write(content)
                          print(f"...wrote {len(content)} bytes to {output.genome}")
 
+# generate contigs taxonomy
+rule post_hitlist_make_contigs_matches:
+    input:
+        genome = genome_dir + '/{f}',
+        genome_sig = output_dir + '/{f}.sig',
+        matches = output_dir + '/{f}.matches.sig',
+        lineages = config['lineages_csv'],
+        hitlist = output_dir + '/hit_list_for_filtering.csv'
+    output:
+        matches_yaml = output_dir + '/{f}.hitlist.matches.yaml',
+    conda: 'conf/env-sourmash.yml'
+    shell: """
+        python -m charcoal.contigs_list_contaminants \
+            --genome {input.genome} --lineages-csv {input.lineages} \
+            --genome-sig {input.genome_sig} \
+            --matches-sig {input.matches} \
+            --hitlist {input.hitlist} \
+            --yaml-out {output.matches_yaml}
+    """
+
 rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',

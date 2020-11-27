@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 """
-Do gather matches on contigs => match names.
+Do gather matches on contigs => taxonomy, and save to JSON
 """
 import sys
 import argparse
 import os.path
-import json
+import yaml
+from collections import defaultdict
 
 import screed
 
@@ -15,11 +16,12 @@ from sourmash.lca import LCA_Database
 
 from .lineage_db import LineageDB
 from .version import version
-from .utils import (get_ident, CSV_DictHelper)
+from . import utils
+from .utils import (get_ident, CSV_DictHelper, make_lineage)
 from .compare_taxonomy import GATHER_MIN_MATCHES
 
 
-def get_matches(mh, lca_db, match_rank, threshold_bp):
+def get_matches(mh, lca_db, lin_db, match_rank, threshold_bp):
     import copy
     minhash = copy.copy(mh)
     query_sig = sourmash.SourmashSignature(minhash)
@@ -33,10 +35,13 @@ def get_matches(mh, lca_db, match_rank, threshold_bp):
             break
 
         (match, match_sig, _) = results[0]
+        common = match_sig.minhash.count_common(query_sig.minhash)
 
         # retrieve identity
         match_ident = get_ident(match_sig)
-        accs.add(match_ident)
+        match_lineage = lin_db.ident_to_lineage[match_ident]
+        
+        yield match_ident, match_lineage, common
         
         # finish out gather algorithm!
         minhash.remove_many(match_sig.minhash.hashes)
@@ -48,7 +53,24 @@ def get_matches(mh, lca_db, match_rank, threshold_bp):
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
-    match_rank = 'genus'
+
+    # load hitlist
+    hitlist = CSV_DictHelper(args.hitlist, 'genome')
+    hitlist_entry = hitlist[genomebase]
+    match_rank = hitlist_entry.filter_at
+    if hitlist_entry.override_filter_at:
+        match_rank = hitlist_entry.override_filter_at
+
+    assert match_rank in ('superkingdom', 'phylum', 'class', 'order',
+                          'family', 'genus'), match_rank
+
+    # genome lineage:
+    genome_lin = make_lineage(hitlist_entry.lineage)
+
+    # load taxonomy CSV
+    tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
+                                              start_column=3)
+    print(f'loaded {len(tax_assign)} tax assignments.')
 
     # load the genome signature
     genome_sig = sourmash.load_one_signature(args.genome_sig)
@@ -76,8 +98,8 @@ def main(args):
     # complain.)
     if not siglist:
         print('no non-identical matches for this genome, exiting.')
-        with open(args.output, 'wt') as fp:
-            fp.write('')
+        with open(args.yaml_out, 'wt') as fp:
+            pass
         return 0
 
     # construct a template minhash object that we can use to create new 'uns
@@ -88,34 +110,71 @@ def main(args):
 
     # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
+    lin_db = LineageDB()
 
     # ...with specific matches.
     for ss in siglist:
         ident = get_ident(ss)
+        lineage = tax_assign[ident]
+
         lca_db.insert(ss, ident=ident)
+        lin_db.insert(ident, lineage)
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
 
     print('')
     print(f'reading contigs from {genomebase}')
 
+    matches_info = {}
+    matches_counts = defaultdict(int)
+
     screed_iter = screed.open(args.genome)
-    accs = set()
-    threshold_bp = GATHER_MIN_MATCHES * empty_mh.scaled
-    n = -1
+    threshold_bp = empty_mh.scaled * GATHER_MIN_MATCHES
+    n = - 1
     for n, record in enumerate(screed_iter):
         # look at each contig individually
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
 
-        # collect all the accessions from gather
-        accs.update(get_matches(mh, lca_db, match_rank, threshold_bp))
+        # collect all the gather results at genus level, together w/counts;
+        # here, results is a list of (lineage, count) tuples.
+        results = list(utils.gather_at_rank(mh, lca_db, lin_db, match_rank))
 
-    print(f"Processed {n+1} contigs.")
+        for acc, match_lin, count in get_matches(mh, lca_db, lin_db, match_rank,
+                                          threshold_bp):
+            # dirty match
+            if not utils.is_lineage_match(genome_lin, match_lin, match_rank):
+                if acc in matches_info:
+                    assert matches_info[acc][0] == 'dirty'
+                matches_info[acc] = ['dirty', utils.display_lineage(match_lin)]
+            else:                     # clean
+                if acc in matches_info:
+                    assert matches_info[acc][0] == 'clean'
+                matches_info[acc] = ['clean', utils.display_lineage(match_lin)]
+
+            matches_counts[acc] += count
+                    
+
+    print(f"Processed {n + 1} contigs.")
 
     # save!
-    with open(args.output, 'wt') as fp:
-        fp.write("\n".join(accs) + "\n")
+    with open(args.yaml_out, 'wt') as fp:
+        out_dict = {}
+        info_dict = {}
+        info_dict['genome'] = genomebase
+        info_dict['genome_lineage'] = utils.display_lineage(genome_lin)
+        out_dict['query_info'] = info_dict
+
+        matches_info_out = {}
+        for acc, (match_type, lineage) in matches_info.items():
+            acc_info = {}
+            acc_info['lineage'] = lineage
+            acc_info['match_type'] = match_type
+            acc_info['counts'] = matches_counts[acc]
+            matches_info_out[acc] = acc_info
+        out_dict['matches'] = matches_info_out
+
+        yaml.dump(out_dict, fp)
 
     return 0
 
@@ -126,11 +185,13 @@ def cmdline(sys_args):
     p.add_argument('--genome', help='genome file', required=True)
     p.add_argument('--genome-sig', help='genome sig', required=True)
     p.add_argument('--matches-sig', help='all relevant matches', required=True)
+    p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
+    p.add_argument('--hitlist', help='hitlist spreadsheet', required=True)
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')
 
-    p.add_argument('--output',
-                   help='list of match accessions',
+    p.add_argument('--yaml-out',
+                   help='YAML-format output file of all matches',
                    required=True)
     args = p.parse_args()
 
