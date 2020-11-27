@@ -10,7 +10,6 @@ import json
 import screed
 
 import sourmash
-from sourmash.lca.command_index import load_taxonomy_assignments
 from sourmash.lca import LCA_Database
 
 from .lineage_db import LineageDB

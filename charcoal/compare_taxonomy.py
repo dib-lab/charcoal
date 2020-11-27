@@ -207,7 +207,7 @@ def main(args):
 
     # load taxonomy assignments for all the things
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
-                                              start_column=3)
+                                              start_column=2)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
     # place to load in the genome from
