@@ -48,7 +48,7 @@ for g in hitlist_genomes:
         hitlist_pairs = []
         break
 
-print(hitlist_pairs)
+print(f'loaded {len(hitlist_pairs)} total genome pairs from hitlist.')
 
 ### verification / strict mode
 

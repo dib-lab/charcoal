@@ -25,7 +25,7 @@ def main(args):
 
     # load taxonomy CSV
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
-                                              start_column=3)
+                                              start_column=2)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
     # load the genome signature
