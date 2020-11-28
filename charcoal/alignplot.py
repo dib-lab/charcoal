@@ -85,6 +85,7 @@ def calc_regions_aligned_bp(regions_by, by_type, filter_by=None):
 
 
 def region_size(region, by_type):
+    "Calculate the size of an alignment based on target or query."
     assert by_type in ("target", "query")
 
     if by_type == "target":
@@ -111,13 +112,13 @@ def load_contig_sizes(genomefile, init_d=None):
 
 class AlignmentContainer:
     """
-    Build an alignment between a query and a bunch of targets.
+    Build or load, then store a set of alignments between a
+    query and a bunch of targets genomes.
 
     Takes:
     * query accession,
     * multiple target accessions,
     * an optional info file containing mappings from accession to names
-    * an optional directory containing the genomes
     """
 
     endings = ".gz", ".fa", ".fna"
@@ -300,6 +301,38 @@ class AlignmentContainer:
 
         return regions
 
+    def filter(self, pident=None, query_size=None):
+        "Filter alignments at given pident and query size."
+        if pident is None and query_size is None:
+            return
+
+        new_results = {}
+        for t_acc, t_results in self.results.items():
+            filtered = []
+            for region in t_results:
+                keep = True
+                if pident and region.pident < pident:
+                    keep = False
+                if query_size and region_size(region, 'query') < query_size:
+                    keep = False
+
+                if keep:
+                    filtered.append(region)
+            new_results[t_acc] = filtered
+
+    def calc_shared(self, t_acc=None):
+        "Calculate the number of bases shared by query and ..."
+        if t_acc:
+            regions = self.results[t_acc]
+        else:
+            regions = []
+            for t_acc in self.results:
+                regions.extend(self.results[t_acc])
+
+        regions_by_query = group_regions_by(regions, 'query')
+        sum_kb = calc_regions_aligned_bp(regions_by_query, 'query')
+        return sum_kb
+
 
 class StackedDotPlot:
     def __init__(self, alignment):
@@ -333,12 +366,9 @@ class StackedDotPlot:
             t_starts = {}
             t_sofar = 0
 
-            sum_shared = 0
             line = None
             this_max_x = 0
             for region in alignment.results[t_acc]:
-                sum_shared += region.qend - region.qstart
-
                 # calculate the base y position for this query contig --
                 q_base = q_starts.get(region.query)
                 if q_base is None:
@@ -369,7 +399,6 @@ class StackedDotPlot:
 
             # "stack" the dotplots horizontally.
             max_x = this_max_x
-            print(f"shared w/{name}: {sum_shared:.1f}kb")
 
         plt.legend(loc="lower right")
 
@@ -472,6 +501,10 @@ class StackedDotPlot:
 
 
 class AlignmentSlopeDiagram:
+    """
+    A FamilyRelations-style diagram showing proportional sloped lines
+    for alignments.
+    """
     def __init__(self, alignment):
         self.alignment = alignment
         

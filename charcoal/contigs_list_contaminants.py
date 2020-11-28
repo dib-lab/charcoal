@@ -163,6 +163,7 @@ def main(args):
         info_dict = {}
         info_dict['genome'] = genomebase
         info_dict['genome_lineage'] = utils.display_lineage(genome_lin)
+        # @CTB add match_rank!
         out_dict['query_info'] = info_dict
 
         matches_info_out = {}
