@@ -381,7 +381,7 @@ rule make_genbank_matches_csv:
     input:
         aggregate_input
     output:
-        csvfile = output_dir + '/genbank_info/{acc}.info.csv'
+        csvfile = 'genbank_info/{acc}.info.csv'
     conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.genbank_genomes \
@@ -392,7 +392,7 @@ rule make_genbank_matches_csv:
 # hitlist-dependent rule for downloading actual genomes
 rule download_matching_genomes_one_by_one:
      input:
-         csvfile = ancient(output_dir + '/genbank_info/{acc}.info.csv')
+         csvfile = ancient('genbank_info/{acc}.info.csv')
      output:
          genome = "genbank_genomes/{acc}.fna.gz"
      run:
