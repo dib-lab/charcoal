@@ -336,7 +336,9 @@ def main(args):
         if rank == 'genus':
             break
 
-    vals['total_bad_bp'] = vals['bad_genus_bp']
+    vals['total_bad_bp'] = vals[f'bad_{match_rank}_bp']
+    if vals['total_bad_bp'] == 0:
+        vals['filter_at'] = 'none'
 
     print(f"   (total): {vals['bad_genus_n']} contigs w/ {kb(vals['bad_genus_bp'])}kb")
 
