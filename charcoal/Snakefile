@@ -349,27 +349,52 @@ rule combine_hitlist_accs:
         sort {input.genome_accs} | uniq > {output.accfile}
     """
 
-# download matching genbank genome details
-rule make_genbank_matches_csv:
+checkpoint split_hitlist_accs:
     input:
         accfile = output_dir + '/hitlist.acc.txt'
     output:
-        csvfile = output_dir + '/hitlist.acc.csv'
+        accfiles = directory(output_dir + '/genbank/')
+    run:
+        try:
+            os.mkdir(output_dir + '/genbank')
+        except FileExistsError:
+            pass
+        for acc in open(input.accfile, 'rt'):
+            acc = acc.strip()
+            filepath = output_dir + f'/genbank/{acc}.txt'
+            if acc and not os.path.exists(filepath):
+                print(f'writing {acc} to {filepath}')
+                with open(filepath, 'wt') as fp:
+                    fp.write(acc)
+
+
+def aggregate_input(wildcards):
+    checkpoint_output = checkpoints.split_hitlist_accs.get(**wildcards).output[0]
+    x = expand(output_dir + f"/genbank/{wildcards.acc}.txt",
+           i=glob_wildcards(os.path.join(checkpoint_output, "{i}.txt")).i)
+    return x
+
+# download matching genbank genome details
+rule make_genbank_matches_csv:
+    input:
+        aggregate_input
+    output:
+        csvfile = output_dir + '/genbank_info/{acc}.info.csv'
     conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.genbank_genomes \
-            {input.accfile} \
+            {input} \
             --output {output.csvfile}
     """
 
 # hitlist-dependent rule for downloading actual genomes
 rule download_matching_genomes_one_by_one:
      input:
-         info_file = ancient(output_dir + "/hitlist.acc.csv")
+         csvfile = output_dir + '/genbank_info/{acc}.info.csv'
      output:
          genome = "genbank_genomes/{acc}.fna.gz"
      run:
-         with open(input.info_file, 'rt') as infp:
+         with open(input.csvfile, 'rt') as infp:
              r = csv.DictReader(infp)
              for row in r:
                  acc = row['acc']
@@ -431,7 +456,7 @@ rule clean_contigs:
 rule mash_compare:
     input:
         query = genome_dir + '/{f}',
-        target = 'genbank_genomes/{acc}.fna.gz',
+        target = ancient('genbank_genomes/{acc}.fna.gz'),
     output:
         outfile = output_dir + '/{f}.x.{acc}.mashmap.out'
     conda: 'conf/env-mashmap.yml'
