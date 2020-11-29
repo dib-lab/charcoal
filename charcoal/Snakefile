@@ -177,7 +177,7 @@ rule clean:
 rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
-        expand("{dir}/{g}.align.html", dir=report_dir, g=genome_list),
+        expand("{dir}/{g}.align.html", dir=report_dir, g=hitlist_genomes),
         f'{report_dir}/index.html'
 
 # check config files only
