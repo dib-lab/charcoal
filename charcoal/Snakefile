@@ -252,6 +252,8 @@ rule make_contigs_taxonomy_json:
     output:
         json=output_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = default_match_rank,
     shell: """
         python -m charcoal.contigs_search_taxonomy \
             --genome {input.genome} --lineages-csv {input.lineages} \
@@ -290,7 +292,7 @@ rule compare_taxonomy_single:
             --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major} \
-            --match_rank={params.match_rank} \
+            --match-rank={params.match_rank} \
             {wildcards.g}
     """
 
