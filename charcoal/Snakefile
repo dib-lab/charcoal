@@ -518,10 +518,12 @@ rule make_notebook_alignment:
         kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.align.ipynb'
+    params:
+        rel_genome_dir = os.path.join('../..', genome_dir)
     conda: 'conf/env-reporting.yml'
     shell: """
         papermill {input.nb} - -k charcoal --cwd {report_dir} \
-              -p directory .. -p genome_dir ../../{genome_dir:q} -p render '' \
+              -p output_dir .. -p genome_dir {params.rel_genome_dir:q} -p render '' \
               -p name {wildcards.g:q} \
               > {output}
     """

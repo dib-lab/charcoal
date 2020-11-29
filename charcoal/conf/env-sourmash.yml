@@ -8,3 +8,4 @@ dependencies:
     - sourmash>=3.5,<4
     - pytest>6,<7
     - pytest-dependency>=0.5.1
+    - pyyaml>5.3,<6
