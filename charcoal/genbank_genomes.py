@@ -95,6 +95,8 @@ def main():
 
     for n, acc in enumerate(open(args.accession_file, "rt")):
         acc = acc.strip()
+        if not acc:
+            continue
 
         genome_url, assembly_report_url = url_for_accession(acc)
         taxid = get_taxid_from_assembly_report(assembly_report_url)
