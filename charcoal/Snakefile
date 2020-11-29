@@ -301,8 +301,10 @@ rule combine_hit_list:
         expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
     output:
         output_dir + '/hit_list_for_filtering.csv'
+    params:
+        sort_by = f"{default_match_rank}_bad_bp"
     shell: """
-        python -m charcoal.combine_csvs --sort-by total_bad_bp --reverse \
+        python -m charcoal.combine_csvs --sort-by {params.sort_by} --reverse \
             {input} > {output}
     """
 

@@ -330,15 +330,11 @@ def main(args):
 
                 x.append((source_lin, target_lin, count))
 
-#                    target = detected_contam.get(source_lin, Counter())
-#                    target[target_lin] += count
-#                    detected_contam[source_lin] = target
         detected_contam[genome_name] = x
 
 
-        if rank == match_rank:
+        if rank == 'genus':
             break
-
 
     vals['total_bad_bp'] = vals['bad_genus_bp']
 
