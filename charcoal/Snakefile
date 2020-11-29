@@ -383,11 +383,21 @@ rule make_genbank_matches_csv:
         aggregate_input
     output:
         csvfile = 'genbank_info/{acc}.info.csv'
-    conda: 'conf/env-sourmash.yml'
+    conda: 'conf/env-genbank.yml'
     shell: """
         python -m charcoal.genbank_genomes \
             {input} \
             --output {output.csvfile}
+    """
+
+# download matching genbank genome details
+rule make_combined_hitlist_csv:
+    input:
+        csvfiles = expand('genbank_info/{acc}.info.csv', acc=[ x[1] for x in hitlist_pairs ])
+    output:
+        output_dir + '/hitlist.acc.csv',
+    shell: """
+        python -m charcoal.combine_csvs {input} > {output}
     """
 
 # hitlist-dependent rule for downloading actual genomes
@@ -515,6 +525,7 @@ rule make_notebook_alignment:
     input:
         nb='charcoal/notebooks/report-alignment.ipynb',
         summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
+        hitlist_acc_csv=output_dir + '/hitlist.acc.csv',
         kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.align.ipynb'

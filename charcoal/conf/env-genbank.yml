@@ -1,0 +1,8 @@
+# conda environment configuration for snakemake --use-conda
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - python>=3.7,<3.8
+    - lxml=4.6.1
