@@ -590,9 +590,11 @@ class AlignmentSlopeDiagram:
         from_contigs = self.from_contig_sizes
         to_contigs = self.to_contig_sizes
         alignments = self.alignments
+
+        if not from_contigs or not to_contigs or not self.alignments:
+            return
         
         fig, ax = plt.subplots()
-        patches = []
 
         from_sum = sum(from_contigs)
         to_sum = sum(to_contigs)
@@ -609,6 +611,7 @@ class AlignmentSlopeDiagram:
             sofar += i
             to_bases.append(sofar)
 
+        patches = []
         for (from_i, qstart, qend, to_i, tstart, tend) in alignments:
             assert qstart <= from_contigs[from_i]
             assert qstart >= 0
@@ -627,8 +630,6 @@ class AlignmentSlopeDiagram:
  
             polygon = Polygon((upper_left, upper_right, bottom_right, bottom_left), True)
             patches.append(polygon)
-
-        patches.append(polygon)
 
         p = PatchCollection(patches, cmap=matplotlib.cm.jet, alpha=0.4)
 
