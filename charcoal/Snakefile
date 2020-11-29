@@ -42,7 +42,8 @@ for g in hitlist_genomes:
         g_accs = open(f'{output_dir}/{g}.matches.acc.txt').readlines()
         g_accs = [ g_acc.strip() for g_acc in g_accs ]
         for g_acc in g_accs:
-            hitlist_pairs.append((g, g_acc))
+            if g_acc:
+                hitlist_pairs.append((g, g_acc))
     except FileNotFoundError:
         print(f'cannot find accession file for {g}; cancelling hitlist pairs')
         hitlist_pairs = []
@@ -477,6 +478,7 @@ rule set_kernel:
     shell: """
         python -m ipykernel install --user --name charcoal
         python -m pip install pyinterval
+        python -m pip install -e .
     """
 
 rule make_notebook_report:
