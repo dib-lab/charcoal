@@ -298,7 +298,7 @@ rule compare_taxonomy_single:
             {wildcards.g}
     """
 
-rule combine_hit_list:
+checkpoint combine_hit_list:
     input:
         expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
     output:
@@ -309,6 +309,26 @@ rule combine_hit_list:
         python -m charcoal.combine_csvs --sort-by {params.sort_by} --reverse \
             {input} > {output}
     """
+
+def hitlist_fn_for_input(pattern):
+    # dynamically generate a function that returns pattern, filled out
+    # with hitlist_genomes, but only after hitlist is calculated.
+    def input_fn(wildcards):
+        # generate checkpoint-not-done exception
+        hit_list_filename = checkpoints.combine_hit_list.get().output[0]
+
+        # parse the hitlist file
+        from charcoal.utils import CSV_DictHelper
+        hitlist_d = CSV_DictHelper(hit_list_filename,
+                                   'genome')
+        hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
+                              if hitlist_d[hl].filter_at != 'none' ]
+
+            # return paths
+        return expand(pattern, f=hitlist_genomes)
+
+    return input_fn
+    
 
 rule combine_genome_summary:
     input:
@@ -342,12 +362,11 @@ rule make_contigs_matches_list:
 # combine acc list
 rule combine_hitlist_accs:
     input:
-        genome_accs = expand(output_dir + '/{f}.matches.acc.txt',
-                             f=hitlist_genomes),
+        hitlist_fn_for_input(output_dir + '/{f}.matches.acc.txt'),
     output:
         accfile = output_dir + '/hitlist.acc.txt'
     shell: """
-        sort {input.genome_accs} | uniq > {output.accfile}
+        sort {input} | uniq > {output.accfile}
     """
 
 checkpoint split_hitlist_accs:
