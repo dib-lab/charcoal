@@ -61,6 +61,8 @@ def main(args):
     if hitlist_entry.override_filter_at:
         match_rank = hitlist_entry.override_filter_at
 
+    match_rank = args.match_rank
+
     assert match_rank in ('superkingdom', 'phylum', 'class', 'order',
                           'family', 'genus'), match_rank
 
@@ -163,7 +165,8 @@ def main(args):
         info_dict = {}
         info_dict['genome'] = genomebase
         info_dict['genome_lineage'] = utils.display_lineage(genome_lin)
-        # @CTB add match_rank!
+        info_dict['match_rank'] = match_rank
+        info_dict['scaled'] = empty_mh.scaled
         out_dict['query_info'] = info_dict
 
         matches_info_out = {}
@@ -194,6 +197,7 @@ def cmdline(sys_args):
     p.add_argument('--yaml-out',
                    help='YAML-format output file of all matches',
                    required=True)
+    p.add_argument('--match-rank', required=True)
     args = p.parse_args()
 
     return main(args)

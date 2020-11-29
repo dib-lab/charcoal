@@ -21,7 +21,7 @@ from .utils import (gather_at_rank, get_ident, ContigGatherInfo)
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
-    match_rank = 'genus'
+    match_rank = args.match_rank
 
     # load taxonomy CSV
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -119,6 +119,7 @@ def cmdline(sys_args):
     p.add_argument('--json-out',
                    help='JSON-format output file of all tax results',
                    required=True)
+    p.add_argument('--match-rank', required=True)
     args = p.parse_args()
 
     return main(args)

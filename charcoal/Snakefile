@@ -133,6 +133,8 @@ min_f_ident = float(min_f_ident)
 min_f_major = config['min_f_major']
 min_f_major = float(min_f_major)
 
+default_match_rank = config['match_rank']
+
 print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
 
@@ -255,7 +257,8 @@ rule make_contigs_taxonomy_json:
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
-            --json-out {output.json}
+            --json-out {output.json} \
+            --match-rank {params.match_rank}
     """
 
 # compare taxonomy for contigs in a genome
@@ -275,6 +278,7 @@ rule compare_taxonomy_single:
         output_dir = output_dir,
         min_f_major = min_f_major,
         min_f_ident = min_f_ident,
+        match_rank = default_match_rank,
     shell: """
         python -m charcoal.compare_taxonomy \
             --input-directory {params.output_dir} \
@@ -286,6 +290,7 @@ rule compare_taxonomy_single:
             --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major} \
+            --match_rank={params.match_rank} \
             {wildcards.g}
     """
 
@@ -317,12 +322,15 @@ rule make_contigs_matches_list:
     output:
         accfile = output_dir + '/{f}.matches.acc.txt'
     conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = default_match_rank,
     shell: """
         python -m charcoal.contigs_search_matches \
             --genome {input.genome} \
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
-            --output {output.accfile}
+            --output {output.accfile} \
+            --match-rank {params.match_rank}
     """
 
 # combine acc list
@@ -382,13 +390,16 @@ rule post_hitlist_make_contigs_matches:
     output:
         matches_yaml = output_dir + '/{f}.hitlist.matches.yaml',
     conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = default_match_rank,
     shell: """
         python -m charcoal.contigs_list_contaminants \
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
             --hitlist {input.hitlist} \
-            --yaml-out {output.matches_yaml}
+            --yaml-out {output.matches_yaml} \
+            --match-rank {params.match_rank}
     """
 
 rule all_hitlist_matches:
@@ -436,7 +447,7 @@ rule set_kernel:
         python -m pip install pyinterval
     """
 
-rule make_notebook:
+rule make_notebook_report:
     input:
         nb='charcoal/notebooks/report-genome.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
@@ -452,7 +463,7 @@ rule make_notebook:
               > {output}
     """
 
-rule make_html:
+rule make_html_report:
     input:
         notebook=report_dir + '/{g}.fig.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
@@ -469,7 +480,7 @@ rule make_html:
 rule make_notebook_alignment:
     input:
         nb='charcoal/notebooks/report-alignment.ipynb',
-        summary=f'{output_dir}/{g}.hitlist.matches.yaml',
+        summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
         kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.align.ipynb'
@@ -484,6 +495,7 @@ rule make_notebook_alignment:
 rule make_html_alignment:
     input:
         notebook=report_dir + '/{g}.align.ipynb',
+        summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
     output:
         report_dir + '/{g}.align.html',
     conda: 'conf/env-reporting.yml'

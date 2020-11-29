@@ -47,7 +47,7 @@ def get_matches(mh, lca_db, match_rank, threshold_bp):
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
-    match_rank = 'genus'
+    match_rank = args.match_rank
 
     # load the genome signature
     genome_sig = sourmash.load_one_signature(args.genome_sig)
@@ -131,6 +131,7 @@ def cmdline(sys_args):
     p.add_argument('--output',
                    help='list of match accessions',
                    required=True)
+    p.add_argument('--match-rank', required=True)
     args = p.parse_args()
 
     return main(args)

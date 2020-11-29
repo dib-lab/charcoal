@@ -203,7 +203,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
-    match_rank = 'genus'
+    match_rank = args.match_rank
 
     # load taxonomy assignments for all the things
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
@@ -417,6 +417,7 @@ def cmdline(sys_args):
     p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
+    p.add_argument('--match-rank', required=True)
     p.add_argument('genome')
     args = p.parse_args()
 
