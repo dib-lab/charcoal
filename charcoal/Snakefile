@@ -353,7 +353,7 @@ checkpoint split_hitlist_accs:
     input:
         accfile = output_dir + '/hitlist.acc.txt'
     output:
-        accfiles = directory(output_dir + '/genbank/')
+        touch(output_dir + '/.accsplit')
     run:
         try:
             os.mkdir(output_dir + '/genbank')
@@ -369,9 +369,11 @@ checkpoint split_hitlist_accs:
 
 
 def aggregate_input(wildcards):
-    checkpoint_output = checkpoints.split_hitlist_accs.get(**wildcards).output[0]
+    foo = checkpoints.split_hitlist_accs.get().output
+    checkpoint_output = glob_wildcards(output_dir + "/genbank/{i}.txt").i
+
     x = expand(output_dir + f"/genbank/{wildcards.acc}.txt",
-           i=glob_wildcards(os.path.join(checkpoint_output, "{i}.txt")).i)
+               acc=checkpoint_output)
     return x
 
 # download matching genbank genome details
@@ -390,7 +392,7 @@ rule make_genbank_matches_csv:
 # hitlist-dependent rule for downloading actual genomes
 rule download_matching_genomes_one_by_one:
      input:
-         csvfile = output_dir + '/genbank_info/{acc}.info.csv'
+         csvfile = ancient(output_dir + '/genbank_info/{acc}.info.csv')
      output:
          genome = "genbank_genomes/{acc}.fna.gz"
      run:
