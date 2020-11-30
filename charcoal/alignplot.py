@@ -391,7 +391,7 @@ class StackedDotPlot:
 
                 # stack 'em horizontally with max_x
                 line = plt.plot((x_0 + max_x, x_1 + max_x), (y_0, y_1), color)
-                this_max_x = max(this_max_x, x_0, x_1)
+                this_max_x = max(this_max_x, t_sofar)
 
             # label the last plotted line w/the right name to make legend
             if line:
