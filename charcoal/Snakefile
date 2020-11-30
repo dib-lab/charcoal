@@ -151,47 +151,38 @@ def get_hitlist_match_accs(g):
 
 
 class Checkpoint_HitListGenomes:
-    def __init__(self, checkpoint_name, pattern):
-        self.checkpoint_name = checkpoint_name
+    def __init__(self, pattern):
         self.pattern = pattern
 
     def __call__(self, w):
         global checkpoints
 
-        # get the checkpoint rule by name,
-        checkpoint_obj = getattr(checkpoints, self.checkpoint_name)
+        # wait for the results of 'combine_hit_list'; this will trigger
+        # exception until that rule has been run.
+        checkpoints.combine_hit_list.get()
 
-        # and get the hit list filename from it. This will raise an
-        # exception until such time as the checkpoint rule completes.
-        hit_list_filename = checkpoint_obj.get().output[0]
-
-        # parse the hitlist file
-        from charcoal.utils import CSV_DictHelper
-        hitlist_d = CSV_DictHelper(hit_list_filename,
-                                   'genome')
-
-        # get the list of genomes to be filtered.
-        hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
-                              if hitlist_d[hl].filter_at != 'none' ]
+        # now, parse...
+        hitlist_genomes = get_hitlist_genomes()
 
         # & return expanded pattern.
         return expand(self.pattern, genome=hitlist_genomes)
 
 
 class Checkpoint_HitListPairs:
-    def __init__(self, checkpoint_name, pattern):
-        self.checkpoint_name = checkpoint_name
+    def __init__(self, pattern):
         self.pattern = pattern
 
     def __call__(self, w):
         global checkpoints
 
-        # get the checkpoint rule by name,
-        checkpoint_obj = getattr(checkpoints, self.checkpoint_name)
+        # wait for the results of 'make_contigs_matches_list';
+        # this will trigger exception until that rule has been run.
+        checkpoints.make_contigs_matches_list.get()
 
+        # parse hitlist_genomes,
         hitlist_genomes = get_hitlist_genomes()
 
-        # parse the matches file
+        # and for each genome, parse the matches file:
         filenames = []
         for g in hitlist_genomes:
             match_accs = get_hitlist_match_accs(g)
@@ -225,8 +216,7 @@ rule clean:
 rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
-        Checkpoint_HitListGenomes('combine_hit_list',
-                                  f'{report_dir}/{{genome}}.align.html'),
+        Checkpoint_HitListGenomes(f'{report_dir}/{{genome}}.align.html'),
         f'{report_dir}/index.html'
 
 # check config files only
@@ -390,8 +380,7 @@ checkpoint make_contigs_matches_list:
 # combine acc list
 rule combine_hitlist_accs:
     input:
-        Checkpoint_HitListGenomes('combine_hit_list',
-                                  output_dir + '/{genome}.matches.acc.txt')
+        Checkpoint_HitListGenomes(output_dir + '/{genome}.matches.acc.txt')
     output:
         accfile = output_dir + '/hitlist.acc.txt'
     shell: """
@@ -441,8 +430,7 @@ rule make_genbank_matches_csv:
 # download matching genbank genome details
 rule make_combined_hitlist_csv:
     input:
-        Checkpoint_HitListPairs('make_contigs_matches_list',
-                                'genbank_info/{acc}.info.csv')
+        Checkpoint_HitListPairs('genbank_info/{acc}.info.csv')
     output:
         output_dir + '/hitlist.acc.csv',
     shell: """
@@ -496,8 +484,7 @@ rule post_hitlist_make_contigs_matches:
 
 rule all_hitlist_matches:
     input:
-        Checkpoint_HitListGenomes('combine_hit_list',
-                                  f'{output_dir}/{{genome}}.hitlist.matches.yaml'),
+        Checkpoint_HitListGenomes(f'{output_dir}/{{genome}}.hitlist.matches.yaml'),
 
 rule clean_contigs:
     input:
@@ -529,8 +516,7 @@ rule mash_compare:
 
 rule do_hitlist_compare:
     input:
-        Checkpoint_HitListPairs('make_contigs_matches_list',
-                                output_dir + '/{g}.x.{acc}.mashmap.out')
+        Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.out')
 
 rule set_kernel:
     output:
@@ -603,8 +589,7 @@ rule make_html_alignment:
      
 rule all_alignment_reports:
     input:
-        Checkpoint_HitListGenomes('combine_hit_list',
-                                  f'{report_dir}/{{genome}}.align.html'),
+        Checkpoint_HitListGenomes(f'{report_dir}/{{genome}}.align.html'),
 
 rule make_index:
     input:
