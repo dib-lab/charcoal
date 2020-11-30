@@ -447,10 +447,6 @@ rule post_hitlist_make_contigs_matches:
             --match-rank {params.match_rank}
     """
 
-rule all_hitlist_matches:
-    input:
-        Checkpoint_HitListGenomes(f'{output_dir}/{{g}}.hitlist.matches.yaml'),
-
 rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',
