@@ -203,11 +203,11 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
 
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
-    match_rank = 'genus'
+    match_rank = args.match_rank
 
     # load taxonomy assignments for all the things
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
-                                              start_column=3)
+                                              start_column=2)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
     # place to load in the genome from
@@ -330,17 +330,15 @@ def main(args):
 
                 x.append((source_lin, target_lin, count))
 
-#                    target = detected_contam.get(source_lin, Counter())
-#                    target[target_lin] += count
-#                    detected_contam[source_lin] = target
         detected_contam[genome_name] = x
 
 
-        if rank == match_rank:
+        if rank == 'genus':
             break
 
-
-    vals['total_bad_bp'] = vals['bad_genus_bp']
+    vals['total_bad_bp'] = vals[f'bad_{match_rank}_bp']
+    if vals['total_bad_bp'] == 0:
+        vals['filter_at'] = 'none'
 
     print(f"   (total): {vals['bad_genus_n']} contigs w/ {kb(vals['bad_genus_bp'])}kb")
 
@@ -417,6 +415,7 @@ def cmdline(sys_args):
     p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
+    p.add_argument('--match-rank', required=True)
     p.add_argument('genome')
     args = p.parse_args()
 

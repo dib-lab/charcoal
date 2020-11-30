@@ -182,7 +182,6 @@ def get_ident(sig):
     "Hack and slash identifiers."
     ident = sig.name
     ident = ident.split()[0]
-    ident = ident.split('.')[0]
     return ident
 
 

@@ -4,6 +4,7 @@ channels:
     - bioconda
     - defaults
 dependencies:
+    - python>=3.7,<3.8
     - sourmash>=3.5,<4
     - papermill>=2.1.2,<3
     - notebook>=6,<7
@@ -11,4 +12,4 @@ dependencies:
     - ipykernel
     - pip
     - pip:
-      - git+https://github.com/dib-lab/charcoal.git
+      - pyinterval

@@ -3,7 +3,7 @@
 #
 # --configfile must be specified on command line.
 #
-import csv, sys
+import csv, sys, os
 from snakemake.workflow import srcdir
 from charcoal.utils import CSV_DictHelper
 
@@ -110,6 +110,8 @@ min_f_ident = float(min_f_ident)
 min_f_major = config['min_f_major']
 min_f_major = float(min_f_major)
 
+default_match_rank = config['match_rank']
+
 print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
 
@@ -127,6 +129,74 @@ def get_provided_lineage(w):
     else:
         return "NA"
 
+def get_hitlist_genomes():
+    hit_list_filename = output_dir + '/hit_list_for_filtering.csv'
+
+    # parse the hitlist file
+    hitlist_d = CSV_DictHelper(hit_list_filename, 'genome')
+
+    # get the list of genomes to be filtered.
+    hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
+                          if hitlist_d[hl].filter_at != 'none' ]
+
+    return hitlist_genomes
+
+
+def get_hitlist_match_accs(g):
+    with open(f'{output_dir}/{g}.matches.acc.txt') as fp:
+        match_accs = [ match_acc.strip() for match_acc in fp ]
+        match_accs = [ match_acc for match_acc in match_accs if match_acc ]
+
+    return match_accs
+
+
+class Checkpoint_HitListGenomes:
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def __call__(self, w):
+        global checkpoints
+
+        # wait for the results of 'combine_hit_list'; this will trigger
+        # exception until that rule has been run.
+        checkpoints.combine_hit_list.get()
+
+        # now, parse...
+        hitlist_genomes = get_hitlist_genomes()
+
+        # & return expanded pattern.
+        return expand(self.pattern, g=hitlist_genomes)
+
+
+class Checkpoint_HitListPairs:
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def __call__(self, w):
+        global checkpoints
+
+        # wait for the results of 'combine_hit_list'; this will trigger
+        # exception until that rule has been run.
+        checkpoints.combine_hit_list.get()
+
+        # parse hitlist_genomes,
+        hitlist_genomes = get_hitlist_genomes()
+
+        # for each genome, parse the matches file & expand the pattern.
+        filenames = []
+        for g in hitlist_genomes:
+            if not w or w.g == g:         # be robust to no wildcards
+
+                # wait for the results of 'make_contigs_matches_list';
+                # this will trigger exception until that rule has been run.
+                checkpoints.make_contigs_matches_list.get(g=g)
+
+                match_accs = get_hitlist_match_accs(g)
+                p = expand(self.pattern, g=g, acc=match_accs)
+                filenames.extend(p)
+
+        return filenames
+
 ###
 ### rules!
 ###
@@ -140,7 +210,7 @@ wildcard_constraints:
 rule inspect:
     input:
         output_dir + '/hit_list_for_filtering.csv',
-        output_dir + '/genome_summary.csv'
+        output_dir + '/genome_summary.csv',
 
 # clean rule - clean the contigs
 rule clean:
@@ -151,6 +221,7 @@ rule clean:
 rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
+        Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
         f'{report_dir}/index.html'
 
 # check config files only
@@ -226,12 +297,15 @@ rule make_contigs_taxonomy_json:
     output:
         json=output_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = default_match_rank,
     shell: """
-        python -m charcoal.contigs_search \
+        python -m charcoal.contigs_search_taxonomy \
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
-            --json-out {output.json}
+            --json-out {output.json} \
+            --match-rank {params.match_rank}
     """
 
 # compare taxonomy for contigs in a genome
@@ -251,6 +325,7 @@ rule compare_taxonomy_single:
         output_dir = output_dir,
         min_f_major = min_f_major,
         min_f_ident = min_f_ident,
+        match_rank = default_match_rank,
     shell: """
         python -m charcoal.compare_taxonomy \
             --input-directory {params.output_dir} \
@@ -262,16 +337,19 @@ rule compare_taxonomy_single:
             --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major} \
+            --match-rank={params.match_rank} \
             {wildcards.g}
     """
 
-rule combine_hit_list:
+checkpoint combine_hit_list:
     input:
         expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
     output:
         output_dir + '/hit_list_for_filtering.csv'
+    params:
+        sort_by = f"{default_match_rank}_bad_bp"
     shell: """
-        python -m charcoal.combine_csvs --sort-by total_bad_bp --reverse \
+        python -m charcoal.combine_csvs --sort-by {params.sort_by} --reverse \
             {input} > {output}
     """
 
@@ -282,6 +360,91 @@ rule combine_genome_summary:
         output_dir + '/genome_summary.csv'
     shell: """
         python -m charcoal.combine_csvs --sort-by genome {input} > {output}
+    """
+
+# generate contigs genbank matches given hitlist match_rank
+checkpoint make_contigs_matches_list:
+    input:
+        genome = genome_dir + '/{g}',
+        genome_sig = output_dir + '/{g}.sig',
+        matches = output_dir + '/{g}.matches.sig',
+    output:
+        accfile = output_dir + '/{g}.matches.acc.txt'
+    conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = default_match_rank,
+    shell: """
+        python -m charcoal.contigs_search_matches \
+            --genome {input.genome} \
+            --genome-sig {input.genome_sig} \
+            --matches-sig {input.matches} \
+            --output {output.accfile} \
+            --match-rank {params.match_rank}
+    """
+
+# download matching genbank genome details
+rule make_genbank_matches_csv:
+    output:
+        csvfile = 'genbank_info/{acc}.info.csv'
+    conda: 'conf/env-genbank.yml'
+    shell: """
+        python -m charcoal.genbank_genomes {wildcards.acc} \
+            --output {output.csvfile}
+    """
+
+# download matching genbank genome details
+rule make_combined_hitlist_csv:
+    input:
+        Checkpoint_HitListPairs('genbank_info/{acc}.info.csv')
+    output:
+        output_dir + '/hitlist.acc.csv',
+    shell: """
+        python -m charcoal.combine_csvs {input} > {output}
+    """
+
+# hitlist-dependent rule for downloading actual genomes
+rule download_matching_genomes_one_by_one:
+     input:
+         csvfile = ancient('genbank_info/{acc}.info.csv')
+     output:
+         genome = "genbank_genomes/{acc}.fna.gz"
+     run:
+         with open(input.csvfile, 'rt') as infp:
+             r = csv.DictReader(infp)
+             for row in r:
+                 acc = row['acc']
+                 if not wildcards.acc.startswith(acc): continue
+                 url = row['genome_url']
+                 name = row['ncbi_tax_name']
+
+                 print(f"downloading genome for acc {acc}/{name} from NCBI...")
+                 with open(output.genome, 'wb') as outfp:
+                     with urllib.request.urlopen(url) as response:
+                         content = response.read()
+                         outfp.write(content)
+                         print(f"...wrote {len(content)} bytes to {output.genome}")
+
+# generate contigs taxonomy
+rule post_hitlist_make_contigs_matches:
+    input:
+        genome = genome_dir + '/{f}',
+        genome_sig = output_dir + '/{f}.sig',
+        matches = output_dir + '/{f}.matches.sig',
+        lineages = ancient(config['lineages_csv']),
+        hitlist = ancient(output_dir + '/hit_list_for_filtering.csv')
+    output:
+        matches_yaml = output_dir + '/{f}.hitlist.matches.yaml',
+    conda: 'conf/env-sourmash.yml'
+    params:
+        match_rank = default_match_rank,
+    shell: """
+        python -m charcoal.contigs_list_contaminants \
+            --genome {input.genome} --lineages-csv {input.lineages} \
+            --genome-sig {input.genome_sig} \
+            --matches-sig {input.matches} \
+            --hitlist {input.hitlist} \
+            --yaml-out {output.matches_yaml} \
+            --match-rank {params.match_rank}
     """
 
 rule clean_contigs:
@@ -301,16 +464,28 @@ rule clean_contigs:
             --clean {output.clean} --dirty {output.dirty}
     """
 
+rule mash_compare:
+    input:
+        query = genome_dir + '/{f}',
+        target = ancient('genbank_genomes/{acc}.fna.gz'),
+    output:
+        outfile = output_dir + '/{f}.x.{acc}.mashmap.out'
+    conda: 'conf/env-mashmap.yml'
+    shell: """
+        mashmap -q {input.query} -r {input.target} -o {output.outfile} --pi 95
+    """
+
 rule set_kernel:
     output:
-        f"{output_dir}/.kernel.set"
+        touch(f"{output_dir}/.kernel.set")
     conda: 'conf/env-reporting.yml'
     shell: """
         python -m ipykernel install --user --name charcoal
-        touch {output}
+        python -m pip install pyinterval
+        python -m pip install -e .
     """
 
-rule make_notebook:
+rule make_notebook_report:
     input:
         nb='charcoal/notebooks/report-genome.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
@@ -326,7 +501,7 @@ rule make_notebook:
               > {output}
     """
 
-rule make_html:
+rule make_html_report:
     input:
         notebook=report_dir + '/{g}.fig.ipynb',
         summary=f'{output_dir}/genome_summary.csv',
@@ -339,6 +514,40 @@ rule make_html:
         python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
      
+
+rule make_notebook_alignment:
+    input:
+        Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.out'),
+        nb='charcoal/notebooks/report-alignment.ipynb',
+        summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
+        hitlist_acc_csv=output_dir + '/hitlist.acc.csv',
+        kernel_set = rules.set_kernel.output
+    output:
+        report_dir + '/{g}.align.ipynb'
+    params:
+        rel_genome_dir = os.path.join('../..', genome_dir)
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        papermill {input.nb} - -k charcoal --cwd {report_dir} \
+              -p output_dir .. -p genome_dir {params.rel_genome_dir:q} -p render '' \
+              -p name {wildcards.g:q} \
+              > {output}
+    """
+
+rule make_html_alignment:
+    input:
+        notebook=report_dir + '/{g}.align.ipynb',
+        summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
+    output:
+        report_dir + '/{g}.align.html',
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
+    """
+     
+rule all_alignment_reports:
+    input:
+        Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
 
 rule make_index:
     input:
