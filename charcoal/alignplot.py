@@ -20,6 +20,7 @@ import os
 import glob
 from collections import defaultdict, namedtuple
 import numpy
+from itertools import cycle
 
 import screed
 from interval import interval
@@ -320,6 +321,8 @@ class AlignmentContainer:
                     filtered.append(region)
             new_results[t_acc] = filtered
 
+        self.results = new_results
+
     def calc_shared(self, t_acc=None):
         "Calculate the number of bases shared by query and ..."
         if t_acc:
@@ -358,7 +361,7 @@ class StackedDotPlot:
         max_x = 0  # track where to start each target
 
         # iterate over each set of features, plotting lines.
-        for t_acc, color in zip(alignment.t_acc_list, colors):
+        for t_acc, color in zip(alignment.t_acc_list, cycle(colors)):
             name = alignment.target_names[t_acc]
             # CTB: if we move this out of the loop and plot self-x-self
             # there is an interesting effect of showing distribution.
@@ -400,7 +403,7 @@ class StackedDotPlot:
             # "stack" the dotplots horizontally.
             max_x = this_max_x
 
-        plt.legend(loc="lower right")
+        #plt.legend(loc="lower right")
 
         return plt.gcf()
 
