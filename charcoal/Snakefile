@@ -153,6 +153,33 @@ def get_provided_lineage(w):
     else:
         return "NA"
 
+class Checkpoint_HitListGenomes:
+    def __init__(self, checkpoint_name, pattern):
+        self.checkpoint_name = checkpoint_name
+        self.pattern = pattern
+
+    def __call__(self, w):
+        global checkpoints
+
+        # get the checkpoint rule by name,
+        checkpoint_obj = getattr(checkpoints, self.checkpoint_name)
+
+        # and get the hit list filename from it. This will raise an
+        # exception until such time as the checkpoint rule completes.
+        hit_list_filename = checkpoint_obj.get().output[0]
+
+        # parse the hitlist file
+        from charcoal.utils import CSV_DictHelper
+        hitlist_d = CSV_DictHelper(hit_list_filename,
+                                   'genome')
+
+        # get the list of genomes to be filtered.
+        hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
+                              if hitlist_d[hl].filter_at != 'none' ]
+
+        # & return expanded pattern.
+        return expand(self.pattern, genome=hitlist_genomes)
+
 ###
 ### rules!
 ###
@@ -178,7 +205,8 @@ rule clean:
 rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
-        expand("{dir}/{g}.align.html", dir=report_dir, g=hitlist_genomes),
+        Checkpoint_HitListGenomes('combine_hit_list',
+                                  f'{report_dir}/{{genome}}.align.html'),
         f'{report_dir}/index.html'
 
 # check config files only
@@ -310,26 +338,6 @@ checkpoint combine_hit_list:
             {input} > {output}
     """
 
-def hitlist_fn_for_input(pattern):
-    # dynamically generate a function that returns pattern, filled out
-    # with hitlist_genomes, but only after hitlist is calculated.
-    def input_fn(wildcards):
-        # generate checkpoint-not-done exception
-        hit_list_filename = checkpoints.combine_hit_list.get().output[0]
-
-        # parse the hitlist file
-        from charcoal.utils import CSV_DictHelper
-        hitlist_d = CSV_DictHelper(hit_list_filename,
-                                   'genome')
-        hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
-                              if hitlist_d[hl].filter_at != 'none' ]
-
-            # return paths
-        return expand(pattern, f=hitlist_genomes)
-
-    return input_fn
-    
-
 rule combine_genome_summary:
     input:
         expand(output_dir + '/{g}.genome_summary.csv', g=genome_list),
@@ -362,7 +370,8 @@ rule make_contigs_matches_list:
 # combine acc list
 rule combine_hitlist_accs:
     input:
-        hitlist_fn_for_input(output_dir + '/{f}.matches.acc.txt'),
+        Checkpoint_HitListGenomes('combine_hit_list',
+                                  output_dir + '/{genome}.matches.acc.txt')
     output:
         accfile = output_dir + '/hitlist.acc.txt'
     shell: """
@@ -466,7 +475,8 @@ rule post_hitlist_make_contigs_matches:
 
 rule all_hitlist_matches:
     input:
-        [ output_dir + f'/{f}.hitlist.matches.yaml' for f in hitlist_genomes ]
+        Checkpoint_HitListGenomes('combine_hit_list',
+                                  f'{output_dir}/{{genome}}.hitlist.matches.yaml'),
 
 rule clean_contigs:
     input:
@@ -571,7 +581,8 @@ rule make_html_alignment:
      
 rule all_alignment_reports:
     input:
-        [ report_dir + f'/{f}.align.html' for f in hitlist_genomes ]
+        Checkpoint_HitListGenomes('combine_hit_list',
+                                  f'{report_dir}/{{genome}}.align.html'),
 
 rule make_index:
     input:
