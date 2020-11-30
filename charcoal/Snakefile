@@ -165,12 +165,13 @@ class Checkpoint_HitListGenomes:
         hitlist_genomes = get_hitlist_genomes()
 
         # & return expanded pattern.
-        return expand(self.pattern, genome=hitlist_genomes)
+        return expand(self.pattern, g=hitlist_genomes)
 
 
 class Checkpoint_HitListPairs:
-    def __init__(self, pattern):
+    def __init__(self, pattern, g=None):
         self.pattern = pattern
+        self.g = g
 
     def __call__(self, w):
         global checkpoints
@@ -182,12 +183,13 @@ class Checkpoint_HitListPairs:
         # parse hitlist_genomes,
         hitlist_genomes = get_hitlist_genomes()
 
-        # and for each genome, parse the matches file:
+        # and for each genome, parse the matches file & expand the pattern.
         filenames = []
         for g in hitlist_genomes:
-            match_accs = get_hitlist_match_accs(g)
-            p = expand(self.pattern, g=g, acc=match_accs)
-            filenames.extend(p)
+            if self.g is None or self.g == g:
+                match_accs = get_hitlist_match_accs(g)
+                p = expand(self.pattern, g=g, acc=match_accs)
+                filenames.extend(p)
 
         return filenames
 
@@ -216,7 +218,7 @@ rule clean:
 rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
-        Checkpoint_HitListGenomes(f'{report_dir}/{{genome}}.align.html'),
+        Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
         f'{report_dir}/index.html'
 
 # check config files only
@@ -380,7 +382,7 @@ checkpoint make_contigs_matches_list:
 # combine acc list
 rule combine_hitlist_accs:
     input:
-        Checkpoint_HitListGenomes(output_dir + '/{genome}.matches.acc.txt')
+        Checkpoint_HitListGenomes(output_dir + '/{g}.matches.acc.txt')
     output:
         accfile = output_dir + '/hitlist.acc.txt'
     shell: """
@@ -484,7 +486,7 @@ rule post_hitlist_make_contigs_matches:
 
 rule all_hitlist_matches:
     input:
-        Checkpoint_HitListGenomes(f'{output_dir}/{{genome}}.hitlist.matches.yaml'),
+        Checkpoint_HitListGenomes(f'{output_dir}/{{g}}.hitlist.matches.yaml'),
 
 rule clean_contigs:
     input:
@@ -516,7 +518,7 @@ rule mash_compare:
 
 rule do_hitlist_compare:
     input:
-        Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.out')
+        Checkpoint_HitListPairs(f'{output_dir}/{{g}}.x.{{acc}}.mashmap.out')
 
 rule set_kernel:
     output:
@@ -560,6 +562,8 @@ rule make_html_report:
 
 rule make_notebook_alignment:
     input:
+        Checkpoint_HitListPairs(f'{output_dir}/{{g}}.x.{{acc}}.mashmap.out',
+                                g='{g}'),
         nb='charcoal/notebooks/report-alignment.ipynb',
         summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
         hitlist_acc_csv=output_dir + '/hitlist.acc.csv',
@@ -589,7 +593,7 @@ rule make_html_alignment:
      
 rule all_alignment_reports:
     input:
-        Checkpoint_HitListGenomes(f'{report_dir}/{{genome}}.align.html'),
+        Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
 
 rule make_index:
     input:
