@@ -170,7 +170,6 @@ class Checkpoint_HitListGenomes:
 
 class Checkpoint_HitListPairs:
     def __init__(self, pattern):
-        print('XXXX', pattern)
         self.pattern = pattern
 
     def __call__(self, w):
@@ -186,7 +185,7 @@ class Checkpoint_HitListPairs:
         # for each genome, parse the matches file & expand the pattern.
         filenames = []
         for g in hitlist_genomes:
-            if not w or w.g == g:
+            if not w or w.g == g:         # be robust to no wildcards
 
                 # wait for the results of 'make_contigs_matches_list';
                 # this will trigger exception until that rule has been run.
@@ -195,8 +194,6 @@ class Checkpoint_HitListPairs:
                 match_accs = get_hitlist_match_accs(g)
                 p = expand(self.pattern, g=g, acc=match_accs)
                 filenames.extend(p)
-
-        print('XYZ', filenames)
 
         return filenames
 
