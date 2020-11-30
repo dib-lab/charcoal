@@ -169,27 +169,34 @@ class Checkpoint_HitListGenomes:
 
 
 class Checkpoint_HitListPairs:
-    def __init__(self, pattern, g=None):
+    def __init__(self, pattern):
+        print('XXXX', pattern)
         self.pattern = pattern
-        self.g = g
 
     def __call__(self, w):
         global checkpoints
 
-        # wait for the results of 'make_contigs_matches_list';
-        # this will trigger exception until that rule has been run.
-        checkpoints.make_contigs_matches_list.get()
+        # wait for the results of 'combine_hit_list'; this will trigger
+        # exception until that rule has been run.
+        checkpoints.combine_hit_list.get()
 
         # parse hitlist_genomes,
         hitlist_genomes = get_hitlist_genomes()
 
-        # and for each genome, parse the matches file & expand the pattern.
+        # for each genome, parse the matches file & expand the pattern.
         filenames = []
         for g in hitlist_genomes:
-            if self.g is None or self.g == g:
+            if not w or w.g == g:
+
+                # wait for the results of 'make_contigs_matches_list';
+                # this will trigger exception until that rule has been run.
+                checkpoints.make_contigs_matches_list.get(g=g)
+
                 match_accs = get_hitlist_match_accs(g)
                 p = expand(self.pattern, g=g, acc=match_accs)
                 filenames.extend(p)
+
+        print('XYZ', filenames)
 
         return filenames
 
@@ -207,7 +214,6 @@ rule inspect:
     input:
         output_dir + '/hit_list_for_filtering.csv',
         output_dir + '/genome_summary.csv',
-        output_dir + '/hitlist.acc.txt'
 
 # clean rule - clean the contigs
 rule clean:
@@ -379,53 +385,13 @@ checkpoint make_contigs_matches_list:
             --match-rank {params.match_rank}
     """
 
-# combine acc list
-rule combine_hitlist_accs:
-    input:
-        Checkpoint_HitListGenomes(output_dir + '/{g}.matches.acc.txt')
-    output:
-        accfile = output_dir + '/hitlist.acc.txt'
-    shell: """
-        sort {input} | uniq > {output.accfile}
-    """
-
-checkpoint split_hitlist_accs:
-    input:
-        accfile = output_dir + '/hitlist.acc.txt'
-    output:
-        touch(output_dir + '/.accsplit')
-    run:
-        try:
-            os.mkdir(output_dir + '/genbank')
-        except FileExistsError:
-            pass
-        for acc in open(input.accfile, 'rt'):
-            acc = acc.strip()
-            filepath = output_dir + f'/genbank/{acc}.txt'
-            if acc and not os.path.exists(filepath):
-                print(f'writing {acc} to {filepath}')
-                with open(filepath, 'wt') as fp:
-                    fp.write(acc)
-
-
-def aggregate_input(wildcards):
-    foo = checkpoints.split_hitlist_accs.get().output
-    checkpoint_output = glob_wildcards(output_dir + "/genbank/{i}.txt").i
-
-    x = expand(output_dir + f"/genbank/{wildcards.acc}.txt",
-               acc=checkpoint_output)
-    return x
-
 # download matching genbank genome details
 rule make_genbank_matches_csv:
-    input:
-        aggregate_input
     output:
         csvfile = 'genbank_info/{acc}.info.csv'
     conda: 'conf/env-genbank.yml'
     shell: """
-        python -m charcoal.genbank_genomes \
-            {input} \
+        python -m charcoal.genbank_genomes {acc} \
             --output {output.csvfile}
     """
 
@@ -516,10 +482,6 @@ rule mash_compare:
         mashmap -q {input.query} -r {input.target} -o {output.outfile} --pi 95
     """
 
-rule do_hitlist_compare:
-    input:
-        Checkpoint_HitListPairs(f'{output_dir}/{{g}}.x.{{acc}}.mashmap.out')
-
 rule set_kernel:
     output:
         touch(f"{output_dir}/.kernel.set")
@@ -562,8 +524,7 @@ rule make_html_report:
 
 rule make_notebook_alignment:
     input:
-        Checkpoint_HitListPairs(f'{output_dir}/{{g}}.x.{{acc}}.mashmap.out',
-                                g='{g}'),
+        Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.out'),
         nb='charcoal/notebooks/report-alignment.ipynb',
         summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
         hitlist_acc_csv=output_dir + '/hitlist.acc.csv',
