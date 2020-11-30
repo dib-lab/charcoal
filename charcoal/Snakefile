@@ -129,6 +129,27 @@ def get_provided_lineage(w):
     else:
         return "NA"
 
+def get_hitlist_genomes():
+    hit_list_filename = output_dir + '/hit_list_for_filtering.csv'
+
+    # parse the hitlist file
+    hitlist_d = CSV_DictHelper(hit_list_filename, 'genome')
+
+    # get the list of genomes to be filtered.
+    hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
+                          if hitlist_d[hl].filter_at != 'none' ]
+
+    return hitlist_genomes
+
+
+def get_hitlist_match_accs(g):
+    with open(f'{output_dir}/{g}.matches.acc.txt') as fp:
+        match_accs = [ match_acc.strip() for match_acc in fp ]
+        match_accs = [ match_acc for match_acc in match_accs if match_acc ]
+
+    return match_accs
+
+
 class Checkpoint_HitListGenomes:
     def __init__(self, checkpoint_name, pattern):
         self.checkpoint_name = checkpoint_name
@@ -168,30 +189,14 @@ class Checkpoint_HitListPairs:
         # get the checkpoint rule by name,
         checkpoint_obj = getattr(checkpoints, self.checkpoint_name)
 
-        # and get the hit list filename from it. This will raise an
-        # exception until such time as the checkpoint rule completes.
-        hit_list_filename = output_dir + '/hit_list_for_filtering.csv'
-
-        # parse the hitlist file
-        from charcoal.utils import CSV_DictHelper
-        hitlist_d = CSV_DictHelper(hit_list_filename,
-                                   'genome')
-
-        # get the list of genomes to be filtered.
-        hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
-                              if hitlist_d[hl].filter_at != 'none' ]
+        hitlist_genomes = get_hitlist_genomes()
 
         # parse the matches file
         filenames = []
         for g in hitlist_genomes:
-            print('ZYZ', g)
-            with open(f'{output_dir}/{g}.matches.acc.txt') as fp:
-                match_accs = [ match_acc.strip() for match_acc in fp ]
-                match_accs = [ match_acc for match_acc in match_accs if match_acc ]
-                for match_acc in match_accs:
-                    p = expand(self.pattern, g=g, acc=match_acc)
-                    print('ZZZ', p)
-                    filenames.extend(p)
+            match_accs = get_hitlist_match_accs(g)
+            p = expand(self.pattern, g=g, acc=match_accs)
+            filenames.extend(p)
 
         return filenames
 
