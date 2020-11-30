@@ -27,30 +27,6 @@ genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
 report_dir = f'{output_dir}/report'
 
-hitlist_path = f'{output_dir}/hit_list_for_filtering.csv'
-hitlist_genomes = []
-if os.path.exists(hitlist_path):
-    from charcoal.utils import CSV_DictHelper
-    hitlist_d = CSV_DictHelper(hitlist_path, 'genome')
-    hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
-                          if hitlist_d[hl].filter_at != 'none' ]
-    print(f'got {len(hitlist_genomes)} genomes from the hitlist.')
-
-hitlist_pairs = []
-for g in hitlist_genomes:
-    try:
-        g_accs = open(f'{output_dir}/{g}.matches.acc.txt').readlines()
-        g_accs = [ g_acc.strip() for g_acc in g_accs ]
-        for g_acc in g_accs:
-            if g_acc:
-                hitlist_pairs.append((g, g_acc))
-    except FileNotFoundError:
-        print(f'cannot find accession file for {g}; cancelling hitlist pairs')
-        hitlist_pairs = []
-        break
-
-print(f'loaded {len(hitlist_pairs)} total genome pairs from hitlist.')
-
 ### verification / strict mode
 
 scaled = config['scaled']
@@ -179,6 +155,45 @@ class Checkpoint_HitListGenomes:
 
         # & return expanded pattern.
         return expand(self.pattern, genome=hitlist_genomes)
+
+
+class Checkpoint_HitListPairs:
+    def __init__(self, checkpoint_name, pattern):
+        self.checkpoint_name = checkpoint_name
+        self.pattern = pattern
+
+    def __call__(self, w):
+        global checkpoints
+
+        # get the checkpoint rule by name,
+        checkpoint_obj = getattr(checkpoints, self.checkpoint_name)
+
+        # and get the hit list filename from it. This will raise an
+        # exception until such time as the checkpoint rule completes.
+        hit_list_filename = output_dir + '/hit_list_for_filtering.csv'
+
+        # parse the hitlist file
+        from charcoal.utils import CSV_DictHelper
+        hitlist_d = CSV_DictHelper(hit_list_filename,
+                                   'genome')
+
+        # get the list of genomes to be filtered.
+        hitlist_genomes = [ hitlist_d[hl].genome for hl in hitlist_d \
+                              if hitlist_d[hl].filter_at != 'none' ]
+
+        # parse the matches file
+        filenames = []
+        for g in hitlist_genomes:
+            print('ZYZ', g)
+            with open(f'{output_dir}/{g}.matches.acc.txt') as fp:
+                match_accs = [ match_acc.strip() for match_acc in fp ]
+                match_accs = [ match_acc for match_acc in match_accs if match_acc ]
+                for match_acc in match_accs:
+                    p = expand(self.pattern, g=g, acc=match_acc)
+                    print('ZZZ', p)
+                    filenames.extend(p)
+
+        return filenames
 
 ###
 ### rules!
@@ -348,13 +363,13 @@ rule combine_genome_summary:
     """
 
 # generate contigs genbank matches given hitlist match_rank
-rule make_contigs_matches_list:
+checkpoint make_contigs_matches_list:
     input:
-        genome = genome_dir + '/{f}',
-        genome_sig = output_dir + '/{f}.sig',
-        matches = output_dir + '/{f}.matches.sig',
+        genome = genome_dir + '/{g}',
+        genome_sig = output_dir + '/{g}.sig',
+        matches = output_dir + '/{g}.matches.sig',
     output:
-        accfile = output_dir + '/{f}.matches.acc.txt'
+        accfile = output_dir + '/{g}.matches.acc.txt'
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = default_match_rank,
@@ -421,7 +436,8 @@ rule make_genbank_matches_csv:
 # download matching genbank genome details
 rule make_combined_hitlist_csv:
     input:
-        csvfiles = expand('genbank_info/{acc}.info.csv', acc=[ x[1] for x in hitlist_pairs ])
+        Checkpoint_HitListPairs('make_contigs_matches_list',
+                                'genbank_info/{acc}.info.csv')
     output:
         output_dir + '/hitlist.acc.csv',
     shell: """
@@ -508,7 +524,8 @@ rule mash_compare:
 
 rule do_hitlist_compare:
     input:
-        [ output_dir + f'/{f}.x.{acc}.mashmap.out' for f, acc in hitlist_pairs ]
+        Checkpoint_HitListPairs('make_contigs_matches_list',
+                                output_dir + '/{g}.x.{acc}.mashmap.out')
 
 rule set_kernel:
     output:
