@@ -17,3 +17,4 @@ output.*
 *.csv
 *.pyc
 ibd-genomes-2
+genbank_genomes/

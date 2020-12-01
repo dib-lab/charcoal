@@ -1,43 +1,34 @@
 #! /usr/bin/env python
 """
-Class etc to produce a stacked dotplot and other genome overlap/contamination
-stats.
-
-TODO:
-* argparse the thang
+Code to produce a stacked dotplot and alignment slope diagram.
 """
 import sys
 import argparse
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
 import csv
 import tempfile
 import shutil
 import subprocess
 import os
-import glob
 from collections import defaultdict, namedtuple
 import numpy
 from itertools import cycle
+
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
 
 import screed
 from interval import interval
 
 
+global_debug = False
+
+
+# a simple named tuple to hold alignments
 AlignedRegion = namedtuple(
     "AlignedRegion", "query, target, qstart, qend, tstart, tend, pident, qsize, tsize"
 )
-
-
-def glob_all(pattern, endings):
-    g = []
-    for end in endings:
-        p = pattern + end
-        g.extend(glob.glob(p))
-
-    return g
 
 
 def group_regions_by(regions, by_type):
@@ -55,6 +46,10 @@ def group_regions_by(regions, by_type):
 
 
 def calc_regions_aligned_bp(regions_by, by_type, filter_by=None):
+    """
+    Calculate the number of unique bases aligned to, in either target
+    or query.
+    """
     assert by_type in ("target", "query")
 
     regions_sum_kb = {}
@@ -117,8 +112,8 @@ class AlignmentContainer:
     query and a bunch of targets genomes.
 
     Takes:
-    * query accession,
-    * multiple target accessions,
+    * query file
+    * multiple target files,
     * an optional info file containing mappings from accession to names
     """
 
@@ -130,20 +125,22 @@ class AlignmentContainer:
         self.q_acc = q_acc
         self.queryfile = queryfile
 
-        self.queryfile = queryfile
-        self.q_acc = q_acc
-
         self.t_acc_list = []
         self.targetfiles = []
         for (t_acc, targetfile) in targetfiles:
             self.t_acc_list.append(t_acc)
             self.targetfiles.append(targetfile)
 
+        assert len(self.t_acc_list) == len(set(self.t_acc_list)), \
+               "duplicate accessions given in target files!"
+
+        # default names to accessions
         self.query_name = q_acc
         self.target_names = {}
         for acc in self.t_acc_list:
             self.target_names[acc] = acc
 
+        # ...but if we can find them in the info file, make 'em nicer.
         if info_file:
             for row in csv.DictReader(open(info_file, "rt")):
                 if self.q_acc == row["acc"]:
@@ -152,10 +149,11 @@ class AlignmentContainer:
                     self.target_names[row["acc"]] = row["ncbi_tax_name"]
 
     def get_targetfile(self, t_acc):
+        "Return the target file, given target accession."
         targetfile = None
-        for find_t_acc, find_targetfile in zip(self.t_acc_list, self.targetfiles):
+        for find_t_acc, find_file in zip(self.t_acc_list, self.targetfiles):
             if find_t_acc == t_acc:
-                targetfile = find_targetfile
+                targetfile = find_file
                 break
 
         assert targetfile
@@ -166,7 +164,6 @@ class AlignmentContainer:
         results = {}
 
         for t_acc, targetfile in zip(self.t_acc_list, self.targetfiles):
-            name = self.target_names[t_acc]
             regions = self._run_mashmap(targetfile)
             results[t_acc] = regions
 
@@ -177,26 +174,34 @@ class AlignmentContainer:
         results = {}
 
         for t_acc, targetfile in zip(self.t_acc_list, self.targetfiles):
-            name = self.target_names[t_acc]
             regions = self._run_nucmer(targetfile)
             results[t_acc] = regions
 
         self.results = results
 
-    def _run_mashmap(self, targetfile):
-        "Run mashmap instead of nucmer."
-        print("running mashmap...")
-        tempdir = tempfile.mkdtemp()
-        outfile = os.path.join(tempdir, "mashmap.out")
-        cmd = f"mashmap -q {self.queryfile} -r {targetfile} -o {outfile} --pi 95"  # -f none -s 1000
-        print(f"running {cmd}")
-        subprocess.check_call(cmd, shell=True)
+    def _run_mashmap(self, targetfile, debug=0):
+        "Run mashmap pairwise, query x target."
+        if debug or global_debug:
+            print("running mashmap...")
 
-        print(f"...done! reading output from {outfile}.")
+        try:
+            tempdir = tempfile.mkdtemp()
+            outfile = os.path.join(tempdir, "mashmap.out")
 
-        results = self._read_mashmap(outfile)
-        shutil.rmtree(tempdir)
-        return results
+            q = self.queryfile
+            t = targetfile
+            cmd = f"mashmap -q {q} -r {t} -o {outfile} > /dev/null"
+            if debug or global_debug:
+                print(f"running {cmd}")
+            subprocess.check_call(cmd, shell=True)
+
+            if debug or global_debug:
+                print(f"...done! reading output from {outfile}.")
+
+            results = self._read_mashmap(outfile)
+            return results
+        finally:
+            shutil.rmtree(tempdir)
 
     def _read_mashmap(self, filename):
         "Parse the mashmap output."
@@ -237,39 +242,47 @@ class AlignmentContainer:
 
         return regions
 
-    def _run_nucmer(self, targetfile):
+    def _run_nucmer(self, targetfile, debug=0):
         "Run nucmer and show coords."
-        print(f"running nucmer & show-coords for {targetfile}...")
-        tempdir = tempfile.mkdtemp()
+        if debug or global_debug:
+            print(f"running nucmer & show-coords for {targetfile}...")
 
-        queryfile = self.queryfile
-        if self.queryfile.endswith(".gz"):
-            queryfile = os.path.join(tempdir, "query.fa")
-            subprocess.check_call(
-                f"gunzip -c {self.queryfile} > {queryfile}", shell=True
-            )
+        try:
+            tempdir = tempfile.mkdtemp()
 
-        if targetfile.endswith(".gz"):
-            newfile = os.path.join(tempdir, "target.fa")
-            subprocess.check_call(f"gunzip -c {targetfile} > {newfile}", shell=True)
-            targetfile = newfile
+            q = self.queryfile
+            if q.endswith(".gz"):         # gunzip query?
+                new_q = os.path.join(tempdir, "query.fa")
+                subprocess.check_call(f"gunzip -c {q} > {new_q}", shell=True)
+                q = new_q
 
-        cmd = f"nucmer -p {tempdir}/cmp {queryfile} {targetfile} 2> /dev/null"
-        # print(f"running {cmd}")
-        subprocess.check_call(cmd, shell=True)
+            t = targetfile
+            if t.endswith(".gz"):         # gunzip target?
+                new_t = os.path.join(tempdir, "target.fa")
+                subprocess.check_call(f"gunzip -c {t} > {new_t}",
+                                      shell=True)
+                t = new_t
 
-        deltafile = f"{tempdir}/cmp.delta"
-        coordsfile = f"{tempdir}/cmp.coords"
+            cmd = f"nucmer -p {tempdir}/cmp {q} {t} 2> /dev/null"
+            if debug or global_debug:
+                print(f"running {cmd}")
+            subprocess.check_call(cmd, shell=True)
 
-        cmd = f"show-coords -T {deltafile} > {coordsfile} 2> /dev/null"
-        # print(f"running {cmd}")
-        subprocess.check_call(cmd, shell=True)
+            deltafile = f"{tempdir}/cmp.delta"
+            coordsfile = f"{tempdir}/cmp.coords"
 
-        print(f"...done! reading output from {tempdir}.")
+            cmd = f"show-coords -T {deltafile} > {coordsfile} 2> /dev/null"
+            if debug or global_debug:
+                print(f"running {cmd}")
+            subprocess.check_call(cmd, shell=True)
 
-        results = self._read_nucmer(coordsfile)
-        # shutil.rmtree(tempdir)
-        return results
+            if debug or global_debug:
+                print(f"...done! reading output from {tempdir}.")
+
+            results = self._read_nucmer(coordsfile)
+            return results
+        finally:
+            shutil.rmtree(tempdir)
 
     def _read_nucmer(self, filename):
         "Parse the nucmer output."
@@ -280,8 +293,8 @@ class AlignmentContainer:
 
         regions = []
         for line in lines[4:]:
-            line = line.strip().split("\t")
-            qstart, qend, tstart, tend, qsize, tsize, pident, query, target = line
+            l = line.strip().split("\t")
+            qstart, qend, tstart, tend, qsize, tsize, pident, query, target = l
             region = AlignedRegion(
                 qsize=int(qsize) / 1e3,
                 qstart=int(qstart) / 1e3,
@@ -294,16 +307,12 @@ class AlignmentContainer:
                 target=target,
             )
 
-            # identity and length filter - @CTB move outside!
-            #            if region.pident < 95 or abs(region.qend - region.qstart) < 0.5:
-            #                continue
-
             regions.append(region)
 
         return regions
 
-    def filter(self, pident=None, query_size=None):
-        "Filter alignments at given pident and query size."
+    def filter(self, pident=None, query_size=None, debug=0):
+        "Filter all alignments at given pident (percent) and query size (kb)."
         if pident is None and query_size is None:
             return
 
@@ -319,12 +328,15 @@ class AlignmentContainer:
 
                 if keep:
                     filtered.append(region)
+            if debug or global_debug:
+                print(f"filtered {t_acc} results from {len(t_results)} to "
+                      f"{len(filtered)}")
             new_results[t_acc] = filtered
 
         self.results = new_results
 
     def calc_shared(self, t_acc=None):
-        "Calculate the number of bases shared by query and ..."
+        "Calculate the number of bases shared b/t query and this/all targets."
         if t_acc:
             regions = self.results[t_acc]
         else:
@@ -338,10 +350,11 @@ class AlignmentContainer:
 
 
 class StackedDotPlot:
+    "Produce a StackedDotPlot from an AlignmentContainer."
     def __init__(self, alignment):
         self.alignment = alignment
 
-    def plot(self):
+    def plot(self, legend=0):
         "Do the actual stacked dotplot plotting."
         alignment = self.alignment
 
@@ -357,7 +370,7 @@ class StackedDotPlot:
         q_starts = {}
         q_sofar = 0
 
-        # the use of max_x is what makes it a stacked dotplot!! :)
+        # the use of max_x is what makes it a _stacked_ dotplot!! :)
         max_x = 0  # track where to start each target
 
         # iterate over each set of features, plotting lines.
@@ -403,7 +416,8 @@ class StackedDotPlot:
             # "stack" the dotplots horizontally.
             max_x = this_max_x
 
-        #plt.legend(loc="lower right")
+        if legend:
+            plt.legend(loc="lower right")
 
         return plt.gcf()
 
@@ -424,7 +438,6 @@ class StackedDotPlot:
 
         # load in all the actual contig sizes for this genome
         all_sizes = load_contig_sizes(targetfile)
-        sum_bp = sum(all_sizes.values())
 
         # construct points for plot --
         x = [0]  # kb in target contigs
@@ -473,7 +486,6 @@ class StackedDotPlot:
 
         # load in all the actual contig sizes for this genome
         all_sizes = load_contig_sizes(queryfile)
-        sum_bp = sum(all_sizes.values())
 
         # construct points for plot --
         x = [0]  # kb in query contigs
@@ -517,8 +529,6 @@ class AlignmentSlopeDiagram:
         regions = []
         for k, v in alignment.results.items():
             regions.extend(v)
-
-        queryfile = alignment.queryfile
 
         # calculate and sort region summed kb in alignments over 95%
         regions_by_query = group_regions_by(regions, "query")
@@ -666,22 +676,22 @@ class AlignmentSlopeDiagram:
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("query_acc")
-    p.add_argument("target_accs", nargs="+")
-    p.add_argument(
-        "-g",
-        "--genomes-directory",
-        default="./genomes",
-        help="directory with genome files in it",
-    )
+    p.add_argument("query_filename")
+    p.add_argument("targetfiles", nargs="+")
     p.add_argument("-i", "--info-file", help="CSV file with nicer names for accessions")
     p.add_argument("-o", "--output-prefix", default="alignplot")
     args = p.parse_args()
 
+    def get_acc(x):
+        return "_".join(x.split('_')[:2])
+
+    query_acc = get_acc(args.query_filename)
+    target_pairs = [ (get_acc(t), t) for t in args.targetfiles ]
     alignment = AlignmentContainer(
-        args.query_acc, args.target_accs, args.info_file, args.genomes_directory,
+        query_acc, args.query_filename, target_pairs, args.info_file,
     )
     alignment.run_nucmer()
+    alignment.filter(pident=95, query_size=0.5)
 
     dotplot = StackedDotPlot(alignment)
     dotplot.plot()
@@ -691,6 +701,7 @@ def main():
     plt.cla()
 
     alignment.run_mashmap()
+    alignment.filter(pident=95, query_size=0.5)
 
     dotplot = StackedDotPlot(alignment)
     dotplot.plot()
@@ -715,7 +726,7 @@ def main():
     plt.cla()
 
     slope = AlignmentSlopeDiagram(alignment)
-    fig = slope.plot()
+    slope.plot()
 
     print(f"saving {args.output_prefix}-alignplot.png")
     plt.savefig(f"{args.output_prefix}-alignplot.png")
