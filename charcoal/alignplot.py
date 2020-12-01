@@ -4,10 +4,6 @@ Code to produce a stacked dotplot and alignment slope diagram.
 """
 import sys
 import argparse
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
 import csv
 import tempfile
 import shutil
@@ -17,8 +13,16 @@ from collections import defaultdict, namedtuple
 import numpy
 from itertools import cycle
 
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
+
 import screed
 from interval import interval
+
+
+global_debug = False
 
 
 # a simple named tuple to hold alignments
@@ -177,7 +181,7 @@ class AlignmentContainer:
 
     def _run_mashmap(self, targetfile, debug=0):
         "Run mashmap pairwise, query x target."
-        if debug:
+        if debug or global_debug:
             print("running mashmap...")
 
         try:
@@ -186,12 +190,12 @@ class AlignmentContainer:
 
             q = self.queryfile
             t = targetfile
-            cmd = f"mashmap -q {q} -r {t} -o {outfile}"
-            if debug:
+            cmd = f"mashmap -q {q} -r {t} -o {outfile} > /dev/null"
+            if debug or global_debug:
                 print(f"running {cmd}")
             subprocess.check_call(cmd, shell=True)
 
-            if debug:
+            if debug or global_debug:
                 print(f"...done! reading output from {outfile}.")
 
             results = self._read_mashmap(outfile)
@@ -240,7 +244,8 @@ class AlignmentContainer:
 
     def _run_nucmer(self, targetfile, debug=0):
         "Run nucmer and show coords."
-        print(f"running nucmer & show-coords for {targetfile}...")
+        if debug or global_debug:
+            print(f"running nucmer & show-coords for {targetfile}...")
 
         try:
             tempdir = tempfile.mkdtemp()
@@ -259,7 +264,7 @@ class AlignmentContainer:
                 t = new_t
 
             cmd = f"nucmer -p {tempdir}/cmp {q} {t} 2> /dev/null"
-            if debug:
+            if debug or global_debug:
                 print(f"running {cmd}")
             subprocess.check_call(cmd, shell=True)
 
@@ -267,11 +272,11 @@ class AlignmentContainer:
             coordsfile = f"{tempdir}/cmp.coords"
 
             cmd = f"show-coords -T {deltafile} > {coordsfile} 2> /dev/null"
-            if debug:
+            if debug or global_debug:
                 print(f"running {cmd}")
             subprocess.check_call(cmd, shell=True)
 
-            if debug:
+            if debug or global_debug:
                 print(f"...done! reading output from {tempdir}.")
 
             results = self._read_nucmer(coordsfile)
@@ -323,9 +328,9 @@ class AlignmentContainer:
 
                 if keep:
                     filtered.append(region)
-            if debug:
+            if debug or global_debug:
                 print(f"filtered {t_acc} results from {len(t_results)} to "
-                      f"len({filtered})")
+                      f"{len(filtered)}")
             new_results[t_acc] = filtered
 
         self.results = new_results
@@ -686,6 +691,7 @@ def main():
         query_acc, args.query_filename, target_pairs, args.info_file,
     )
     alignment.run_nucmer()
+    alignment.filter(pident=95, query_size=0.5)
 
     dotplot = StackedDotPlot(alignment)
     dotplot.plot()
@@ -695,6 +701,7 @@ def main():
     plt.cla()
 
     alignment.run_mashmap()
+    alignment.filter(pident=95, query_size=0.5)
 
     dotplot = StackedDotPlot(alignment)
     dotplot.plot()
