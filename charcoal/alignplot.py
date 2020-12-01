@@ -1,10 +1,6 @@
 #! /usr/bin/env python
 """
-Class etc to produce a stacked dotplot and other genome overlap/contamination
-stats.
-
-TODO:
-* argparse the thang
+Code to produce a stacked dotplot and alignment slope diagram.
 """
 import sys
 import argparse
@@ -166,7 +162,6 @@ class AlignmentContainer:
         results = {}
 
         for t_acc, targetfile in zip(self.t_acc_list, self.targetfiles):
-            name = self.target_names[t_acc]
             regions = self._run_mashmap(targetfile)
             results[t_acc] = regions
 
@@ -177,7 +172,6 @@ class AlignmentContainer:
         results = {}
 
         for t_acc, targetfile in zip(self.t_acc_list, self.targetfiles):
-            name = self.target_names[t_acc]
             regions = self._run_nucmer(targetfile)
             results[t_acc] = regions
 
@@ -424,7 +418,6 @@ class StackedDotPlot:
 
         # load in all the actual contig sizes for this genome
         all_sizes = load_contig_sizes(targetfile)
-        sum_bp = sum(all_sizes.values())
 
         # construct points for plot --
         x = [0]  # kb in target contigs
@@ -473,7 +466,6 @@ class StackedDotPlot:
 
         # load in all the actual contig sizes for this genome
         all_sizes = load_contig_sizes(queryfile)
-        sum_bp = sum(all_sizes.values())
 
         # construct points for plot --
         x = [0]  # kb in query contigs
@@ -517,8 +509,6 @@ class AlignmentSlopeDiagram:
         regions = []
         for k, v in alignment.results.items():
             regions.extend(v)
-
-        queryfile = alignment.queryfile
 
         # calculate and sort region summed kb in alignments over 95%
         regions_by_query = group_regions_by(regions, "query")
@@ -715,7 +705,7 @@ def main():
     plt.cla()
 
     slope = AlignmentSlopeDiagram(alignment)
-    fig = slope.plot()
+    slope.plot()
 
     print(f"saving {args.output_prefix}-alignplot.png")
     plt.savefig(f"{args.output_prefix}-alignplot.png")
