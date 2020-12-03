@@ -368,28 +368,6 @@ rule combine_genome_summary:
         python -m charcoal.combine_csvs --sort-by genome {input} > {output}
     """
 
-# generate genbank matches given hitlist match_rank
-# @CTB this currently pays no attention to match rank;
-# @CTB combine with contigs taxonomy output?
-checkpoint make_contigs_matches_list:
-    input:
-        genome = genome_dir + '/{g}',
-        genome_sig = output_dir + '/{g}.sig',
-        matches = output_dir + '/{g}.matches.sig',
-    output:
-        accfile = output_dir + '/{g}.matches.acc.txt'
-    conda: 'conf/env-sourmash.yml'
-    params:
-        match_rank = default_match_rank,
-    shell: """
-        python -m charcoal.contigs_search_matches \
-            --genome {input.genome} \
-            --genome-sig {input.genome_sig} \
-            --matches-sig {input.matches} \
-            --output {output.accfile} \
-            --match-rank {params.match_rank}
-    """
-
 # download matching genbank genome details; make an info.csv file for entry.
 rule make_genbank_matches_csv:
     output:
@@ -406,7 +384,7 @@ rule make_combined_hitlist_csv:
     input:
         Checkpoint_HitListPairs('genbank_info/{acc}.info.csv')
     output:
-        output_dir + '/hitlist.acc.csv',
+        output_dir + '/hitlist-accessions.info.csv',
     shell: """
         python -m charcoal.combine_csvs {input} > {output}
     """
@@ -435,9 +413,8 @@ rule download_matching_genomes_one_by_one:
                      outfp.write(content)
                      print(f"...wrote {len(content)} bytes to {output.genome}")
 
-# generate contigs taxonomy
-# @CTB this makes a YAML file containing details on all the matches,
-# and marks them as contaminant (or not). revisit :)
+# generates list of contaminant & non-contaminant accessions for genomes
+# on the hitlist.
 checkpoint hitlist_make_contigs_matches:
     input:
         genome = genome_dir + '/{g}',
@@ -536,9 +513,9 @@ rule make_html_report:
 rule make_notebook_alignment:
     input:
         Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.out'),
-        nb='charcoal/notebooks/report-alignment.ipynb',
-        summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
-        hitlist_acc_csv=output_dir + '/hitlist.acc.csv',
+        nb = 'charcoal/notebooks/report-alignment.ipynb',
+        summary = f'{output_dir}/{{g}}.hitlist.matches.yaml',
+        hitlist_acc_csv = output_dir + '/hitlist-accessions.info.csv',
         kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.align.ipynb'
