@@ -20,7 +20,7 @@ def test_basic(location):
     args.input_directory = location
     args.genome_list_file = genome_list_file
     args.hit_list = hitlist
-    args.contig_details_summary = summary_csv
+    args.genome_summary = summary_csv
     args.lineages_csv = utils.relative_file("tests/test-data/test-match-lineages.csv")
     args.provided_lineages = None
     args.contam_summary_json = contam_json

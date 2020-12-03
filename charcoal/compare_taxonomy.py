@@ -374,8 +374,8 @@ def main(args):
 
     fp.close()
 
-    # output a sorted summary CSV with a lot more information!
-    fp = open(args.contig_details_summary, 'wt')
+    # output a single-line summary CSV with a lot more information!
+    fp = open(args.genome_summary, 'wt')
 
     # build column list; put genome first
     vals = summary_items[0][1]
@@ -409,7 +409,7 @@ def cmdline(sys_args):
     p.add_argument('--input-directory', required=True)
     p.add_argument('--genome-list-file', required=True)
     p.add_argument('--hit-list', required=True)
-    p.add_argument('--contig-details-summary', required=True)
+    p.add_argument('--genome-summary', required=True)
     p.add_argument('--contam-summary-json', required=True)
     p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided-lineages', help='provided lineages')
