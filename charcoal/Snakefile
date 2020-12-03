@@ -194,15 +194,13 @@ wildcard_constraints:
     size="\d+",
     g='[a-zA-Z0-9._-]+'                   # should be everything but /
 
+# default rule: build report index
+rule all:
+   input:
+       output_dir + '/report/index.html'
 
-# default rule - produce hit list for stage 1
-rule stage1:
-    input:
-        output_dir + '/stage1_hitlist.csv',
-        output_dir + '/stage1_genome_summary.csv',
-
-# clean rule - clean the contigs
-rule clean:
+# clean rule - clean the contigs # @CTB out of date fix me
+rule all_clean_contigs:
     input:
         expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
 
@@ -226,6 +224,12 @@ rule showconf:
 ###
 ### stage 1 rules -- use sourmash to make a first round list of candidates.
 ###
+
+# default rule - produce hit list for stage 1
+rule stage1:
+    input:
+        output_dir + '/stage1_hitlist.csv',
+        output_dir + '/stage1_genome_summary.csv',
 
 class Checkpoint_HitListGenomes:
     def __init__(self, pattern):
