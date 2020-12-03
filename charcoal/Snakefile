@@ -411,7 +411,7 @@ rule download_matching_genomes_one_by_one:
      input:
          csvfile = ancient('genbank_info/{acc}.info.csv')
      output:
-         genome = "genbank_genomes/{acc}.fna.gz"   # @CTB change to genomic?
+         genome = "genbank_genomes/{acc}_genomic.fna.gz"
      run:
          with open(input.csvfile, 'rt') as infp:   # @CTB change to using 1 row
              r = csv.DictReader(infp)
@@ -475,7 +475,7 @@ rule clean_contigs:
 rule mashmap_compare:
     input:
         query = genome_dir + '/{f}',
-        target = ancient('genbank_genomes/{acc}.fna.gz'),
+        target = ancient('genbank_genomes/{acc}_genomic.fna.gz'),
     output:
         outfile = output_dir + '/{f}.x.{acc}.mashmap.out'
     conda: 'conf/env-mashmap.yml'
