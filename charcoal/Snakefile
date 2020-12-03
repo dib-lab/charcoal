@@ -471,7 +471,7 @@ rule mashmap_compare:
 rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',
-        json = output_dir + '/{f}.contigs-tax.json',
+        json = stage1_dir + '/{f}.contigs-tax.json',
         hit_list = output_dir + '/stage1_hitlist.csv',
     output:
         clean = output_dir + '/{f}.clean.fa.gz',
