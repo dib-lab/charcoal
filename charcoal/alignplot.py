@@ -335,6 +335,27 @@ class AlignmentContainer:
 
         self.results = new_results
 
+    def filter_by_query_coverage(self, f_query_cov):
+        import copy
+
+        alignment = copy.copy(self)
+        shared_kb = alignment.calc_shared()
+
+        new_results = {}
+        for t_acc, t_results in alignment.results.items():
+            filtered = []
+
+            for region in t_results:
+                covered_kb = shared_kb[region.query]
+                qsize = region.qsize
+                if covered_kb / qsize >= f_query_cov:
+                    filtered.append(region)
+
+            new_results[t_acc] = filtered
+        alignment.results = new_results
+
+        return alignment
+
     def calc_shared(self, t_acc=None):
         "Calculate the number of bases shared b/t query and this/all targets."
         if t_acc:
