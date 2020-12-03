@@ -248,7 +248,7 @@ def make_moltype_compute_args(moltype):
         args = "--no-dna --{}".format(moltype)
     return args
 
-# generate a signature
+# generate a signature for a query genome
 rule contigs_sig:
     input:
         genome_dir + '/{filename}'
@@ -264,8 +264,7 @@ rule contigs_sig:
             {params.moltype} {input} -o {output}
     """
 
-# run a search against the database.
-# this should be the most time-consuming and memory-intensive step...
+# run a search, query.x.database.
 rule search_all:
     input:
         query = output_dir + '/{filename}.sig',
@@ -280,8 +279,7 @@ rule search_all:
     conda: 'conf/env-sourmash.yml'
     shell: """
         sourmash search {input.query} {input.databases} -o {output.csv} \
-            --containment \
-            {params.moltype} --scaled {params.gather_scaled} \
+            --containment {params.moltype} --scaled {params.gather_scaled} \
             --save-matches {output.matches} --threshold=0.001 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
@@ -308,7 +306,8 @@ rule make_contigs_taxonomy_json:
             --match-rank {params.match_rank}
     """
 
-# compare taxonomy for contigs in a genome
+# compare taxonomy for contigs in a genome; this generates hit list and
+# genome summary outputs.
 rule compare_taxonomy_single:
     input:
         all_json = output_dir + '/{g}.contigs-tax.json',
@@ -341,6 +340,7 @@ rule compare_taxonomy_single:
             {wildcards.g}
     """
 
+# combine all of the individual hit lists into a single hitlist summary file.
 checkpoint combine_hit_list:
     input:
         expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
@@ -353,6 +353,7 @@ checkpoint combine_hit_list:
             {input} > {output}
     """
 
+# combine all of the individual genome summaries into one file.
 rule combine_genome_summary:
     input:
         expand(output_dir + '/{g}.genome_summary.csv', g=genome_list),
@@ -362,7 +363,9 @@ rule combine_genome_summary:
         python -m charcoal.combine_csvs --sort-by genome {input} > {output}
     """
 
-# generate contigs genbank matches given hitlist match_rank
+# generate genbank matches given hitlist match_rank
+# @CTB this currently pays no attention to match rank;
+# @CTB combine with contigs taxonomy output?
 checkpoint make_contigs_matches_list:
     input:
         genome = genome_dir + '/{g}',
@@ -382,7 +385,7 @@ checkpoint make_contigs_matches_list:
             --match-rank {params.match_rank}
     """
 
-# download matching genbank genome details
+# download matching genbank genome details; make an info.csv file for entry.
 rule make_genbank_matches_csv:
     output:
         csvfile = 'genbank_info/{acc}.info.csv'
@@ -392,7 +395,8 @@ rule make_genbank_matches_csv:
             --output {output.csvfile}
     """
 
-# download matching genbank genome details
+# combine genbank genome details for the matches for this run.
+# @CTB change output filename.
 rule make_combined_hitlist_csv:
     input:
         Checkpoint_HitListPairs('genbank_info/{acc}.info.csv')
@@ -402,14 +406,14 @@ rule make_combined_hitlist_csv:
         python -m charcoal.combine_csvs {input} > {output}
     """
 
-# hitlist-dependent rule for downloading actual genomes
+# download actual genomes!
 rule download_matching_genomes_one_by_one:
      input:
          csvfile = ancient('genbank_info/{acc}.info.csv')
      output:
-         genome = "genbank_genomes/{acc}.fna.gz"
+         genome = "genbank_genomes/{acc}.fna.gz"   # @CTB change to genomic?
      run:
-         with open(input.csvfile, 'rt') as infp:
+         with open(input.csvfile, 'rt') as infp:   # @CTB change to using 1 row
              r = csv.DictReader(infp)
              for row in r:
                  acc = row['acc']
@@ -425,6 +429,8 @@ rule download_matching_genomes_one_by_one:
                          print(f"...wrote {len(content)} bytes to {output.genome}")
 
 # generate contigs taxonomy
+# @CTB this makes a YAML file containing details on all the matches,
+# and marks them as contaminant (or not). revisit :)
 rule post_hitlist_make_contigs_matches:
     input:
         genome = genome_dir + '/{f}',
@@ -447,6 +453,7 @@ rule post_hitlist_make_contigs_matches:
             --match-rank {params.match_rank}
     """
 
+# actually do cleaning. @CTB out of date!
 rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',
@@ -464,7 +471,8 @@ rule clean_contigs:
             --clean {output.clean} --dirty {output.dirty}
     """
 
-rule mash_compare:
+# run a mashmap comparison of two genomes.
+rule mashmap_compare:
     input:
         query = genome_dir + '/{f}',
         target = ancient('genbank_genomes/{acc}.fna.gz'),
@@ -475,6 +483,7 @@ rule mash_compare:
         mashmap -q {input.query} -r {input.target} -o {output.outfile} --pi 95
     """
 
+# configure notebook kernel; all notebook rules depend on this setup.
 rule set_kernel:
     output:
         touch(f"{output_dir}/.kernel.set")
@@ -485,6 +494,7 @@ rule set_kernel:
         python -m pip install -e .
     """
 
+# make genome summary ipynb.
 rule make_notebook_report:
     input:
         nb='charcoal/notebooks/report-genome.ipynb',
@@ -501,6 +511,7 @@ rule make_notebook_report:
               > {output}
     """
 
+# make genome summart HTML.
 rule make_html_report:
     input:
         notebook=report_dir + '/{g}.fig.ipynb',
@@ -514,7 +525,7 @@ rule make_html_report:
         python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
      
-
+# make alignment ipynb.
 rule make_notebook_alignment:
     input:
         Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.out'),
@@ -534,6 +545,7 @@ rule make_notebook_alignment:
               > {output}
     """
 
+# make alignment html.
 rule make_html_alignment:
     input:
         notebook=report_dir + '/{g}.align.ipynb',
@@ -544,11 +556,13 @@ rule make_html_alignment:
     shell: """
         python -m nbconvert {input.notebook} --to html --stdout --no-input --ExecutePreprocessor.kernel_name=charcoal > {output}
     """
-     
+
+# make all the alignment reports.
 rule all_alignment_reports:
     input:
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
 
+# make the index.
 rule make_index:
     input:
         notebook='charcoal/notebooks/report-index.ipynb',
