@@ -25,8 +25,8 @@ genome_list = [ line for line in genome_list if line ]   # remove empty lines
 
 genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
-stage1_dir = config['output_dir'].rstrip('/') + "/stage1/"
-stage2_dir = config['output_dir'].rstrip('/') + "/stage2/"
+stage1_dir = config['output_dir'].rstrip('/') + "/stage1"
+stage2_dir = config['output_dir'].rstrip('/') + "/stage2"
 report_dir = f'{output_dir}/report'
 
 ### verification / strict mode
@@ -526,7 +526,7 @@ rule make_html_report:
         notebook=report_dir + '/{g}.fig.ipynb',
         summary=f'{output_dir}/stage1_genome_summary.csv',
         hitlist=f'{output_dir}/stage1_hitlist.csv',
-        contigs_json=f'{output_dir}/{{g}}.contigs-tax.json',
+        contigs_json=f'{output_dir}/stage1/{{g}}.contigs-tax.json',
     output:
         report_dir + '/{g}.fig.html',
     conda: 'conf/env-reporting.yml'
@@ -537,10 +537,10 @@ rule make_html_report:
 # make alignment ipynb.
 rule make_notebook_alignment:
     input:
-        Checkpoint_HitListPairs(output_dir + '/{g}.x.{acc}.mashmap.align'),
+        Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
         nb = 'charcoal/notebooks/report-alignment.ipynb',
-        summary = f'{output_dir}/{{g}}.hitlist.matches.yaml',
-        hitlist_acc_csv = output_dir + '/hitlist-accessions.info.csv',
+        summary = f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv',
         kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.align.ipynb'
@@ -558,7 +558,7 @@ rule make_notebook_alignment:
 rule make_html_alignment:
     input:
         notebook=report_dir + '/{g}.align.ipynb',
-        summary=f'{output_dir}/{{g}}.hitlist.matches.yaml',
+        summary=f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
     output:
         report_dir + '/{g}.align.html',
     conda: 'conf/env-reporting.yml'
