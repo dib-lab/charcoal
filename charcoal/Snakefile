@@ -413,20 +413,22 @@ rule download_matching_genomes_one_by_one:
      output:
          genome = "genbank_genomes/{acc}_genomic.fna.gz"
      run:
-         with open(input.csvfile, 'rt') as infp:   # @CTB change to using 1 row
+         with open(input.csvfile, 'rt') as infp:
              r = csv.DictReader(infp)
-             for row in r:
-                 acc = row['acc']
-                 if not wildcards.acc.startswith(acc): continue
-                 url = row['genome_url']
-                 name = row['ncbi_tax_name']
+             rows = list(r)
+             assert len(rows) == 1
+             row = rows[0]
+             acc = row['acc']
+             assert wildcards.acc.startswith(acc)
+             url = row['genome_url']
+             name = row['ncbi_tax_name']
 
-                 print(f"downloading genome for acc {acc}/{name} from NCBI...")
-                 with open(output.genome, 'wb') as outfp:
-                     with urllib.request.urlopen(url) as response:
-                         content = response.read()
-                         outfp.write(content)
-                         print(f"...wrote {len(content)} bytes to {output.genome}")
+             print(f"downloading genome for acc {acc}/{name} from NCBI...")
+             with open(output.genome, 'wb') as outfp:
+                 with urllib.request.urlopen(url) as response:
+                     content = response.read()
+                     outfp.write(content)
+                     print(f"...wrote {len(content)} bytes to {output.genome}")
 
 # generate contigs taxonomy
 # @CTB this makes a YAML file containing details on all the matches,
