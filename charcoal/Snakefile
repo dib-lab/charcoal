@@ -143,11 +143,16 @@ def get_hitlist_genomes():
 
 
 def get_hitlist_match_accs(g):
-    with open(f'{output_dir}/{g}.matches.acc.txt') as fp:
-        match_accs = [ match_acc.strip() for match_acc in fp ]
-        match_accs = [ match_acc for match_acc in match_accs if match_acc ]
+    import yaml
 
-    return match_accs
+    with open(f'{output_dir}/{g}.hitlist.matches.yaml') as fp:
+        matches_info = yaml.safe_load(fp)
+
+    if matches_info["matches"]:
+        match_accs = list(matches_info["matches"])
+        return match_accs
+    else:
+        return []
 
 
 class Checkpoint_HitListGenomes:
@@ -187,9 +192,9 @@ class Checkpoint_HitListPairs:
         for g in hitlist_genomes:
             if not w or w.g == g:         # be robust to no wildcards
 
-                # wait for the results of 'make_contigs_matches_list';
+                # wait for the results of 'hitlist_make_contigs_matches';
                 # this will trigger exception until that rule has been run.
-                checkpoints.make_contigs_matches_list.get(g=g)
+                checkpoints.hitlist_make_contigs_matches.get(g=g)
 
                 match_accs = get_hitlist_match_accs(g)
                 p = expand(self.pattern, g=g, acc=match_accs)
@@ -433,15 +438,15 @@ rule download_matching_genomes_one_by_one:
 # generate contigs taxonomy
 # @CTB this makes a YAML file containing details on all the matches,
 # and marks them as contaminant (or not). revisit :)
-rule post_hitlist_make_contigs_matches:
+checkpoint hitlist_make_contigs_matches:
     input:
-        genome = genome_dir + '/{f}',
-        genome_sig = output_dir + '/{f}.sig',
-        matches = output_dir + '/{f}.matches.sig',
+        genome = genome_dir + '/{g}',
+        genome_sig = output_dir + '/{g}.sig',
+        matches = output_dir + '/{g}.matches.sig',
         lineages = ancient(config['lineages_csv']),
         hitlist = ancient(output_dir + '/hit_list_for_filtering.csv')
     output:
-        matches_yaml = output_dir + '/{f}.hitlist.matches.yaml',
+        matches_yaml = output_dir + '/{g}.hitlist.matches.yaml',
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = default_match_rank,
