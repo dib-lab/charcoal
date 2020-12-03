@@ -580,6 +580,7 @@ rule make_index:
     input:
         notebook='charcoal/notebooks/report-index.ipynb',
         summary=f'{output_dir}/stage1_genome_summary.csv',
+        hitlist=f'{output_dir}/stage1_hitlist.csv',
         kernel_set = rules.set_kernel.output
     output:
         nb=f'{report_dir}/index.ipynb',
