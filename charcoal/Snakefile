@@ -25,6 +25,8 @@ genome_list = [ line for line in genome_list if line ]   # remove empty lines
 
 genome_dir = config['genome_dir'].rstrip('/')
 output_dir = config['output_dir'].rstrip('/')
+stage1_dir = config['output_dir'].rstrip('/') + "/stage1/"
+stage2_dir = config['output_dir'].rstrip('/') + "/stage2/"
 report_dir = f'{output_dir}/report'
 
 ### verification / strict mode
@@ -130,7 +132,7 @@ def get_provided_lineage(w):
         return "NA"
 
 def get_hitlist_genomes():
-    hit_list_filename = output_dir + '/hit_list_for_filtering.csv'
+    hit_list_filename = output_dir + '/stage1_hitlist.csv'
 
     # parse the hitlist file
     hitlist_d = CSV_DictHelper(hit_list_filename, 'genome')
@@ -212,10 +214,10 @@ wildcard_constraints:
 
 
 # default rule - produce hit list
-rule inspect:
+rule stage1:
     input:
-        output_dir + '/hit_list_for_filtering.csv',
-        output_dir + '/genome_summary.csv',
+        output_dir + '/stage1_hitlist.csv',
+        output_dir + '/stage1_genome_summary.csv',
 
 # clean rule - clean the contigs
 rule clean:
@@ -246,6 +248,10 @@ rule showconf:
 
 ###
 
+###
+### stage 1 rules -- use sourmash to make a first round list of candidates.
+###
+
 def make_moltype_compute_args(moltype):
     if moltype == 'DNA':
         args = "--dna"
@@ -258,7 +264,7 @@ rule contigs_sig:
     input:
         genome_dir + '/{filename}'
     output:
-        output_dir + '/{filename}.sig'
+        stage1_dir + '/{filename}.sig'
     conda: 'conf/env-sourmash.yml'
     params:
         scaled = config['scaled'],
@@ -275,9 +281,9 @@ rule search_all:
         query = output_dir + '/{filename}.sig',
         databases = config['gather_db']
     output:
-        csv = output_dir + '/{filename}.matches.csv',
-        matches = output_dir + '/{filename}.matches.sig',
-        txt = output_dir + '/{filename}.matches.txt'
+        csv = stage1_dir + '/{filename}.matches.csv',
+        matches = stage1_dir + '/{filename}.matches.sig',
+        txt = stage1_dir + '/{filename}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
         gather_scaled = config['gather_scaled']
@@ -294,11 +300,11 @@ rule search_all:
 rule make_contigs_taxonomy_json:
     input:
         genome = genome_dir + '/{f}',
-        genome_sig = output_dir + '/{f}.sig',
-        matches = output_dir + '/{f}.matches.sig',
+        genome_sig = stage1_dir + '/{f}.sig',
+        matches = stage1_dir + '/{f}.matches.sig',
         lineages = config['lineages_csv']
     output:
-        json=output_dir + '/{f}.contigs-tax.json',
+        json = stage1_dir + '/{f}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = default_match_rank,
@@ -315,15 +321,15 @@ rule make_contigs_taxonomy_json:
 # genome summary outputs.
 rule compare_taxonomy_single:
     input:
-        all_json = output_dir + '/{g}.contigs-tax.json',
-        all_sig = output_dir + '/{g}.matches.sig',
+        json = stage1_dir + '/{g}.contigs-tax.json',
+        sig = stage1_dir + '/{g}.matches.sig',
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
     output:
-        hit_list = output_dir + '/{g}.hit_list_for_filtering.csv',
-        contig_details = output_dir + '/{g}.genome_summary.csv',
-        contam_json = output_dir + '/{g}.contam_summary.json',
+        hit_list_csv = stage1_dir + '/{g}.hitlist_for_filtering.csv',
+        summary_csv = stage1_dir + '/{g}.genome_summary.csv',
+        contam_json = stage1_dir + '/{g}.contam_summary.json',
     conda: 'conf/env-sourmash.yml'
     params:
         output_dir = output_dir,
@@ -336,8 +342,8 @@ rule compare_taxonomy_single:
             --genome-list-file {input.genome_list} \
             --lineages-csv {input.lineages} \
             --provided-lineages {input.provided_lineages} \
-            --hit-list {output.hit_list} \
-            --contig-details-summary {output.contig_details} \
+            --hit-list {output.hit_list_csv} \
+            --genome-summary {output.summary_csv} \
             --contam-summary-json {output.contam_json} \
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major} \
@@ -348,9 +354,9 @@ rule compare_taxonomy_single:
 # combine all of the individual hit lists into a single hitlist summary file.
 checkpoint combine_hit_list:
     input:
-        expand(output_dir + '/{g}.hit_list_for_filtering.csv', g=genome_list),
+        expand(stage1_dir + '/{g}.hitlist_for_filtering.csv', g=genome_list),
     output:
-        output_dir + '/hit_list_for_filtering.csv'
+        output_dir + '/stage1_hitlist.csv'
     params:
         sort_by = f"{default_match_rank}_bad_bp"
     shell: """
@@ -361,9 +367,9 @@ checkpoint combine_hit_list:
 # combine all of the individual genome summaries into one file.
 rule combine_genome_summary:
     input:
-        expand(output_dir + '/{g}.genome_summary.csv', g=genome_list),
+        expand(stage1_dir + '/{g}.genome_summary.csv', g=genome_list),
     output:
-        output_dir + '/genome_summary.csv'
+        output_dir + '/stage1_genome_summary.csv'
     shell: """
         python -m charcoal.combine_csvs --sort-by genome {input} > {output}
     """
@@ -420,8 +426,8 @@ checkpoint hitlist_make_contigs_matches:
         genome = genome_dir + '/{g}',
         genome_sig = output_dir + '/{g}.sig',
         matches = output_dir + '/{g}.matches.sig',
-        lineages = ancient(config['lineages_csv']),
-        hitlist = ancient(output_dir + '/hit_list_for_filtering.csv')
+        lineages = config['lineages_csv'],
+        hitlist = output_dir + '/stage1_hitlist.csv'
     output:
         matches_yaml = output_dir + '/{g}.hitlist.matches.yaml',
     conda: 'conf/env-sourmash.yml'
@@ -442,7 +448,7 @@ rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',
         json = output_dir + '/{f}.contigs-tax.json',
-        hit_list = output_dir + '/hit_list_for_filtering.csv',
+        hit_list = output_dir + '/stage1_hitlist.csv',
     output:
         clean = output_dir + '/{f}.clean.fa.gz',
         dirty = output_dir + '/{f}.dirty.fa.gz',
@@ -482,8 +488,8 @@ rule set_kernel:
 rule make_notebook_report:
     input:
         nb='charcoal/notebooks/report-genome.ipynb',
-        summary=f'{output_dir}/genome_summary.csv',
-        hitlist=f'{output_dir}/hit_list_for_filtering.csv',
+        summary=f'{output_dir}/stage1_genome_summary.csv',
+        hitlist=f'{output_dir}/stage1_hitlist.csv',
         kernel_set = rules.set_kernel.output
     output:
         report_dir + '/{g}.fig.ipynb'
@@ -499,8 +505,8 @@ rule make_notebook_report:
 rule make_html_report:
     input:
         notebook=report_dir + '/{g}.fig.ipynb',
-        summary=f'{output_dir}/genome_summary.csv',
-        hitlist=f'{output_dir}/hit_list_for_filtering.csv',
+        summary=f'{output_dir}/stage1_genome_summary.csv',
+        hitlist=f'{output_dir}/stage1_hitlist.csv',
         contigs_json=f'{output_dir}/{{g}}.contigs-tax.json',
     output:
         report_dir + '/{g}.fig.html',
@@ -550,7 +556,7 @@ rule all_alignment_reports:
 rule make_index:
     input:
         notebook='charcoal/notebooks/report-index.ipynb',
-        summary=f'{output_dir}/genome_summary.csv',
+        summary=f'{output_dir}/stage1_genome_summary.csv',
         kernel_set = rules.set_kernel.output
     output:
         nb=f'{report_dir}/index.ipynb',
