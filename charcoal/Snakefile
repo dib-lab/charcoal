@@ -329,13 +329,13 @@ rule compare_taxonomy_single:
         contam_json = stage1_dir + '/{g}.contam_summary.json',
     conda: 'conf/env-sourmash.yml'
     params:
-        output_dir = stage1_dir,
+        input_dir = stage1_dir,
         min_f_major = min_f_major,
         min_f_ident = min_f_ident,
         match_rank = default_match_rank,
     shell: """
         python -m charcoal.compare_taxonomy \
-            --input-directory {params.output_dir} \
+            --input-directory {params.input_dir} \
             --genome-list-file {input.genome_list} \
             --lineages-csv {input.lineages} \
             --provided-lineages {input.provided_lineages} \
@@ -378,8 +378,7 @@ rule combine_genome_summary:
 # stage 2: produce matches detail & genome alignments
 rule stage2:
     input:
-        Checkpoint_HitListGenomes(stage2_dir + '/{g}.hitlist.matches.yaml'),
-        Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
+        Checkpoint_HitListGenomes(f'{stage2_dir}/{{g}}.stage2.yaml'),
 
 # download genbank genome details; make an info.csv file for entry.
 rule make_genbank_info_csv:
@@ -461,6 +460,29 @@ rule mashmap_compare:
     shell: """
         mashmap -q {input.query} -r {input.target} -o {output.cmpfile} \
             --pi 95 > {output.outfile}
+    """
+
+# postprocess alignments w/taxonomy and summarize.
+rule postprocess_alignments:
+    input:
+        Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
+        hit_list_csv = stage1_dir + '/{g}.hitlist_for_filtering.csv',
+        matches = f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv', # @CTB?
+    output:
+        yaml_out = stage2_dir + '/{g}.stage2.yaml',
+        summary_csv = stage2_dir + '/{g}.stage2.csv',
+    conda: 'conf/env-sourmash.yml'
+    params:
+        input_dir = stage2_dir,
+    shell: """
+        python -m charcoal.postprocess_alignments \
+            --input-directory {params.input_dir} \
+            --hit-list {input.hit_list_csv} \
+            --matches-yaml {input.matches} \
+            --yaml-out {output.yaml_out} \
+            --summary-csv {output.summary_csv} \
+            {wildcards.g}
     """
 
 ###

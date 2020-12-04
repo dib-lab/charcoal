@@ -407,10 +407,9 @@ def cmdline(sys_args):
     "Command line entry point w/argparse action."
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--input-directory', required=True)
-    p.add_argument('--genome-list-file', required=True)
     p.add_argument('--hit-list', required=True)
     p.add_argument('--genome-summary', required=True)
-    p.add_argument('--contam-summary-json', required=True)
+    p.add_argument('--contam-summary-json', required=True)   # @CTB remove?
     p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--provided-lineages', help='provided lineages')
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
