@@ -106,11 +106,27 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
+def check_is_fraction(f):
+    if f >= 0 and f <= 1:
+        return True
+    return False
+
 min_f_ident = config['min_f_ident']
 min_f_ident = float(min_f_ident)
+assert check_is_fraction(min_f_ident), 'min_f_ident should be between 0 and 1'
 
 min_f_major = config['min_f_major']
 min_f_major = float(min_f_major)
+assert check_is_fraction(min_f_major), 'min_f_major should be between 0 and 1'
+
+min_align_pident = config['min_align_pident']
+min_align_pident = int(min_align_pident)
+assert min_align_pident > 1.0, 'min_align_pident should be between 1 and 100'
+assert min_align_pident <= 100, 'min_align_pident should be between 1 and 100'
+
+min_query_coverage = config['min_query_coverage']
+min_query_coverage = float(min_query_coverage)
+assert check_is_fraction(min_query_coverage), 'min_query_coverage should be between 0 and 1'
 
 default_match_rank = config['match_rank']
 
@@ -466,6 +482,7 @@ rule mashmap_compare:
 rule postprocess_alignments:
     input:
         Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
+        genome = genome_dir + '/{g}',
         hit_list_csv = stage1_dir + '/{g}.hitlist_for_filtering.csv',
         matches = f'{stage2_dir}/{{g}}.matches.yaml',
         hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv', # @CTB?
@@ -475,6 +492,8 @@ rule postprocess_alignments:
     conda: 'conf/env-sourmash.yml'
     params:
         input_dir = stage2_dir,
+        min_query_coverage = min_query_coverage,
+        min_align_pident = min_align_pident,
     shell: """
         python -m charcoal.postprocess_alignments \
             --input-directory {params.input_dir} \
@@ -482,7 +501,9 @@ rule postprocess_alignments:
             --matches-yaml {input.matches} \
             --yaml-out {output.yaml_out} \
             --summary-csv {output.summary_csv} \
-            {wildcards.g}
+            --min-query-coverage={params.min_query_coverage} \
+            --min-align-pident={params.min_align_pident} \
+            {input.genome}
     """
 
 ###
