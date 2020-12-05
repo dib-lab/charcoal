@@ -8,7 +8,9 @@ import csv
 import os.path
 import yaml
 import glob
+import itertools
 
+from . import alignplot
 from .alignplot import AlignmentContainer
 
 import sourmash
@@ -61,7 +63,7 @@ def main(args):
         output.append(f'* `{match_acc}` with est {match_counts*scaled} kb;\n`{match_lineage}`')
 
     print("\n".join(output))
-        
+
     def load_target_pairs(match_list):
         pairs = []
         for acc, _, _ in match_list:
@@ -74,6 +76,17 @@ def main(args):
 
     contaminant_pairs = load_target_pairs(dirty_accs)
     clean_pairs = load_target_pairs(clean_accs)
+
+    contigs_by_acc = {}
+    contig_to_acc = {}
+    for acc, _, _ in itertools.chain(clean_accs, dirty_accs):
+        filename = glob.glob(f'genbank_genomes/{acc}*.fna.gz')
+        filename = filename[0]
+        sizes = alignplot.load_contig_sizes(filename)
+        contigs_by_acc[acc] = sizes
+        for contig_name in sizes:
+            assert contig_name not in contig_to_acc
+            contig_to_acc[contig_name] = acc
 
     dirty_alignment = AlignmentContainer(genomebase, args.genome, contaminant_pairs, f'{inp_dir}/hitlist-accessions.info.csv')
 
