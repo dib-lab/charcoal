@@ -33,16 +33,23 @@ def main(args):
     scaled = matches_info['query_info']['scaled']
 
     clean_accs = []
+    clean_accs_d = {}
     dirty_accs = []
+    dirty_accs_d = {}
     for match_acc, acc_info in matches_info['matches'].items():
         match_counts = acc_info['counts']
         match_type = acc_info['match_type']
         match_lineage = acc_info['lineage']
 
+        assert match_acc not in clean_accs_d
+        assert match_acc not in dirty_accs_d
+
         if match_type == 'clean':
             clean_accs.append((match_acc, match_lineage, match_counts))
+            clean_accs_d[match_acc] = (match_lineage, match_counts)
         elif match_type == 'dirty':
             dirty_accs.append((match_acc, match_lineage, match_counts))
+            dirty_accs_d[match_acc] = (match_lineage, match_counts)
 
     clean_accs.sort(key=lambda x: -x[2])
     dirty_accs.sort(key=lambda x: -x[2])
