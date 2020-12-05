@@ -5,7 +5,7 @@ Do gather matches on contigs => taxonomy, and save to JSON
 import sys
 import argparse
 import os.path
-import yaml
+import json
 from collections import defaultdict
 
 import screed
@@ -100,7 +100,7 @@ def main(args):
     # complain.)
     if not siglist:
         print('no non-identical matches for this genome, exiting.')
-        with open(args.yaml_out, 'wt') as fp:
+        with open(args.json_out, 'wt') as fp:
             pass
         return 0
 
@@ -160,7 +160,7 @@ def main(args):
     print(f"Processed {n + 1} contigs.")
 
     # save!
-    with open(args.yaml_out, 'wt') as fp:
+    with open(args.json_out, 'wt') as fp:
         out_dict = {}
         info_dict = {}
         info_dict['genome'] = genomebase
@@ -178,7 +178,7 @@ def main(args):
             matches_info_out[acc] = acc_info
         out_dict['matches'] = matches_info_out
 
-        yaml.dump(out_dict, fp)
+        json.dump(out_dict, fp)
 
     return 0
 
@@ -194,8 +194,8 @@ def cmdline(sys_args):
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')
 
-    p.add_argument('--yaml-out',
-                   help='YAML-format output file of all matches',
+    p.add_argument('--json-out',
+                   help='JSON output file of all matches',
                    required=True)
     p.add_argument('--match-rank', required=True)
     args = p.parse_args()

@@ -6,7 +6,7 @@ import sys
 import argparse
 import csv
 import os.path
-import yaml
+import json
 import glob
 import itertools
 
@@ -30,8 +30,8 @@ def main(args):
 
     genomebase = os.path.basename(args.genome)
 
-    with open(args.matches_yaml, 'rt') as fp:
-        matches_info = yaml.safe_load(fp)
+    with open(args.matches_json, 'rt') as fp:
+        matches_info = json.load(fp)
 
     ##
     genome_lin = utils.make_lineage(matches_info['query_info']['genome_lineage'])
@@ -146,7 +146,7 @@ def main(args):
 
     ###
 
-    with open(args.yaml_out, 'wt') as fp:
+    with open(args.json_out, 'wt') as fp:
         pass
     with open(args.summary_csv, 'wt') as fp:
         pass
@@ -159,8 +159,8 @@ def cmdline(sys_args):
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--input-directory', required=True)
     p.add_argument('--hit-list', required=True)
-    p.add_argument('--matches-yaml', required=True)
-    p.add_argument('--yaml-out', required=True)
+    p.add_argument('--matches-json', required=True)
+    p.add_argument('--json-out', required=True)
     p.add_argument('--summary-csv', required=True)
     p.add_argument('--min-query-coverage', type=float, required=True)
     p.add_argument('--min-align-pident', type=float, required=True)
