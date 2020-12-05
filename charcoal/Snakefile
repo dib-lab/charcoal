@@ -546,7 +546,8 @@ rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
-        f'{report_dir}/index.html'
+        f'{report_dir}/index.html',
+        f'{report_dir}/stage2.html'
 
 # configure notebook kernel; all notebook rules depend on this setup.
 rule set_kernel:
