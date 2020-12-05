@@ -149,7 +149,9 @@ def main(args):
     with open(args.json_out, 'wt') as fp:
         pass
     with open(args.summary_csv, 'wt') as fp:
-        pass
+        w = csv.writer(fp)
+        w.writerow(["genome", "dirty_kb", "remove_kb"])
+        w.writerow([genomebase, round(sum_dirty_kb, 1), round(sum_to_remove, 1)])
 
     return 0
 

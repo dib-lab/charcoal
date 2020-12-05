@@ -391,7 +391,7 @@ rule combine_genome_summary:
 # stage 2: produce matches detail & genome alignments
 rule stage2:
     input:
-        Checkpoint_HitListGenomes(f'{stage2_dir}/{{g}}.stage2.json'),
+        output_dir + '/stage2_summary.csv',
 
 # download genbank genome details; make an info.csv file for entry.
 rule make_genbank_info_csv:
@@ -502,6 +502,17 @@ rule postprocess_alignments:
             --min-query-coverage={params.min_query_coverage} \
             --min-align-pident={params.min_align_pident} \
             {input.genome} | tee {output.report}
+    """
+
+# combine postprocessing summary details for the matches from stage 2.
+rule combine_postprocessing_csv:
+    input:
+        Checkpoint_HitListGenomes(f'{stage2_dir}/{{g}}.stage2.csv'),
+    output:
+        output_dir + '/stage2_summary.csv',
+    shell: """
+        python -m charcoal.combine_csvs --sort-by remove_kb --reverse \
+            {input} > {output}
     """
 
 ###
@@ -615,6 +626,24 @@ rule make_html_alignment:
 rule all_alignment_reports:
     input:
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
+
+# make the stage 2 index
+rule make_stage2_index:
+    input:
+        Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
+        notebook='charcoal/notebooks/report-stage2.ipynb',
+        summary=f'{output_dir}/stage2_summary.csv',
+        kernel_set = rules.set_kernel.output
+    output:
+        nb=f'{report_dir}/stage2.ipynb',
+        html=f'{report_dir}/stage2.html',
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        papermill {input.notebook} - -p name {output_dir:q} -p render '' \
+            -p directory .. -k charcoal --cwd {report_dir} > {output.nb}
+        python -m nbconvert {output.nb} --to html --stdout --no-input > {output.html}
+    """
+
 
 # make the index.
 rule make_index:
