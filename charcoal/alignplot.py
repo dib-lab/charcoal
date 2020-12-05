@@ -11,7 +11,7 @@ import subprocess
 import os
 from collections import defaultdict, namedtuple
 import numpy
-from itertools import cycle
+from itertools import cycle, chain
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -147,6 +147,14 @@ class AlignmentContainer:
                     self.query_name = row["ncbi_tax_name"]
                 if row["acc"] in self.target_names:
                     self.target_names[row["acc"]] = row["ncbi_tax_name"]
+
+    def __len__(self):
+        "Return total number of aligned regions"
+        return sum([ len(v) for v in self.results.values() ])
+
+    def __iter__(self):
+        "Iterate over all aligned regions"
+        return iter(chain(*self.results.values()))
 
     def get_targetfile(self, t_acc):
         "Return the target file, given target accession."
@@ -361,9 +369,7 @@ class AlignmentContainer:
         if t_acc:
             regions = self.results[t_acc]
         else:
-            regions = []
-            for t_acc in self.results:
-                regions.extend(self.results[t_acc])
+            regions = list(self)
 
         regions_by_query = group_regions_by(regions, 'query')
         sum_kb = calc_regions_aligned_bp(regions_by_query, 'query')
@@ -491,9 +497,7 @@ class StackedDotPlot:
         alignment = self.alignment
 
         # aggregate regions over _all_ results
-        regions = []
-        for k, v in alignment.results.items():
-            regions.extend(v)
+        regions = iter(self)
 
         queryfile = alignment.queryfile
 
@@ -546,10 +550,7 @@ class AlignmentSlopeDiagram:
         
     def calculate(self, select_n=None, plot_all_contigs=False):
         alignment = self.alignment
-
-        regions = []
-        for k, v in alignment.results.items():
-            regions.extend(v)
+        regions = iter(alignment)
 
         # calculate and sort region summed kb in alignments over 95%
         regions_by_query = group_regions_by(regions, "query")
