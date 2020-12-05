@@ -147,7 +147,7 @@ def get_hitlist_genomes():
 def get_hitlist_match_accs(g):
     import yaml
 
-    with open(f'{stage2_dir}/{g}.hitlist.matches.yaml') as fp:
+    with open(f'{stage2_dir}/{g}.matches.yaml') as fp:
         matches_info = yaml.safe_load(fp)
 
     if matches_info["matches"]:
@@ -434,7 +434,7 @@ checkpoint hitlist_make_contigs_matches:
         lineages = config['lineages_csv'],
         hitlist = output_dir + '/stage1_hitlist.csv'
     output:
-        matches_yaml = stage2_dir + '/{g}.hitlist.matches.yaml',
+        matches_yaml = stage2_dir + '/{g}.matches.yaml',
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = default_match_rank,
@@ -467,7 +467,7 @@ rule postprocess_alignments:
     input:
         Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
         hit_list_csv = stage1_dir + '/{g}.hitlist_for_filtering.csv',
-        matches = f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        matches = f'{stage2_dir}/{{g}}.matches.yaml',
         hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv', # @CTB?
     output:
         yaml_out = stage2_dir + '/{g}.stage2.yaml',
@@ -565,7 +565,7 @@ rule make_notebook_alignment:
     input:
         Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
         nb = 'charcoal/notebooks/report-alignment.ipynb',
-        summary = f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        summary = f'{stage2_dir}/{{g}}.matches.yaml',
         hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv',
         kernel_set = rules.set_kernel.output
     output:
@@ -584,7 +584,7 @@ rule make_notebook_alignment:
 rule make_html_alignment:
     input:
         notebook=report_dir + '/{g}.align.ipynb',
-        summary=f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        summary=f'{stage2_dir}/{{g}}.matches.yaml',
     output:
         report_dir + '/{g}.align.html',
     conda: 'conf/env-reporting.yml'
