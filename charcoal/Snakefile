@@ -3,7 +3,7 @@
 #
 # --configfile must be specified on command line.
 #
-import csv, sys, os
+import csv, sys, os, json
 from snakemake.workflow import srcdir
 from charcoal.utils import CSV_DictHelper
 
@@ -106,11 +106,27 @@ if provided_lineages_file:
 
     print(f'** read {len(provided_lineages)} provided lineages')
 
+def check_is_fraction(f):
+    if f >= 0 and f <= 1:
+        return True
+    return False
+
 min_f_ident = config['min_f_ident']
 min_f_ident = float(min_f_ident)
+assert check_is_fraction(min_f_ident), 'min_f_ident should be between 0 and 1'
 
 min_f_major = config['min_f_major']
 min_f_major = float(min_f_major)
+assert check_is_fraction(min_f_major), 'min_f_major should be between 0 and 1'
+
+min_align_pident = config['min_align_pident']
+min_align_pident = int(min_align_pident)
+assert min_align_pident > 1.0, 'min_align_pident should be between 1 and 100'
+assert min_align_pident <= 100, 'min_align_pident should be between 1 and 100'
+
+min_query_coverage = config['min_query_coverage']
+min_query_coverage = float(min_query_coverage)
+assert check_is_fraction(min_query_coverage), 'min_query_coverage should be between 0 and 1'
 
 default_match_rank = config['match_rank']
 
@@ -145,10 +161,8 @@ def get_hitlist_genomes():
 
 
 def get_hitlist_match_accs(g):
-    import yaml
-
-    with open(f'{stage2_dir}/{g}.hitlist.matches.yaml') as fp:
-        matches_info = yaml.safe_load(fp)
+    with open(f'{stage2_dir}/{g}.matches.json') as fp:
+        matches_info = json.load(fp)
 
     if matches_info["matches"]:
         match_accs = list(matches_info["matches"])
@@ -329,14 +343,13 @@ rule compare_taxonomy_single:
         contam_json = stage1_dir + '/{g}.contam_summary.json',
     conda: 'conf/env-sourmash.yml'
     params:
-        output_dir = stage1_dir,
+        input_dir = stage1_dir,
         min_f_major = min_f_major,
         min_f_ident = min_f_ident,
         match_rank = default_match_rank,
     shell: """
         python -m charcoal.compare_taxonomy \
-            --input-directory {params.output_dir} \
-            --genome-list-file {input.genome_list} \
+            --input-directory {params.input_dir} \
             --lineages-csv {input.lineages} \
             --provided-lineages {input.provided_lineages} \
             --hit-list {output.hit_list_csv} \
@@ -378,8 +391,7 @@ rule combine_genome_summary:
 # stage 2: produce matches detail & genome alignments
 rule stage2:
     input:
-        Checkpoint_HitListGenomes(stage2_dir + '/{g}.hitlist.matches.yaml'),
-        Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
+        output_dir + '/stage2_summary.csv',
 
 # download genbank genome details; make an info.csv file for entry.
 rule make_genbank_info_csv:
@@ -435,7 +447,7 @@ checkpoint hitlist_make_contigs_matches:
         lineages = config['lineages_csv'],
         hitlist = output_dir + '/stage1_hitlist.csv'
     output:
-        matches_yaml = stage2_dir + '/{g}.hitlist.matches.yaml',
+        matches_json = stage2_dir + '/{g}.matches.json',
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = default_match_rank,
@@ -445,7 +457,7 @@ checkpoint hitlist_make_contigs_matches:
             --genome-sig {input.genome_sig} \
             --matches-sig {input.matches} \
             --hitlist {input.hitlist} \
-            --yaml-out {output.matches_yaml} \
+            --json-out {output.matches_json} \
             --match-rank {params.match_rank}
     """
 
@@ -461,6 +473,46 @@ rule mashmap_compare:
     shell: """
         mashmap -q {input.query} -r {input.target} -o {output.cmpfile} \
             --pi 95 > {output.outfile}
+    """
+
+# postprocess alignments w/taxonomy and summarize.
+rule postprocess_alignments:
+    input:
+        Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
+        genome = genome_dir + '/{g}',
+        hit_list_csv = stage1_dir + '/{g}.hitlist_for_filtering.csv',
+        matches = f'{stage2_dir}/{{g}}.matches.json',
+        hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv', # @CTB?
+    output:
+        json_out = stage2_dir + '/{g}.stage2.json',
+        summary_csv = stage2_dir + '/{g}.stage2.csv',
+        report = stage2_dir + '/{g}.postprocess.txt',
+    conda: 'conf/env-sourmash.yml'
+    params:
+        input_dir = stage2_dir,
+        min_query_coverage = min_query_coverage,
+        min_align_pident = min_align_pident,
+    shell: """
+        python -m charcoal.postprocess_alignments \
+            --input-directory {params.input_dir} \
+            --hit-list {input.hit_list_csv} \
+            --matches-json {input.matches} \
+            --json-out {output.json_out} \
+            --summary-csv {output.summary_csv} \
+            --min-query-coverage={params.min_query_coverage} \
+            --min-align-pident={params.min_align_pident} \
+            {input.genome} | tee {output.report}
+    """
+
+# combine postprocessing summary details for the matches from stage 2.
+rule combine_postprocessing_csv:
+    input:
+        Checkpoint_HitListGenomes(f'{stage2_dir}/{{g}}.stage2.csv'),
+    output:
+        output_dir + '/stage2_summary.csv',
+    shell: """
+        python -m charcoal.combine_csvs --sort-by remove_kb --reverse \
+            {input} > {output}
     """
 
 ###
@@ -494,7 +546,8 @@ rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
-        f'{report_dir}/index.html'
+        f'{report_dir}/index.html',
+        f'{report_dir}/stage2.html'
 
 # configure notebook kernel; all notebook rules depend on this setup.
 rule set_kernel:
@@ -543,7 +596,7 @@ rule make_notebook_alignment:
     input:
         Checkpoint_HitListPairs(stage2_dir + '/{g}.x.{acc}.mashmap.align'),
         nb = 'charcoal/notebooks/report-alignment.ipynb',
-        summary = f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        summary = f'{stage2_dir}/{{g}}.matches.json',
         hitlist_acc_csv = stage2_dir + '/hitlist-accessions.info.csv',
         kernel_set = rules.set_kernel.output
     output:
@@ -562,7 +615,7 @@ rule make_notebook_alignment:
 rule make_html_alignment:
     input:
         notebook=report_dir + '/{g}.align.ipynb',
-        summary=f'{stage2_dir}/{{g}}.hitlist.matches.yaml',
+        summary=f'{stage2_dir}/{{g}}.matches.json',
     output:
         report_dir + '/{g}.align.html',
     conda: 'conf/env-reporting.yml'
@@ -574,6 +627,24 @@ rule make_html_alignment:
 rule all_alignment_reports:
     input:
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
+
+# make the stage 2 index
+rule make_stage2_index:
+    input:
+        Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
+        notebook='charcoal/notebooks/report-stage2.ipynb',
+        summary=f'{output_dir}/stage2_summary.csv',
+        kernel_set = rules.set_kernel.output
+    output:
+        nb=f'{report_dir}/stage2.ipynb',
+        html=f'{report_dir}/stage2.html',
+    conda: 'conf/env-reporting.yml'
+    shell: """
+        papermill {input.notebook} - -p name {output_dir:q} -p render '' \
+            -p directory .. -k charcoal --cwd {report_dir} > {output.nb}
+        python -m nbconvert {output.nb} --to html --stdout --no-input > {output.html}
+    """
+
 
 # make the index.
 rule make_index:

@@ -49,6 +49,14 @@ def pop_to_rank(lin, rank):
     return tuple(lin)
 
 
+def find_disagree_rank(lin_a, lin_b):
+    for a, b in zip(lin_a, lin_b):
+        assert a.rank == b.rank
+        if a.name != b.name:
+            return a.rank
+    return None
+
+
 def get_idents_for_hashval(lca_db, hashval):
     "Get the identifiers associated with this hashval."
     idx_list = lca_db.hashval_to_idx.get(hashval, [])
