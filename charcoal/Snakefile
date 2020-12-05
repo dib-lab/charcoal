@@ -352,7 +352,6 @@ rule compare_taxonomy_single:
     shell: """
         python -m charcoal.compare_taxonomy \
             --input-directory {params.input_dir} \
-            --genome-list-file {input.genome_list} \
             --lineages-csv {input.lineages} \
             --provided-lineages {input.provided_lineages} \
             --hit-list {output.hit_list_csv} \
@@ -489,6 +488,7 @@ rule postprocess_alignments:
     output:
         yaml_out = stage2_dir + '/{g}.stage2.yaml',
         summary_csv = stage2_dir + '/{g}.stage2.csv',
+        report = stage2_dir + '/{g}.postprocess.txt',
     conda: 'conf/env-sourmash.yml'
     params:
         input_dir = stage2_dir,
@@ -503,7 +503,7 @@ rule postprocess_alignments:
             --summary-csv {output.summary_csv} \
             --min-query-coverage={params.min_query_coverage} \
             --min-align-pident={params.min_align_pident} \
-            {input.genome}
+            {input.genome} | tee {output.report}
     """
 
 ###
