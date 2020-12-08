@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-Do gather matches on contigs, and save to JSON
+Do gather matches on contigs => taxonomy, and save to JSON
 """
 import sys
 import argparse
@@ -21,11 +21,11 @@ from .utils import (gather_at_rank, get_ident, ContigGatherInfo)
 def main(args):
     "Main entry point for scripting. Use cmdline for command line entry."
     genomebase = os.path.basename(args.genome)
-    match_rank = 'genus'
+    match_rank = args.match_rank
 
     # load taxonomy CSV
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
-                                              start_column=3)
+                                              start_column=2)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
     # load the genome signature
@@ -119,6 +119,7 @@ def cmdline(sys_args):
     p.add_argument('--json-out',
                    help='JSON-format output file of all tax results',
                    required=True)
+    p.add_argument('--match-rank', required=True)
     args = p.parse_args()
 
     return main(args)

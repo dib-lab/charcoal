@@ -4,6 +4,7 @@ channels:
     - bioconda
     - defaults
 dependencies:
+    - python>=3.7,<3.8
     - papermill>=2.1.2,<3
     - notebook>=6,<7
     - plotly>=4.9.0,<5
@@ -12,3 +13,4 @@ dependencies:
     - pip:
       - git+https://github.com/dib-lab/charcoal.git
       - sourmash==4.0.0a3
+      - pyinterval

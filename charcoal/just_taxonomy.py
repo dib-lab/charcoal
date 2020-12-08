@@ -336,7 +336,7 @@ def main(args):
     match_rank = args.match_rank
 
     tax_assign, _ = load_taxonomy_assignments(args.lineages_csv,
-                                              start_column=3)
+                                              start_column=2)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
     with open(args.matches_sig, 'rt') as fp:

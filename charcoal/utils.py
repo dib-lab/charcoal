@@ -49,6 +49,14 @@ def pop_to_rank(lin, rank):
     return tuple(lin)
 
 
+def find_disagree_rank(lin_a, lin_b):
+    for a, b in zip(lin_a, lin_b):
+        assert a.rank == b.rank
+        if a.name != b.name:
+            return a.rank
+    return None
+
+
 def get_idents_for_hashval(lca_db, hashval):
     "Get the identifiers associated with this hashval."
     idx_list = lca_db.hashval_to_idx.get(hashval, [])
@@ -182,7 +190,6 @@ def get_ident(sig):
     "Hack and slash identifiers."
     ident = sig.name
     ident = ident.split()[0]
-    ident = ident.split('.')[0]
     return ident
 
 
@@ -248,8 +255,10 @@ class CSV_DictHelper:
         with open(filename, 'rt') as fp:
             r = csv.DictReader(fp)
             for row in r:
-                genome = row['genome']
-                self.rows[genome] = row
+                keyval = row[key]
+                if keyval in self.rows:
+                    raise ValueError(f"duplicate key value {key}='{keyval}'")
+                self.rows[keyval] = row
 
     def __getitem__(self, k):
         return AttrDict(self.rows[k])

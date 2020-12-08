@@ -20,12 +20,14 @@ def test_basic(location):
     args.input_directory = location
     args.genome_list_file = genome_list_file
     args.hit_list = hitlist
-    args.contig_details_summary = summary_csv
+    args.genome_summary = summary_csv
     args.lineages_csv = utils.relative_file("tests/test-data/test-match-lineages.csv")
     args.provided_lineages = None
     args.contam_summary_json = contam_json
     args.min_f_ident = compare_taxonomy.F_IDENT_THRESHOLD
     args.min_f_major = compare_taxonomy.F_MAJOR_THRESHOLD
+    args.match_rank = 'genus'
+    args.genome = 'loomba'
     
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.sig"), os.path.join(location, "loomba.sig"))
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.sig"), os.path.join(location, "loomba.matches.sig"))
