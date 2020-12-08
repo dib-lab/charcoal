@@ -497,7 +497,7 @@ class StackedDotPlot:
         alignment = self.alignment
 
         # aggregate regions over _all_ results
-        regions = iter(self)
+        regions = iter(alignment)
 
         queryfile = alignment.queryfile
 
@@ -696,14 +696,7 @@ class AlignmentSlopeDiagram:
         return plt.gcf()
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("query_filename")
-    p.add_argument("targetfiles", nargs="+")
-    p.add_argument("-i", "--info-file", help="CSV file with nicer names for accessions")
-    p.add_argument("-o", "--output-prefix", default="alignplot")
-    args = p.parse_args()
-
+def do_compare(args):
     def get_acc(x):
         return "_".join(x.split('_')[:2])
 
@@ -754,7 +747,57 @@ def main():
     plt.savefig(f"{args.output_prefix}-alignplot.png")
     plt.cla()
 
-    return 0
+
+def plot_nucmer(args):
+    query_acc = args.query_filename
+    target_pairs = [ (t, t) for t in args.targetfiles ]
+    alignment = AlignmentContainer(
+        query_acc, args.query_filename, target_pairs,
+    )
+    alignment.run_nucmer()
+    alignment.filter(pident=95, query_size=0.5)
+
+    dotplot = StackedDotPlot(alignment)
+    dotplot.plot()
+
+    print(f"saving {args.output_prefix}-dotplot.png")
+    plt.savefig(f"{args.output_prefix}-dotplot.png")
+    plt.cla()
+
+    slope = AlignmentSlopeDiagram(alignment)
+    slope.plot()
+
+    print(f"saving {args.output_prefix}-sloped.png")
+    plt.savefig(f"{args.output_prefix}-sloped.png")
+    plt.cla()
+
+
+def main():
+    p = argparse.ArgumentParser()
+    subparsers = p.add_subparsers(title='subcommands',
+                                  help='additional help')
+
+    p_cmp = subparsers.add_parser('compare_all', aliases=['cmp'])
+    p_cmp.add_argument("query_filename")
+    p_cmp.add_argument("targetfiles", nargs="+")
+    p_cmp.add_argument("-i", "--info-file", help="CSV file with nicer names for accessions")
+    p_cmp.add_argument("-o", "--output-prefix", default="alignplot")
+    p_cmp.set_defaults(func=do_compare)
+
+    p_nuc = subparsers.add_parser('plot_nucmer', aliases=['nucmer'])
+    p_nuc.add_argument("query_filename")
+    p_nuc.add_argument("targetfiles", nargs="+")
+    p_nuc.add_argument("-o", "--output-prefix", default="nucmer")
+    p_nuc.set_defaults(func=plot_nucmer)
+
+    p_mash = subparsers.add_parser('plot_mashmap', aliases=['mashmap'])
+    p_mash.add_argument("query_filename")
+    p_mash.add_argument("targetfiles", nargs="+")
+    p_mash.add_argument("-o", "--output-prefix", default="mashmap")
+    p_mash.set_defaults(func=plot_nucmer)
+    args = p.parse_args()
+
+    return args.func(args)
 
 
 if __name__ == "__main__":
