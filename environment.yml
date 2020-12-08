@@ -7,4 +7,6 @@ dependencies:
     - python>=3.6
     - snakemake-minimal=5.8.1
     - screed
-    
+    - pip
+    - pip:
+      - sourmash==4.0.0a3
