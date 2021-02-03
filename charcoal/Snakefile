@@ -406,7 +406,7 @@ rule make_genbank_info_csv:
 # download actual genomes!
 rule download_matching_genomes_one_by_one:
      input:
-         csvfile = ancient('genbank_info/{acc}.info.csv')
+         csvfile = 'genbank_info/{acc}.info.csv'
      output:
          genome = "genbank_genomes/{acc}_genomic.fna.gz"
      run:
