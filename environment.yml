@@ -10,4 +10,4 @@ dependencies:
     - click
     - pip
     - pip:
-      - sourmash==4.0.0a3
+      - sourmash==4.1.0
