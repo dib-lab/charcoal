@@ -135,7 +135,7 @@ def main(args):
 
     screed_iter = screed.open(args.genome)
     threshold_bp = empty_mh.scaled * GATHER_MIN_MATCHES
-    print("threshold_bp is", threshold_bp)
+
     n = - 1
     for n, record in enumerate(screed_iter):
         # look at each contig individually
