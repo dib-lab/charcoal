@@ -154,7 +154,7 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
     counts = Counter()
     while 1:
         
-        if len(query_sig.minhash.get_mins()):
+        if len(query_sig.minhash.get_mins()) == 0:
             break
 
         results = lca_db.gather(query_sig, threshold_bp=0)
