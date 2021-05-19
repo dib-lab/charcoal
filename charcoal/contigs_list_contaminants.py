@@ -80,8 +80,7 @@ def main(args):
     # load all of the matches from search --containment in the database
     with open(args.matches_sig, 'rt') as fp:
         try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True,
-                                                    quiet=False))
+            siglist = list(sourmash.load_file_as_signatures(fp))
         except sourmash.exceptions.SourmashError:
             siglist = []
     print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")

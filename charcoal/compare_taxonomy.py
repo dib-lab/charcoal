@@ -121,7 +121,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
     with open(matches_filename, 'rt') as fp:
         try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
+            siglist = list(sourmash.load_files_as_signatures(fp, do_raise=True))
         except sourmash.exceptions.SourmashError:
             siglist = None
 

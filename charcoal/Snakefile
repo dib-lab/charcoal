@@ -287,21 +287,21 @@ rule contigs_sig:
     """
 
 # run a search, query.x.database.
-rule search_all:
+rule prefetch_all:
     input:
         query = stage1_dir + '/{filename}.sig',
         databases = config['gather_db']
     output:
         csv = stage1_dir + '/{filename}.matches.csv',
-        matches = stage1_dir + '/{filename}.matches.sig',
+        matches = stage1_dir + '/{filename}.matches.zip',
         txt = stage1_dir + '/{filename}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
         gather_scaled = config['gather_scaled']
     conda: 'conf/env-sourmash.yml'
     shell: """
-        sourmash search {input.query} {input.databases} -o {output.csv} \
-            --containment {params.moltype} --scaled {params.gather_scaled} \
+        sourmash gather --no-linear --prefetch {input.query} {input.databases} -o {output.csv} \
+            {params.moltype} --scaled {params.gather_scaled} \
             --save-matches {output.matches} --threshold=0.001 >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
@@ -312,7 +312,8 @@ rule make_contigs_taxonomy_json:
     input:
         genome = genome_dir + '/{f}',
         genome_sig = stage1_dir + '/{f}.sig',
-        matches = stage1_dir + '/{f}.matches.sig',
+        matches = stage1_dir + '/{f}.matches.zip',
+
         lineages = config['lineages_csv']
     output:
         json = stage1_dir + '/{f}.contigs-tax.json',
@@ -333,7 +334,7 @@ rule make_contigs_taxonomy_json:
 rule compare_taxonomy_single:
     input:
         json = stage1_dir + '/{g}.contigs-tax.json',
-        sig = stage1_dir + '/{g}.matches.sig',
+        sig = stage1_dir + '/{g}.matches.zip',
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
         genome_list = genome_list_file
@@ -443,7 +444,7 @@ checkpoint hitlist_make_contigs_matches:
     input:
         genome = genome_dir + '/{g}',
         genome_sig = stage1_dir + '/{g}.sig',
-        matches = stage1_dir + '/{g}.matches.sig',
+        matches = stage1_dir + '/{g}.matches.zip',
         lineages = config['lineages_csv'],
         hitlist = output_dir + '/stage1_hitlist.csv'
     output:
@@ -651,7 +652,7 @@ rule make_index:
     input:
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.fig.html'),
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
-        notebook='charcoal/notebooks/report-index.ipynb',
+        #notebook='charcoal/notebooks/report-index.ipynb',
         summary=f'{output_dir}/stage1_genome_summary.csv',
         kernel_set = rules.set_kernel.output
     output:

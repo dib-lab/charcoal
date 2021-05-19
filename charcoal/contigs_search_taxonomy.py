@@ -32,12 +32,11 @@ def main(args):
     genome_sig = sourmash.load_one_signature(args.genome_sig)
 
     # load all of the matches from search --containment in the database
-    with open(args.matches_sig, 'rt') as fp:
-        try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True,
-                                                    quiet=False))
-        except sourmash.exceptions.SourmashError:
-            siglist = []
+    #with open(args.matches_sig, 'rt') as fp:
+    try:
+        siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
+    except sourmash.exceptions.SourmashError:
+        siglist = []
     print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
 
     # Hack for examining members of our search database: remove exact matches.
@@ -88,7 +87,7 @@ def main(args):
         # look at each contig individually
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
-
+        print("working on", n)
         # collect all the gather results at genus level, together w/counts;
         # here, results is a list of (lineage, count) tuples.
         results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
