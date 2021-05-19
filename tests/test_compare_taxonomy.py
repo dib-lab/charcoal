@@ -30,7 +30,7 @@ def test_basic(location):
     args.genome = 'loomba'
     
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.sig"), os.path.join(location, "loomba.sig"))
-    shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.sig"), os.path.join(location, "loomba.matches.sig"))
+    shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.zip"), os.path.join(location, "loomba.matches.zip"))
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.contigs-tax.json"), os.path.join(location, "loomba.contigs-tax.json"))
 
     status = compare_taxonomy.main(args)
