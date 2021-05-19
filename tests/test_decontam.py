@@ -62,7 +62,7 @@ def make_lca_and_lineages(match_files, lineages_csv, scaled, ksize,
     # load matches into a list
     siglist = []
     for filename in match_files:
-        siglist += list(sourmash.load_signatures(filename))
+        siglist += list(sourmash.load_file_as_signatures(filename))
 
     # pull in taxonomic assignments
     tax_assign, _ = load_taxonomy_assignments(lineages_csv,
