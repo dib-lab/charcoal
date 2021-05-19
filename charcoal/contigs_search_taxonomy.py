@@ -87,14 +87,15 @@ def main(args):
         # look at each contig individually
         mh = empty_mh.copy_and_clear()
         mh.add_sequence(record.sequence, force=True)
-        print("working on", n)
         # collect all the gather results at genus level, together w/counts;
         # here, results is a list of (lineage, count) tuples.
-        results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
-
-        # store together with size of sequence.
-        info = ContigGatherInfo(len(record.sequence), len(mh), results)
-        contigs_tax[record.name] = info
+        if len(mh) < 1:
+            pass
+        else:
+            results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
+            # store together with size of sequence.
+            info = ContigGatherInfo(len(record.sequence), len(mh), results)
+            contigs_tax[record.name] = info
 
     print(f"Processed {len(contigs_tax)} contigs.")
 
