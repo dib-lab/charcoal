@@ -125,7 +125,8 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
     try:
         siglist = list(sourmash.load_file_as_signatures(matches_filename))
-    except sourmash.exceptions.SourmashError:
+    # TR for empty signatures; update when #1537 is fixed. 
+    except IndexError:
         siglist = None
 
     if not siglist:
