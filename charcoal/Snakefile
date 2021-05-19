@@ -652,7 +652,7 @@ rule make_index:
     input:
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.fig.html'),
         Checkpoint_HitListGenomes(f'{report_dir}/{{g}}.align.html'),
-        #notebook='charcoal/notebooks/report-index.ipynb',
+        notebook='charcoal/notebooks/report-index.ipynb',
         summary=f'{output_dir}/stage1_genome_summary.csv',
         kernel_set = rules.set_kernel.output
     output:
