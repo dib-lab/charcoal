@@ -297,12 +297,13 @@ rule prefetch_all:
         txt = stage1_dir + '/{filename}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
-        gather_scaled = config['gather_scaled']
+        gather_scaled = config['gather_scaled'],
+        threshold_bp = config['gather_scaled']*3
     conda: 'conf/env-sourmash.yml'
     shell: """
         sourmash prefetch --no-linear {input.query} {input.databases} -o {output.csv} \
             {params.moltype} --scaled {params.gather_scaled} \
-            --save-matches {output.matches} --threshold=0.001 >& {output.txt}
+            --save-matches {output.matches} --threshold-bp {params.threshold_bp} >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
     """
