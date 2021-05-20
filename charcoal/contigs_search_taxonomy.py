@@ -91,9 +91,7 @@ def main(args):
         mh.add_sequence(record.sequence, force=True)
         # collect all the gather results at genus level, together w/counts;
         # here, results is a list of (lineage, count) tuples.
-        if len(mh) < 1:
-            pass
-        else:
+        if len(mh):
             results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
             # store together with size of sequence.
             info = ContigGatherInfo(len(record.sequence), len(mh), results)
