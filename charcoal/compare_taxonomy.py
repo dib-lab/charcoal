@@ -78,10 +78,9 @@ def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
 
         sum_ident += count
     
-    if sum_ident == 0:
-        f_ident = 0
-        f_major = 0
-    else:
+    f_ident = 0
+    f_major = 0
+    if sum_ident:
         f_ident = sum_ident / len(entire_mh)
         f_major = first_count / sum_ident
 
