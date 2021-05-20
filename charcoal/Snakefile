@@ -300,7 +300,7 @@ rule prefetch_all:
         gather_scaled = config['gather_scaled']
     conda: 'conf/env-sourmash.yml'
     shell: """
-        sourmash gather --no-linear --prefetch {input.query} {input.databases} -o {output.csv} \
+        sourmash prefetch --no-linear {input.query} {input.databases} -o {output.csv} \
             {params.moltype} --scaled {params.gather_scaled} \
             --save-matches {output.matches} --threshold=0.001 >& {output.txt}
         cat {output.txt}
