@@ -11,5 +11,5 @@ dependencies:
     - pip
     - pip:
       - git+https://github.com/dib-lab/charcoal.git
-      - sourmash==4.1.0
+      - sourmash>=4.1.0,<5
       - pyinterval
