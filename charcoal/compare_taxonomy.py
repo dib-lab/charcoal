@@ -126,7 +126,8 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
     try:
         siglist = list(sourmash.load_file_as_signatures(matches_filename))
     # TR for empty signatures; update when sourmash#1537 is fixed. 
-    except IndexError:
+    # TR AssertionError covers "assert db" from sourmash _load_database() in sourmash_args.py
+    except (IndexError, AssertionError) as e:
         siglist = None
 
     if not siglist:

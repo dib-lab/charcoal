@@ -35,8 +35,9 @@ def main(args):
     #with open(args.matches_sig, 'rt') as fp:
     try:
         siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
-    # TR for cases with empty sigs; update when sourmash#1537 is fixed
-    except IndexError:
+    # TR for cases with empty sigs that return IndexError; update when sourmash#1537 is fixed
+    # TR AssertionError covers "assert db" from sourmash _load_database() in sourmash_args.py
+    except (IndexError, AssertionError) as e:
         siglist = []
     print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
 
