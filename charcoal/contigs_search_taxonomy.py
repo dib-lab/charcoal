@@ -35,7 +35,7 @@ def main(args):
     #with open(args.matches_sig, 'rt') as fp:
     try:
         siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
-    # TR for cases with empty sigs; update when #1537 is fixed
+    # TR for cases with empty sigs; update when sourmash#1537 is fixed
     except IndexError:
         siglist = []
     print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
