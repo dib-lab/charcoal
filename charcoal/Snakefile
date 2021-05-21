@@ -301,7 +301,7 @@ rule prefetch_all:
         threshold_bp = config['gather_scaled']*3
     conda: 'conf/env-sourmash.yml'
     shell: """
-        sourmash prefetch --no-linear {input.query} {input.databases} -o {output.csv} \
+        sourmash prefetch {input.query} {input.databases} -o {output.csv} \
             {params.moltype} --scaled {params.gather_scaled} \
             --save-matches {output.matches} --threshold-bp {params.threshold_bp} >& {output.txt}
         cat {output.txt}
