@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Code to produce a stacked dotplot and alignment slope diagram.
 """
