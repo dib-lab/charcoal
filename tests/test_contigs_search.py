@@ -42,8 +42,6 @@ def test_2_loomba(location):
     assert status == 0
     assert os.path.exists(args.json_out)
 
-    import shutil
-    shutil.copyfile(args.json_out, '/tmp/xyz.json')
     with open(args.json_out, 'rt') as fp:
         this_results = json.load(fp)
 
