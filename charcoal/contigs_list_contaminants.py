@@ -84,8 +84,7 @@ def main(args):
     # load all of the matches from search --containment in the database
     try:
         siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
-    # TR for empty signatures; update when sourmash#1537 is fixed. 
-    except IndexError:
+    except ValueError:
         siglist = []
     print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
 
