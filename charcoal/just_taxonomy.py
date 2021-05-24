@@ -339,8 +339,7 @@ def main(args):
                                               start_column=2)
     print(f'loaded {len(tax_assign)} tax assignments.')
 
-    with open(args.matches_sig, 'rt') as fp:
-        siglist = list(sourmash.load_signatures(fp))
+    siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
 
     if not siglist:
         print('no matches for this genome, exiting.')

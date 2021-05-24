@@ -30,7 +30,11 @@ def get_matches(mh, lca_db, lin_db, match_rank, threshold_bp):
 
     # do the gather:
     while 1:
-        results = lca_db.gather(query_sig, threshold_bp=threshold_bp)
+        try:
+            results = lca_db.gather(query_sig, threshold_bp=threshold_bp)
+        except ValueError:
+            break
+
         if not results:
             break
 
@@ -78,12 +82,10 @@ def main(args):
     genome_sig = sourmash.load_one_signature(args.genome_sig)
 
     # load all of the matches from search --containment in the database
-    with open(args.matches_sig, 'rt') as fp:
-        try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True,
-                                                    quiet=False))
-        except sourmash.exceptions.SourmashError:
-            siglist = []
+    try:
+        siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
+    except ValueError:
+        siglist = []
     print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
 
     # Hack for examining members of our search database: remove exact matches.
@@ -132,6 +134,7 @@ def main(args):
 
     screed_iter = screed.open(args.genome)
     threshold_bp = empty_mh.scaled * GATHER_MIN_MATCHES
+
     n = - 1
     for n, record in enumerate(screed_iter):
         # look at each contig individually

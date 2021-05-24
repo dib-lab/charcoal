@@ -146,14 +146,15 @@ class WriteAndTrackFasta:
 
 def gather_at_rank(mh, lca_db, lin_db, match_rank):
     "Run gather, and aggregate at given rank."
-    import copy
-    minhash = copy.copy(mh)
+    minhash = mh.to_mutable()
     query_sig = sourmash.SourmashSignature(minhash)
 
     # do the gather:
     counts = Counter()
-    while 1:
+    while query_sig.minhash:
+        
         results = lca_db.gather(query_sig, threshold_bp=0)
+
         if not results:
             break
 

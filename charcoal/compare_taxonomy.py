@@ -77,9 +77,12 @@ def guess_tax_by_gather(entire_mh, lca_db, lin_db, match_rank, report_fp):
                 first_count = count
 
         sum_ident += count
-
-    f_ident = sum_ident / len(entire_mh)
-    f_major = first_count / sum_ident
+    
+    f_ident = 0
+    f_major = 0
+    if sum_ident:
+        f_ident = sum_ident / len(entire_mh)
+        f_major = first_count / sum_ident
 
     return first_lin, f_ident, f_major
 
@@ -119,11 +122,10 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
 
 def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
-    with open(matches_filename, 'rt') as fp:
-        try:
-            siglist = list(sourmash.load_signatures(fp, do_raise=True, quiet=True))
-        except sourmash.exceptions.SourmashError:
-            siglist = None
+    try:
+        siglist = list(sourmash.load_file_as_signatures(matches_filename))
+    except (ValueError, AssertionError) as e:
+        siglist = None
 
     if not siglist:
         comment = 'no matches for this genome.'
@@ -233,7 +235,7 @@ def main(args):
     detected_contam = {}
 
     summary_d = {}
-    matches_filename = os.path.join(dirname, genome_name + '.matches.sig')
+    matches_filename = os.path.join(dirname, genome_name + '.matches.zip')
     genome_sig = os.path.join(dirname, genome_name + '.sig')
     lineage = provided_lineages.get(genome_name, '')
     contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
@@ -367,8 +369,8 @@ def main(args):
                             vals['bad_order_bp'],
                             vals['bad_family_bp'],
                             vals['bad_genus_bp'],
-                            f'{vals["f_ident"]:.03}',
-                            f'{vals["f_major"]:.03}',
+                            f'{vals["f_ident"]:.03f}',
+                            f'{vals["f_major"]:.03f}',
                             vals["lineage"],
                             vals["comment"]])
 
