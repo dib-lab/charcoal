@@ -57,6 +57,24 @@ def main(args):
             fp.write(json.dumps(contigs_tax))
         return 0
 
+    # remove duplicate signatures in matches
+    md5_list = []
+    for ss in siglist:
+        md5_list.append(ss.md5sum())
+
+    # check for duplicates in md5s, a proceed with filtering if there are duplicates.
+    if len(md5_list) != len(set(md5_list)):
+        new_siglist = []
+        seen_md5 = set()
+        for ss in siglist:
+            ss_md5 = ss.md5sum()
+            if not ss_md5 in seen_md5:
+                new_siglist.append(ss)
+                seen_md5.add(ss_md5)    
+            else:
+                print(f'removing a duplicate match: {ss.name}')
+        siglist = new_siglist
+
     # construct a template minhash object that we can use to create new 'uns
     empty_mh = siglist[0].minhash.copy_and_clear()
     ksize = empty_mh.ksize
