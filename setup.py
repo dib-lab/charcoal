@@ -8,7 +8,9 @@ CLASSIFIERS = [
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 
@@ -31,5 +33,5 @@ setup(
     setup_requires = [ "setuptools>=38.6.0",
                        'setuptools_scm', 'setuptools_scm_git_archive' ],
     use_scm_version = {"write_to": "charcoal/version.py"},
-    install_requires = ['snakemake>=5.10', 'click>=7']
+    install_requires = ['snakemake==6.4.1', 'click>7<8']
 )
