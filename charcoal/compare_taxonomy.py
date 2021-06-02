@@ -160,6 +160,19 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
     if new_siglist:
         siglist = new_siglist
 
+    # remove duplicate signatures in matches
+    # workaround for issue of duplicate sigs in SBT, see sourmash/#1171
+    new_siglist = []
+    seen_md5 = set()
+    for ss in siglist:
+        ss_md5 = ss.md5sum()
+        if not ss_md5 in seen_md5:
+            new_siglist.append(ss)
+            seen_md5.add(ss_md5)    
+        else:
+            print(f'removing a duplicate match: {ss.name}')
+    siglist = new_siglist
+
     # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
     lin_db = LineageDB()
