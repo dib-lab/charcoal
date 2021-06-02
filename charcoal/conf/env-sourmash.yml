@@ -8,8 +8,8 @@ dependencies:
     - pytest>6,<7
     - pytest-dependency>=0.5.1
     - pyyaml>5.3,<6
+    - sourmash>=4.1.1,<5
     - pip
     - pip:
       - git+https://github.com/dib-lab/charcoal.git
-      - sourmash>=4.1.0,<5
       - pyinterval
