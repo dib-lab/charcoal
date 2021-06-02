@@ -4,10 +4,10 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - python>=3.6
-    - snakemake-minimal=5.8.1
+    - python>=3.7
+    - snakemake-minimal=6.4.1
     - screed
-    - click
+    - click>=7,<8
     - pip
-    - pip:
-      - sourmash>=4.1.0,<5
+    - mamba
+    - sourmash>=4.1.1,<5
