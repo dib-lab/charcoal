@@ -171,8 +171,7 @@ def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
             seen_md5.add(ss_md5)    
         else:
             print(f'removing a duplicate match: {ss.name}')
-    if new_siglist:
-        siglist = new_siglist
+    siglist = new_siglist
 
     # create empty LCA database to populate...
     lca_db = LCA_Database(ksize=ksize, scaled=scaled, moltype=moltype)
