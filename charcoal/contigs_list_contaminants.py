@@ -24,6 +24,7 @@ from .compare_taxonomy import GATHER_MIN_MATCHES
 def get_matches(mh, lca_db, lin_db, match_rank, threshold_bp):
     import copy
     minhash = copy.copy(mh)
+    minhash = minhash.flatten()
     query_sig = sourmash.SourmashSignature(minhash)
 
     accs = set()
