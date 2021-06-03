@@ -201,13 +201,14 @@ def load_contigs_gather_json(filename):
     # load contigs JSON file - @CTB
     with open(filename, 'rt') as fp:
         contigs_d = json.load(fp)
-        for k in contigs_d:
-            (size, num_hashes, v) = contigs_d[k]
-            vv = []
-            for (lin, count) in v:
-                vv.append((tuple([ LineagePair(*x) for x in lin ]), count))
-            info = ContigGatherInfo(size, num_hashes, vv)
-            contigs_d[k] = info
+        for k, tup in contigs_d.items():
+            if tup:
+                (size, num_hashes, v) = tup
+                vv = []
+                for (lin, count) in v:
+                    vv.append((tuple([ LineagePair(*x) for x in lin ]), count))
+                info = ContigGatherInfo(size, num_hashes, vv)
+                contigs_d[k] = info
 
     return contigs_d
 

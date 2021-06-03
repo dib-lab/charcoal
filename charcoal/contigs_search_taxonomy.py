@@ -106,6 +106,8 @@ def main(args):
             # store together with size of sequence.
             info = ContigGatherInfo(len(record.sequence), len(mh), results)
             contigs_tax[record.name] = info
+        else:
+            contigs_tax[record.name] = None
 
     print(f"Processed {len(contigs_tax)} contigs.")
 
