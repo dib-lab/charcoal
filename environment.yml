@@ -5,9 +5,9 @@ channels:
     - defaults
 dependencies:
     - python>=3.7
-    - snakemake-minimal=6.4.1
+    - snakemake-minimal=6.5.1
     - screed
     - click>=7,<8
     - pip
     - mamba
-    - sourmash>=4.1.1,<5
+    - sourmash>=4.2.0,<5
