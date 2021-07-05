@@ -101,11 +101,10 @@ def main(args):
         mh.add_sequence(record.sequence, force=True)
         # collect all the gather results at genus level, together w/counts;
         # here, results is a list of (lineage, count) tuples.
-        if len(mh):
-            results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
-            # store together with size of sequence.
-            info = ContigGatherInfo(len(record.sequence), len(mh), results)
-            contigs_tax[record.name] = info
+        results = list(gather_at_rank(mh, lca_db, lin_db, match_rank))
+        # store together with size of sequence.
+        info = ContigGatherInfo(len(record.sequence), len(mh), results)
+        contigs_tax[record.name] = info
 
     print(f"Processed {len(contigs_tax)} contigs.")
 

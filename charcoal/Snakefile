@@ -3,6 +3,7 @@
 #
 # --configfile must be specified on command line.
 #
+# CTB TODO: bring CLI improvements from grist over (@toplevel, etc.)
 import csv, sys, os, json
 from snakemake.workflow import srcdir
 from charcoal.utils import CSV_DictHelper
@@ -271,6 +272,7 @@ def make_moltype_compute_args(moltype):
     return args
 
 # generate a signature for a query genome
+# CTB TODO: update for sourmash sketch
 rule contigs_sig:
     input:
         genome_dir + '/{filename}'
@@ -303,7 +305,8 @@ rule prefetch_all:
     shell: """
         sourmash prefetch {input.query} {input.databases} -o {output.csv} \
             {params.moltype} --scaled {params.gather_scaled} \
-            --save-matches {output.matches} --threshold-bp {params.threshold_bp} >& {output.txt}
+            --save-matches {output.matches} \
+            --threshold-bp {params.threshold_bp} >& {output.txt}
         cat {output.txt}
         touch {output.csv} {output.matches}
     """

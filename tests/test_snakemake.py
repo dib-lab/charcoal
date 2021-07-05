@@ -18,6 +18,7 @@ from . import pytest_utils as utils
 
 
 def setup_module(m):
+    # make a single temp directory for everything to run in.
     global _tempdir
     _tempdir = tempfile.mkdtemp(prefix='charcoal_test')
 
