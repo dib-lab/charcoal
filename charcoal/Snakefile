@@ -135,8 +135,18 @@ print('** config file checks PASSED!')
 print('** from here on out, it\'s all snakemake...')
 
 ### utility functions
+
+# mark top-level rules:
+_toplevel_rules = []
+def toplevel(fn):
+    assert fn.__name__.startswith('__')
+    _toplevel_rules.append(fn.__name__[2:])
+    return fn
+
+
 def output_files(filename_template, **kw):
     return expand(output_dir + filename_template, **kw)
+
 
 def get_provided_lineage(w):
     "retrieve a lineage for this filename from provided_lineages dictionary"
@@ -147,6 +157,7 @@ def get_provided_lineage(w):
         return lineage
     else:
         return "NA"
+
 
 def get_hitlist_genomes():
     hit_list_filename = output_dir + '/stage1_hitlist.csv'
@@ -210,21 +221,25 @@ wildcard_constraints:
     g='[a-zA-Z0-9._-]+'                   # should be everything but /
 
 # default rule: build report index
+@toplevel
 rule all:
    input:
        output_dir + '/report/index.html'
 
 # clean rule - clean the contigs # @CTB out of date fix me
+@toplevel
 rule all_clean_contigs:
     input:
         expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
 
 # check config files only
+@toplevel
 rule check:
     input:
         genome_list_file                  # do nothing - this file should exist
 
 # print out the configuration
+@toplevel
 rule showconf:
     input:
         genome_list_file
@@ -241,6 +256,7 @@ rule showconf:
 ###
 
 # default rule - produce hit list for stage 1
+@toplevel
 rule stage1:
     input:
         output_dir + '/stage1_hitlist.csv',
@@ -289,6 +305,7 @@ rule contigs_sig:
     """
 
 # run a search, query.x.database.
+@toplevel
 rule prefetch_all:
     input:
         query = stage1_dir + '/{filename}.sig',
@@ -394,6 +411,7 @@ rule combine_genome_summary:
 ###
 
 # stage 2: produce matches detail & genome alignments
+@toplevel
 rule stage2:
     input:
         output_dir + '/stage2_summary.csv',
@@ -525,6 +543,7 @@ rule combine_postprocessing_csv:
 ###
 
 # actually do cleaning. @CTB out of date, fixme later!
+@toplevel
 rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',
@@ -547,6 +566,7 @@ rule clean_contigs:
 ###
 
 # report - make HTML output
+@toplevel
 rule report:
     input:
         expand("{dir}/{g}.fig.html", dir=report_dir, g=genome_list),
