@@ -35,9 +35,6 @@ def calculate_contam(genome_lin, contigs_d, rank, filter_names=None):
     bad_names = dict()
 
     for contig_name, gather_info in contigs_d.items():
-        if not gather_info:
-            continue
-
         contig_taxlist = gather_info.gather_tax
         if filter_names and contig_name in filter_names:
             continue
@@ -56,9 +53,6 @@ def calculate_clean(genome_lin, contigs_d, rank):
     bad_names = dict()
 
     for contig_name, gather_info in contigs_d.items():
-        if not gather_info:
-            continue
-
         contig_taxlist = gather_info.gather_tax
 
         if not is_contig_contaminated(genome_lin, contig_taxlist, rank, GATHER_MIN_MATCHES):
@@ -298,15 +292,14 @@ def main(args):
     contigs_bp = 0
     for contig_name, gather_info in contigs_d.items():
         contigs_n += 1
-        if gather_info:
-            contigs_bp += gather_info.length
+        contigs_bp += gather_info.length
 
-            if not gather_info.num_hashes:
-                nohash_bp += gather_info.length
-                nohash_count += 1
-            elif not gather_info.gather_tax or not genome_lineage:
-                noident_bp += gather_info.length
-                noident_count += 1
+        if not gather_info.num_hashes:
+            nohash_bp += gather_info.length
+            nohash_count += 1
+        elif not gather_info.gather_tax or not genome_lineage:
+            noident_bp += gather_info.length
+            noident_count += 1
 
     vals['ignored_contigs_n'] = nohash_count
     vals['ignored_contigs_bp'] = nohash_bp

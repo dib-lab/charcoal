@@ -97,14 +97,13 @@ def main(args):
         # wrong!
         gather_info = contigs_d[record.name]
 
-        if gather_info and is_contig_contaminated(lineage,
-                                                  gather_info.gather_tax,
-                                                  filter_rank, 3): # @CTB configurable?!
+        if is_contig_contaminated(lineage, gather_info.gather_tax,
+                                  filter_rank, 3): # @CTB configurable?!
             if not args.do_nothing:
                 assert len(record.sequence) == gather_info.length
                 dirty_fp.write(f'>{record.name}\n{record.sequence}\n')
             bp_dirty += gather_info.length
-        elif gather_info:
+        else:
             if not args.do_nothing:
                 assert len(record.sequence) == gather_info.length
                 clean_fp.write(f'>{record.name}\n{record.sequence}\n')
