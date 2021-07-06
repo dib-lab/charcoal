@@ -226,8 +226,13 @@ rule all:
    input:
        output_dir + '/report/index.html'
 
-# clean rule - clean the contigs # @CTB out of date fix me
+# clean rule - clean the contigs
 @toplevel
+rule clean:
+    input:
+        expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
+
+# CTB: alias for 'clean'; remove later after making sure it's not in docs :)
 rule all_clean_contigs:
     input:
         expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
@@ -305,7 +310,6 @@ rule contigs_sig:
     """
 
 # run a search, query.x.database.
-@toplevel
 rule prefetch_all:
     input:
         query = stage1_dir + '/{filename}.sig',
@@ -543,7 +547,6 @@ rule combine_postprocessing_csv:
 ###
 
 # actually do cleaning. @CTB out of date, fixme later!
-@toplevel
 rule clean_contigs:
     input:
         genome = genome_dir + '/{f}',
