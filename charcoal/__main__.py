@@ -6,6 +6,9 @@ import glob
 
 import click
 
+from charcoal.version import version
+
+
 def get_snakefile_path(name):
     thisdir = os.path.dirname(__file__)
     snakefile = os.path.join(thisdir, name)
@@ -84,6 +87,32 @@ def cli():
 @click.argument('snakemake_args', nargs=-1)
 def run(configfile, snakemake_args, no_use_conda, verbose, outdir):
     "execute charcoal workflow (using snakemake underneath)"
+    targets = [ arg for arg in snakemake_args if not arg.startswith('-') ]
+    if help or not targets:
+        # CTB: note, this should match what's in README, please :)
+        print(f"""
+This is charcoal v{version}.
+
+Usage:
+
+   charcoal run <conf file> <target> [ <target 2>... ] [ <snakemake args> ]
+
+Recommended targets:
+
+ * stage1 - produce summary of genome taxonomies and potential contamination
+ * stage2 - produce alignments summary and report
+ * report - produce summary reports in HTML, under {{output_dir}}/report/
+ * clean - produce clean contigs under {{output_dir}}/*.clean.fa.gz
+
+Debug and config targets:
+ * check - verify the basic config
+ * showconf - show configuration
+
+Please see https://github.com/dib-lab/charcoal for quickstart docs.
+
+Please post questions at https://github.com/dib-lab/charcoal/issues!
+""")
+        sys.exit(0)
     run_snakemake(configfile, snakefile_name='Snakefile',
                   no_use_conda=no_use_conda, verbose=verbose,
                   outdir=outdir, extra_args=snakemake_args)
