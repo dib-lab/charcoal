@@ -84,8 +84,9 @@ def cli():
 @click.option('--no-use-conda', is_flag=True, default=False)
 @click.option('--verbose', is_flag=True)
 @click.option('--outdir', nargs=1)
+@click.option("-h", "--help", nargs=0)
 @click.argument('snakemake_args', nargs=-1)
-def run(configfile, snakemake_args, no_use_conda, verbose, outdir):
+def run(configfile, snakemake_args, no_use_conda, verbose, outdir, help):
     "execute charcoal workflow (using snakemake underneath)"
     targets = [ arg for arg in snakemake_args if not arg.startswith('-') ]
     if help or not targets:
