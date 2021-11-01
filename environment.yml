@@ -4,8 +4,8 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - python>=3.7
-    - snakemake-minimal=6.4.1
+    - python>=3.7,<3.10
+    - snakemake-minimal==6.10.0
     - screed
     - click>=7,<8
     - pip

@@ -20,6 +20,8 @@ def url_for_accession(accession):
     number = "/".join([number[p : p + 3] for p in range(0, len(number), 3)])
     url = f"ftp://ftp.ncbi.nlm.nih.gov/genomes/all/{db}/{number}"
 
+    print(f'downloading genome from: {url}')
+
     with urllib.request.urlopen(url) as response:
         all_names = response.read()
 
