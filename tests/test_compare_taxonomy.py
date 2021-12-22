@@ -22,6 +22,7 @@ def test_basic(location):
     args.hit_list = hitlist
     args.genome_summary = summary_csv
     args.lineages_csv = utils.relative_file("tests/test-data/test-match-lineages.csv")
+    args.databases = [utils.relative_file('tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.zip')]
     args.provided_lineages = None
     args.contam_summary_json = contam_json
     args.min_f_ident = compare_taxonomy.F_IDENT_THRESHOLD
@@ -30,7 +31,7 @@ def test_basic(location):
     args.genome = 'loomba'
     
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.sig"), os.path.join(location, "loomba.sig"))
-    shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.zip"), os.path.join(location, "loomba.matches.zip"))
+    shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.matches.csv"), os.path.join(location, "loomba.matches.csv"))
     shutil.copyfile(utils.relative_file("tests/test-data/loomba/LoombaR_2017__SID1050_bax__bin.11.fa.gz.contigs-tax.json"), os.path.join(location, "loomba.contigs-tax.json"))
 
     status = compare_taxonomy.main(args)
