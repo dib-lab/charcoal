@@ -204,7 +204,7 @@ class Checkpoint_HitListPairs:
 
                 # wait for the results of 'hitlist_make_contigs_matches';
                 # this will trigger exception until that rule has been run.
-                checkpoints.hitlist_make_contigs_matches.get(g=g)
+                checkpoints.hitlist_make_contigs_matches_all.get(g=g)
 
                 match_accs = get_hitlist_match_accs(g)
                 p = expand(self.pattern, g=g, acc=match_accs)
@@ -230,12 +230,12 @@ rule all:
 @toplevel
 rule clean:
     input:
-        expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
+        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list)
 
 # CTB: alias for 'clean'; remove later after making sure it's not in docs :)
 rule all_clean_contigs:
     input:
-        expand(output_dir + '/{f}.clean.fa.gz', f=genome_list)
+        expand(output_dir + '/{g}.clean.fa.gz', g=genome_list)
 
 # check config files only
 @toplevel
@@ -294,7 +294,7 @@ def make_moltype_compute_args(moltype):
 
 # generate a signature for a query genome
 # CTB TODO: update for sourmash sketch
-rule contigs_sig:
+rule contigs_sig_wc:
     input:
         genome_dir + '/{filename}'
     output:
@@ -309,14 +309,15 @@ rule contigs_sig:
             {params.moltype} {input} -o {output}
     """
 
+
+
 # run a search, query.x.database.
-rule prefetch_all:
+rule prefetch_all_matches_wc:
     input:
         query = stage1_dir + '/{filename}.sig',
         databases = config['gather_db']
     output:
         csv = stage1_dir + '/{filename}.matches.csv',
-        matches = stage1_dir + '/{filename}.matches.zip',
         txt = stage1_dir + '/{filename}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
@@ -326,22 +327,26 @@ rule prefetch_all:
     shell: """
         sourmash prefetch {input.query} {input.databases} -o {output.csv} \
             {params.moltype} --scaled {params.gather_scaled} \
-            --save-matches {output.matches} \
             --threshold-bp {params.threshold_bp} >& {output.txt}
         cat {output.txt}
-        touch {output.csv} {output.matches}
+        touch {output.csv}
     """
 
-# generate contigs taxonomy
-rule make_contigs_taxonomy_json:
+@toplevel
+rule prefetch_all_matches:
     input:
-        genome = genome_dir + '/{f}',
-        genome_sig = stage1_dir + '/{f}.sig',
-        matches = stage1_dir + '/{f}.matches.zip',
+        expand(stage1_dir + '/{g}.matches.csv', g=genome_list)
 
-        lineages = config['lineages_csv']
+# generate contigs taxonomy
+rule make_contigs_search_taxonomy_wc:
+    input:
+        genome = genome_dir + '/{g}',
+        genome_sig = stage1_dir + '/{g}.sig',
+        matches_csv = stage1_dir + '/{g}.matches.csv',
+        lineages = config['lineages_csv'],
+        databases = config['gather_db']
     output:
-        json = stage1_dir + '/{f}.contigs-tax.json',
+        json = stage1_dir + '/{g}.contigs-tax.json',
     conda: 'conf/env-sourmash.yml'
     params:
         match_rank = default_match_rank,
@@ -349,20 +354,27 @@ rule make_contigs_taxonomy_json:
         python -m charcoal.contigs_search_taxonomy \
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
-            --matches-sig {input.matches} \
+            --matches-csv {input.matches_csv} \
+            --databases {input.databases} \
             --json-out {output.json} \
             --match-rank {params.match_rank}
     """
 
+@toplevel
+rule make_contigs_search_taxonomy:
+    input:
+        expand(stage1_dir + '/{g}.contigs-tax.json', g=genome_list)
+
 # compare taxonomy for contigs in a genome; this generates hit list and
 # genome summary outputs.
-rule compare_taxonomy_single:
+rule compare_taxonomy_single_wc:
     input:
         json = stage1_dir + '/{g}.contigs-tax.json',
-        sig = stage1_dir + '/{g}.matches.zip',
+        matches_csv = stage1_dir + '/{g}.matches.csv',
         lineages = config['lineages_csv'],
         provided_lineages = provided_lineages_file,
-        genome_list = genome_list_file
+        databases = config['gather_db'],
+        genome_list = genome_list_file,
     output:
         hit_list_csv = stage1_dir + '/{g}.hitlist_for_filtering.csv',
         summary_csv = stage1_dir + '/{g}.genome_summary.csv',
@@ -384,7 +396,8 @@ rule compare_taxonomy_single:
             --min_f_ident={params.min_f_ident} \
             --min_f_major={params.min_f_major} \
             --match-rank={params.match_rank} \
-            {wildcards.g}
+            {wildcards.g} \
+            --databases {input.databases}
     """
 
 # combine all of the individual hit lists into a single hitlist summary file.
@@ -466,11 +479,12 @@ rule make_hitlist_matches_info_csv:
 
 # generates list of contaminant & non-contaminant accessions for genomes
 # on the hitlist.
-checkpoint hitlist_make_contigs_matches:
+checkpoint hitlist_make_contigs_matches_all:
     input:
         genome = genome_dir + '/{g}',
         genome_sig = stage1_dir + '/{g}.sig',
-        matches = stage1_dir + '/{g}.matches.zip',
+        matches_csv = stage1_dir + '/{g}.matches.csv',
+        databases = config['gather_db'],
         lineages = config['lineages_csv'],
         hitlist = output_dir + '/stage1_hitlist.csv'
     output:
@@ -482,20 +496,26 @@ checkpoint hitlist_make_contigs_matches:
         python -m charcoal.contigs_list_contaminants \
             --genome {input.genome} --lineages-csv {input.lineages} \
             --genome-sig {input.genome_sig} \
-            --matches-sig {input.matches} \
+            --matches-csv {input.matches_csv} \
+            --databases {input.databases} \
             --hitlist {input.hitlist} \
             --json-out {output.matches_json} \
             --match-rank {params.match_rank}
     """
 
+@toplevel
+rule hitlist_make_contigs_matches:
+    input:
+        expand(stage2_dir + '/{g}.matches.json', g=genome_list)
+
 # run a mashmap comparison of two genomes.
 rule mashmap_compare:
     input:
-        query = genome_dir + '/{f}',
+        query = genome_dir + '/{g}',
         target = ancient('genbank_genomes/{acc}_genomic.fna.gz'),
     output:
-        cmpfile = stage2_dir + '/{f}.x.{acc}.mashmap.align',
-        outfile = stage2_dir + '/{f}.x.{acc}.mashmap.out',
+        cmpfile = stage2_dir + '/{g}.x.{acc}.mashmap.align',
+        outfile = stage2_dir + '/{g}.x.{acc}.mashmap.out',
     conda: 'conf/env-mashmap.yml'
     shell: """
         mashmap -q {input.query} -r {input.target} -o {output.cmpfile} \
@@ -549,12 +569,12 @@ rule combine_postprocessing_csv:
 # actually do cleaning. @CTB out of date, fixme later!
 rule clean_contigs:
     input:
-        genome = genome_dir + '/{f}',
-        json = stage1_dir + '/{f}.contigs-tax.json',
+        genome = genome_dir + '/{g}',
+        json = stage1_dir + '/{g}.contigs-tax.json',
         hit_list = output_dir + '/stage1_hitlist.csv',
     output:
-        clean = output_dir + '/{f}.clean.fa.gz',
-        dirty = output_dir + '/{f}.dirty.fa.gz',
+        clean = output_dir + '/{g}.clean.fa.gz',
+        dirty = output_dir + '/{g}.dirty.fa.gz',
     conda: 'conf/env-sourmash.yml'
     shell: """
         python -m charcoal.clean_genome \
