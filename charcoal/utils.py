@@ -5,48 +5,10 @@ import json
 from collections import defaultdict, Counter, namedtuple
 import csv
 
-try:
-    import sourmash
-    from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
-except ImportError:
-    pass
-
-
-def is_lineage_match(lin_a, lin_b, rank):
-    """
-    check to see if two lineages are a match down to given rank.
-    """
-    for a, b in zip(lin_a, lin_b):
-        assert a.rank == b.rank
-        if a.rank == rank:
-            if a == b:
-                return 1
-        if a != b:
-            return 0
-
-    return 0
-
-
-def pop_to_rank(lin, rank):
-    "Remove lineage tuples from given lineage `lin` until `rank` is reached."
-    lin = list(lin)
-
-    txl = lca_utils.taxlist()
-    before_rank = []
-    for txl_rank in txl:
-        if txl_rank != rank:
-            before_rank.append(txl_rank)
-        else:
-            break
-
-    # are we already above rank?
-    if lin and lin[-1].rank in before_rank:
-        return tuple(lin)
-
-    while lin and lin[-1].rank != rank:
-        lin.pop()
-
-    return tuple(lin)
+import sourmash
+from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+from sourmash.lca.lca_utils import (is_lineage_match, pop_to_rank,
+                                    make_lineage)
 
 
 def find_disagree_rank(lin_a, lin_b):
@@ -269,17 +231,6 @@ class CSV_DictHelper:
 
     def __len__(self):
         return len(self.rows)
-
-
-def make_lineage(lineage):
-    "Turn a ; or ,-separated set of lineages into a tuple of LineagePair objs."
-    lin = lineage.split(';')
-    if len(lin) == 1:
-        lin = lineage.split(',')
-    lin = [ LineagePair(rank, n) for (rank, n) in zip(taxlist(), lin) ]
-    lin = tuple(lin)
-
-    return lin
 
 
 def save_contamination_summary(detected_contam, fp):
