@@ -296,9 +296,9 @@ def make_moltype_compute_args(moltype):
 # CTB TODO: update for sourmash sketch
 rule contigs_sig_wc:
     input:
-        genome_dir + '/{filename}'
+        genome_dir + '/{g}'
     output:
-        stage1_dir + '/{filename}.sig'
+        stage1_dir + '/{g}.sig'
     conda: 'conf/env-sourmash.yml'
     params:
         scaled = config['scaled'],
@@ -314,11 +314,11 @@ rule contigs_sig_wc:
 # run a search, query.x.database.
 rule prefetch_all_matches_wc:
     input:
-        query = stage1_dir + '/{filename}.sig',
+        query = stage1_dir + '/{g}.sig',
         databases = config['gather_db']
     output:
-        csv = stage1_dir + '/{filename}.matches.csv',
-        txt = stage1_dir + '/{filename}.matches.txt'
+        csv = stage1_dir + '/{g}.matches.csv',
+        txt = stage1_dir + '/{g}.matches.txt'
     params:
         moltype = "--{}".format(config['moltype'].lower()),
         gather_scaled = config['gather_scaled'],
