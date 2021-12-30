@@ -31,12 +31,22 @@ def main(args):
     # load the genome signature
     genome_sig = sourmash.load_one_signature(args.genome_sig)
 
-    # load all of the matches from search --containment in the database
-    try:
-        siglist = list(sourmash.load_file_as_signatures(args.matches_sig))
-    except (ValueError, AssertionError) as e:
-        siglist = []
-    print(f"loaded {len(siglist)} matches from '{args.matches_sig}'")
+    # load the matches from prefetch as a picklist
+    picklist = sourmash.picklist.SignaturePicklist('prefetch')
+    picklist.load(args.matches_csv, picklist.column_name)
+
+    # load all of the matches in the database, as found by prefetch;
+    # select on them; and then aggregate into MultiIndex.
+    # CTB note: currently, this loads all the signatures into memory.
+    # Alternatively we could do something with LazyLoadedIndex maybe?
+
+    siglist = []
+    for filename in args.databases:
+        db = sourmash.load_file_as_index(filename)
+        db = db.select(picklist=picklist)
+        siglist += list(db.signatures())
+
+    print(f"loaded {len(siglist)} matches from '{args.matches_csv}'")
 
     # Hack for examining members of our search database: remove exact matches.
     new_siglist = []
@@ -120,7 +130,9 @@ def cmdline(sys_args):
     p = argparse.ArgumentParser(sys_args)
     p.add_argument('--genome', help='genome file', required=True)
     p.add_argument('--genome-sig', help='genome sig', required=True)
-    p.add_argument('--matches-sig', help='all relevant matches', required=True)
+    p.add_argument('--matches-csv', help='all relevant matches', required=True)
+    p.add_argument('--databases', help='sourmash databases', required=True,
+                   nargs='+')
     p.add_argument('--lineages-csv', help='lineage spreadsheet', required=True)
     p.add_argument('--force', help='continue past survivable errors',
                    action='store_true')

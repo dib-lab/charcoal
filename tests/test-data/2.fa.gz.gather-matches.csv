@@ -1,0 +1,2 @@
+intersect_bp,jaccard,max_containment,f_query_match,f_match_query,match_filename,match_name,match_md5,match_bp,query_filename,query_name,query_md5,query_bp
+2740000,1.0,1.0,1.0,1.0,,"CP001071.1 Akkermansia muciniphila ATCC BAA-835, complete genome",318839c2,2740000,tests/test-data/genomes/2.fa.gz,"CP001071.1 Akkermansia muciniphila ATCC BAA-835, complete genome",318839c2,2740000
