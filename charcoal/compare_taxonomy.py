@@ -120,12 +120,23 @@ def choose_genome_lineage(guessed_genome_lineage, provided_lineage, match_rank,
     return genome_lineage, comment, needs_lineage
 
 
-def get_genome_taxonomy(matches_filename, genome_sig_filename, provided_lineage,
+def get_genome_taxonomy(matches_filename, database_list,
+                        genome_sig_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
-    try:
-        siglist = list(sourmash.load_file_as_signatures(matches_filename))
-    except (ValueError, AssertionError) as e:
-        siglist = None
+    # load the matches from prefetch as a picklist
+    picklist = sourmash.picklist.SignaturePicklist('prefetch')
+    picklist.load(matches_filename, picklist.column_name)
+
+    # load all of the matches in the database, as found by prefetch;
+    # select on them; and then aggregate into MultiIndex.
+    # CTB note: currently, this loads all the signatures into memory.
+    # Alternatively we could do something with LazyLoadedIndex maybe?
+
+    siglist = []
+    for filename in database_list:
+        db = sourmash.load_file_as_index(filename)
+        db = db.select(picklist=picklist)
+        siglist += list(db.signatures())
 
     if not siglist:
         comment = 'no matches for this genome.'
@@ -248,12 +259,13 @@ def main(args):
     detected_contam = {}
 
     summary_d = {}
-    matches_filename = os.path.join(dirname, genome_name + '.matches.zip')
+    matches_filename = os.path.join(dirname, genome_name + '.matches.csv')
     genome_sig = os.path.join(dirname, genome_name + '.sig')
     lineage = provided_lineages.get(genome_name, '')
     contigs_json = os.path.join(dirname, genome_name + '.contigs-tax.json')
 
     x = get_genome_taxonomy(matches_filename,
+                            args.databases,
                             genome_sig,
                             lineage,
                             tax_assign, match_rank,
@@ -430,6 +442,8 @@ def cmdline(sys_args):
     p.add_argument('--min_f_ident', type=float, default=F_IDENT_THRESHOLD)
     p.add_argument('--min_f_major', type=float, default=F_MAJOR_THRESHOLD)
     p.add_argument('--match-rank', required=True)
+    p.add_argument('--databases', help='sourmash databases', required=True,
+                   nargs='+')
     p.add_argument('genome')
     args = p.parse_args()
 
