@@ -4,19 +4,19 @@
 
 rule all:
     input:
-        lineages = 'db/gtdb-r95-reps.lineages.csv',
-        database = 'db/gtdb-r95.nucleotide-k31-scaled1000.sbt.zip'
+        lineages = 'db/gtdb-rs207.taxonomy.csv',
+        database = 'db/gtdb-rs207.genomic-reps.dna.k31.zip'
 
 rule download_gtdb_lineages:
     output:
-        lineages = 'db/gtdb-r95-reps.lineages.csv'
+        lineages = 'db/gtdb-rs207.taxonomy.csv'
     shell: """
-        curl -L https://osf.io/vbn2c/download | gunzip > {output.lineages}
+        curl -L https://osf.io/v3zmg/download | gunzip > {output.lineages}
     """
 
 rule download_gtdb_sbt_zip:
     output:
-        database = 'db/gtdb-r95.nucleotide-k31-scaled1000.sbt.zip'
+        database = 'db/gtdb-rs207.genomic-reps.dna.k31.zip'
     shell: """
-        curl -L https://osf.io/4n3m5/download > {output.database}
+        curl -L https://osf.io/3a6gn/download > {output.database}
     """
