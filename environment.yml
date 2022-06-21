@@ -10,4 +10,4 @@ dependencies:
     - click>=7,<8
     - pip
     - mamba
-    - sourmash>=4.2.2,<5
+    - sourmash=4.2.3
