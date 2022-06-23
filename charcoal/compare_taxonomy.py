@@ -125,7 +125,15 @@ def get_genome_taxonomy(matches_filename, database_list,
                         tax_assign, match_rank, min_f_ident, min_f_major):
     # load the matches from prefetch as a picklist
     picklist = sourmash.picklist.SignaturePicklist('prefetch')
-    picklist.load(matches_filename, picklist.column_name)
+    try:
+        picklist.load(matches_filename, picklist.column_name)
+    except ValueError:
+        with open(matches_filename, 'rt') as fp:
+            contents = fp.read()
+            if not len(contents): # empty is ok.
+                picklist = None
+            else:
+                raise
 
     # load all of the matches in the database, as found by prefetch;
     # select on them; and then aggregate into MultiIndex.
