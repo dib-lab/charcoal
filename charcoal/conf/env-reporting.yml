@@ -7,6 +7,7 @@ dependencies:
     - python>=3.7,<3.8
     - papermill>=2.1.2,<3
     - notebook>=6,<7
+    - matplotlib=3.5.2
     - plotly>=4.9.0,<5
     - ipykernel
     - sourmash>=4.2.2,<5
