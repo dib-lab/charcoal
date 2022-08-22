@@ -10,7 +10,7 @@ dependencies:
     - matplotlib=3.5.2
     - plotly>=4.9.0,<5
     - ipykernel
-    - sourmash>=4.2.2,<5
+    - sourmash>=4.4.3,<5
     - pip
     - pip:
       - git+https://github.com/dib-lab/charcoal.git

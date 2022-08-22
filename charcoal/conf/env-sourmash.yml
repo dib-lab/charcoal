@@ -8,7 +8,7 @@ dependencies:
     - pytest>6,<7
     - pytest-dependency>=0.5.1
     - pyyaml>5.3,<6
-    - sourmash>=4.2.2,<5
+    - sourmash>=4.4.3,<5
     - pip
     - pip:
       - git+https://github.com/dib-lab/charcoal.git
