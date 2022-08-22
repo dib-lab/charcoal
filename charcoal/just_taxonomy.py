@@ -243,14 +243,14 @@ class ContigsDecontaminator(object):
             return ContigInfo.CLEAN, "", good_count
 
         threshold_bp = contig_mh.scaled * self.GATHER_THRESHOLD
-        results = self.lca_db.gather(sourmash.SourmashSignature(contig_mh),
+        results = self.lca_db.best_containment(sourmash.SourmashSignature(contig_mh),
                                      threshold_bp=threshold_bp)
 
         if not results:
             return ContigInfo.NO_IDENT, "", 0
 
-        score = results[0][0]
-        match = results[0][1]
+        score = results[0]
+        match = results[1]
 
         if score < F_IDENT_THRESHOLD:
             return ContigInfo.NO_IDENT, "", 0

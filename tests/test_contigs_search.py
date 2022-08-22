@@ -51,6 +51,10 @@ def test_2_loomba(location):
     with open(saved_results_file, 'rt') as fp:
         saved_results = json.load(fp)
 
+    # to make a new save file, if results change:
+    #with open('/tmp/save.json', 'wt') as fp:
+    #    json.dump(this_results, fp)
+
     assert this_results == saved_results
 
 @utils.in_tempdir

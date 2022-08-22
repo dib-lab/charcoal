@@ -32,14 +32,14 @@ def get_matches(mh, lca_db, lin_db, match_rank, threshold_bp):
     # do the gather:
     while 1:
         try:
-            results = lca_db.gather(query_sig, threshold_bp=threshold_bp)
+            results = lca_db.best_containment(query_sig, threshold_bp=threshold_bp)
         except ValueError:
             break
 
         if not results:
             break
 
-        (match, match_sig, _) = results[0]
+        (match, match_sig, _) = results
         common = match_sig.minhash.count_common(query_sig.minhash)
 
         # retrieve identity
