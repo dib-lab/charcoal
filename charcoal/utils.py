@@ -115,12 +115,12 @@ def gather_at_rank(mh, lca_db, lin_db, match_rank):
     counts = Counter()
     while query_sig.minhash:
         
-        results = lca_db.gather(query_sig, threshold_bp=0)
+        results = lca_db.best_containment(query_sig, threshold_bp=0)
 
         if not results:
             break
 
-        (match, match_sig, _) = results[0]
+        (match, match_sig, _) = results
 
         # retrieve lineage & pop to match_rank
         match_ident = get_ident(match_sig)

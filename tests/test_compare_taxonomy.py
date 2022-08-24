@@ -4,6 +4,7 @@ from . import pytest_utils as utils
 
 from charcoal import compare_taxonomy
 from charcoal.utils import load_contamination_summary
+#from charcoal.utils import save_contamination_summary
 
 
 @utils.in_tempdir
@@ -55,11 +56,15 @@ def test_basic(location):
     assert ',genus,,12351,0,0,0,7286,9347,12351,0.959,0.764,d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Acutalibacteraceae;g__Anaeromassilibacillus,' in saved_csv
 
     # check contam output against saved
-    test_contam_file = utils.relative_file("tests/test-data/loomba/contam.json")
-    with open(test_contam_file, 'rt') as fp:
-        test_contam = load_contamination_summary(fp)
+    saved_contam_file = utils.relative_file("tests/test-data/loomba/contam.json")
+    with open(saved_contam_file, 'rt') as fp:
+        saved_contam = load_contamination_summary(fp)
 
     with open(args.contam_summary_json, 'rt') as fp:
         actual_contam = load_contamination_summary(fp)
 
-    assert test_contam == actual_contam
+    # if we need to update the saved contam info
+    #with open('/tmp/contam_summary.json', 'wt') as fp:
+    #    save_contamination_summary(actual_contam, fp)
+
+    assert saved_contam == actual_contam
