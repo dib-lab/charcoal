@@ -1,6 +1,7 @@
 from charcoal import utils
 import sourmash
-from sourmash.lca import taxlist, LineagePair
+from sourmash.lca import taxlist
+from sourmash.tax.tax_utils import LineagePair
 import collections
 
 import plotly.graph_objects as go

@@ -11,7 +11,8 @@ import json
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
-from sourmash.lca import LCA_Database, LineagePair
+from sourmash.lca import LCA_Database
+from sourmash.tax.tax_utils import LineagePair
 
 from . import utils
 from .lineage_db import LineageDB
@@ -124,16 +125,9 @@ def get_genome_taxonomy(matches_filename, database_list,
                         genome_sig_filename, provided_lineage,
                         tax_assign, match_rank, min_f_ident, min_f_major):
     # load the matches from prefetch as a picklist
-    picklist = sourmash.picklist.SignaturePicklist('prefetch')
-    try:
-        picklist.load(matches_filename, picklist.column_name)
-    except ValueError:
-        with open(matches_filename, 'rt') as fp:
-            contents = fp.read()
-            if not len(contents): # empty is ok.
-                picklist = None
-            else:
-                raise
+    picklist = sourmash.picklist.SignaturePicklist('prefetch',
+                                                   pickfile=matches_filename)
+    picklist.load(allow_empty=True)
 
     # load all of the matches in the database, as found by prefetch;
     # select on them; and then aggregate into MultiIndex.

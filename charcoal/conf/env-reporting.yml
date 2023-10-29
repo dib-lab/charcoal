@@ -4,13 +4,13 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - python>=3.8
+    - python>=3.10
     - papermill>=2.1.2,<3
     - notebook>=6,<7
     - matplotlib=3.5.2
     - plotly>=4.9.0,<5
     - ipykernel
-    - sourmash>=4.4.3,<5
+    - sourmash>=4.8.4,<5
     - pip
     - pip:
       - git+https://github.com/dib-lab/charcoal.git

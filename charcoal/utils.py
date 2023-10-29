@@ -6,7 +6,8 @@ from collections import defaultdict, Counter, namedtuple
 import csv
 
 import sourmash
-from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+from sourmash.lca import lca_utils, taxlist, display_lineage
+from sourmash.tax.tax_utils import LineagePair
 from sourmash.lca.lca_utils import (is_lineage_match, pop_to_rank,
                                     make_lineage)
 

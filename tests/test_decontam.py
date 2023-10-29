@@ -11,7 +11,8 @@ from charcoal.just_taxonomy import ContigInfo
 
 import sourmash
 from sourmash.lca import LCA_Database
-from sourmash.lca import LineagePair, taxlist
+from sourmash.lca import taxlist
+from sourmash.tax.tax_utils import LineagePair
 from sourmash.lca.command_index import load_taxonomy_assignments
 
 

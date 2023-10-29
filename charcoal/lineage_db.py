@@ -16,7 +16,7 @@ from collections import OrderedDict, defaultdict
 import functools
 import pytest
 
-from sourmash.lca import LineagePair
+from sourmash.tax.tax_utils import LineagePair
 
 
 def cached_property(fun):
@@ -85,7 +85,7 @@ class LineageDB(object):
     @classmethod
     def load(cls, db_name):
         "Load LCA_Database from a JSON file."
-        from .lca_utils import taxlist, LineagePair
+        from .lca_utils import taxlist
 
         xopen = open
         if db_name.endswith('.gz'):

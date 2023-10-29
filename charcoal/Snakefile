@@ -4,7 +4,7 @@
 # --configfile must be specified on command line.
 #
 # CTB TODO: bring CLI improvements from grist over (@toplevel, etc.)
-import csv, sys, os, json
+import csv, sys, os, json, urllib
 from snakemake.workflow import srcdir
 from charcoal.utils import CSV_DictHelper
 
