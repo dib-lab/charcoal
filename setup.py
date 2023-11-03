@@ -30,6 +30,6 @@ setup(
     },
     include_package_data=True,
     package_data = { "charcoal": ["Snakefile", "*.yml", "*.ipynb"] },
-    setup_requires = [ "setuptools>=68.2.2" ]
+    setup_requires = [ "setuptools>=68.2.2" ],
     install_requires = ['snakemake==7.32.4', 'click>=7,<8']
 )
