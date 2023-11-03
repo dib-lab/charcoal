@@ -32,16 +32,9 @@ def main(args):
     genome_sig = sourmash.load_one_signature(args.genome_sig)
 
     # load the matches from prefetch as a picklist
-    picklist = sourmash.picklist.SignaturePicklist('prefetch')
-    try:
-        picklist.load(args.matches_csv, picklist.column_name)
-    except ValueError:
-        with open(args.matches_csv, 'rt') as fp:
-            contents = fp.read()
-            if not len(contents): # empty is ok.
-                picklist = None
-            else:
-                raise
+    picklist = sourmash.picklist.SignaturePicklist('prefetch',
+                                                   pickfile=args.matches_csv)
+    picklist.load(allow_empty=True)
 
     # load all of the matches in the database, as found by prefetch;
     # select on them; and then aggregate into MultiIndex.

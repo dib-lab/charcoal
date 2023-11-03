@@ -83,8 +83,9 @@ def main(args):
     genome_sig = sourmash.load_one_signature(args.genome_sig)
 
     # load the matches from prefetch as a picklist
-    picklist = sourmash.picklist.SignaturePicklist('prefetch')
-    picklist.load(args.matches_csv, picklist.column_name)
+    picklist = sourmash.picklist.SignaturePicklist('prefetch',
+                                                   pickfile=args.matches_csv)
+    picklist.load()
 
     # load all of the matches in the database, as found by prefetch;
     # select on them; and then aggregate into MultiIndex.
@@ -130,7 +131,10 @@ def main(args):
         ident = get_ident(ss)
         lineage = tax_assign[ident]
 
-        lca_db.insert(ss, ident=ident)
+        try:
+            lca_db.insert(ss, ident=ident)
+        except ValueError:
+            continue
         lin_db.insert(ident, lineage)
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')

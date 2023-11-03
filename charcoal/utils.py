@@ -6,7 +6,8 @@ from collections import defaultdict, Counter, namedtuple
 import csv
 
 import sourmash
-from sourmash.lca import lca_utils, LineagePair, taxlist, display_lineage
+from sourmash.lca import lca_utils, taxlist, display_lineage
+from sourmash.tax.tax_utils import LineagePair
 from sourmash.lca.lca_utils import (is_lineage_match, pop_to_rank,
                                     make_lineage)
 
@@ -246,8 +247,9 @@ def load_contamination_summary(fp):
     for k, items in x.items():
         z = []
         for source, target, count in items:
-            source = tuple([ LineagePair(rank, name) for rank, name in source ])
-            target = tuple([ LineagePair(rank, name) for rank, name in target ])
+            # get rank, name for each
+            source = tuple([ LineagePair(x[0], x[1]) for x in source ])
+            target = tuple([ LineagePair(x[0], x[1]) for x in target ])
             z.append((source, target, count))
         contam_d[k] = z
 

@@ -13,7 +13,8 @@ import screed
 
 import sourmash
 from sourmash.lca.command_index import load_taxonomy_assignments
-from sourmash.lca import LCA_Database, LineagePair
+from sourmash.lca import LCA_Database
+from sourmash.tax.tax_utils import LineagePair
 
 from . import utils
 from . import lineage_db
