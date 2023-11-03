@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 CLASSIFIERS = [
     "Environment :: Console",
@@ -22,7 +22,7 @@ setup(
     author="C. Titus Brown and Taylor Reiter",
     author_email="titus@idyll.org,tereiter@ucdavis.edu",
     license="BSD 3-clause",
-    packages = find_packages(),
+    packages = ["charcoal"],
     classifiers = CLASSIFIERS,
     entry_points = {'console_scripts': [
         'charcoal  = charcoal.__main__:main'
@@ -30,6 +30,5 @@ setup(
     },
     include_package_data=True,
     package_data = { "charcoal": ["Snakefile", "*.yml", "*.ipynb"] },
-    setup_requires = [ "setuptools>=68.2.2" ],
     install_requires = ['snakemake==7.32.4', 'click>=7,<8']
 )
