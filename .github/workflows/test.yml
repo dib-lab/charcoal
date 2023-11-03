@@ -16,26 +16,40 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python }}
+          fetch-depth: 0
 
-      - run: pip install -U pip setuptools
-
-      - name: Setup conda
-        uses: s-weigand/setup-conda@v1
+      - name: cache conda
+        uses: actions/cache@v3
+        env:
+          CACHE_NUMBER: 0
         with:
-            activate-conda: true
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+
+      - name: setup conda
+        uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3
+        with:
+          auto-update-conda: true
+          python-version: 3.9
+          channels: conda-forge,bioconda
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          use-mamba: true
+          mamba-version: "*"
+          activate-environment: sourmash_dev
+          auto-activate-base: false
+          use-only-tar-bz2: true
+
       - run: conda env update -n base -f environment.yml
 
       - name: Install coverage dependencies
-        run: pip install pytest-cov pytest-dependency
+        run: pip install pytest-cov pytest-dependency setuptools
 
-      - name: Build
-        run: python setup.py build_ext --inplace
+#      - name: Build
+#        run: python setup.py build_ext --inplace
 
       - name: Install charcoal
         run: pip install -e .
