@@ -217,7 +217,7 @@ class Checkpoint_HitListPairs:
 ###
 
 wildcard_constraints:
-    size="\d+",
+    size="\\d+",
     g='[a-zA-Z0-9._-]+'                   # should be everything but /
 
 # default rule: build report index
