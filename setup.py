@@ -30,8 +30,6 @@ setup(
     },
     include_package_data=True,
     package_data = { "charcoal": ["Snakefile", "*.yml", "*.ipynb"] },
-    setup_requires = [ "setuptools>=68.2.2",
-                       'setuptools_scm', 'setuptools_scm_git_archive' ],
-    use_scm_version = {"write_to": "charcoal/version.py"},
+    setup_requires = [ "setuptools>=68.2.2" ]
     install_requires = ['snakemake==7.32.4', 'click>=7,<8']
 )
