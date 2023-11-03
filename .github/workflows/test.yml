@@ -46,8 +46,8 @@ jobs:
       - name: Install coverage dependencies
         run: pip install pytest-cov pytest-dependency setuptools
 
-#      - name: Build
-#        run: python setup.py build_ext --inplace
+      - name: Build
+        run: python setup.py build_ext --inplace
 
       - name: Install charcoal
         run: pip install -e .
