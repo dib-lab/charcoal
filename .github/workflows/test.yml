@@ -43,6 +43,8 @@ jobs:
           auto-activate-base: false
           use-only-tar-bz2: true
 
+      - run: conda env update -n base -f environment.yml
+
       - name: Install coverage dependencies
         run: pip install pytest-cov pytest-dependency setuptools
 
