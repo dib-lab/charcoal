@@ -131,7 +131,10 @@ def main(args):
         ident = get_ident(ss)
         lineage = tax_assign[ident]
 
-        lca_db.insert(ss, ident=ident)
+        try:
+            lca_db.insert(ss, ident=ident)
+        except ValueError:
+            continue
         lin_db.insert(ident, lineage)
 
     print(f'loaded {len(siglist)} signatures & created LCA Database')
