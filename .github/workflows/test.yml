@@ -44,7 +44,7 @@ jobs:
           use-only-tar-bz2: true
 
       - name: Install coverage dependencies
-        run: pip install pytest-cov pytest-dependency
+        run: pip install pytest-cov pytest-dependency setuptools
 
 #      - name: Build
 #        run: python setup.py build_ext --inplace
